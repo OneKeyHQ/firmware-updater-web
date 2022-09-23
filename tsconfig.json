@@ -28,7 +28,5 @@
   },
   "include": [
     "src",
-    "./postcss.config.js",
-    "./tailwind.config.js"
   ]
 }

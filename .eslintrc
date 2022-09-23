@@ -1,8 +1,26 @@
 {
   "extends": [ "wesbos/typescript" ],
+  "parserOptions": {
+    "project": "tsconfig.eslint.json",
+    "sourceType": "module"
+  },
   "plugins": ["import"],
   "rules": {
-    "@typescript-eslint/ban-ts-comment": "off"
+    "strict": "off",
+    "global-require": "off",
+    "prefer-destructuring": "off",
+    "no-var-requires": "off",
+    "no-use-before-define": "off",
+    "@typescript-eslint/ban-ts-comment": "off",
+    "@typescript-eslint/no-var-requires": "off",
+    "@typescript-eslint/no-unsafe-argument": "off",
+    "@typescript-eslint/no-unsafe-assignment": "off",
+    "@typescript-eslint/restrict-template-expressions": "off",
+    "@typescript-eslint/no-unsafe-member-access": "off",
+    "@typescript-eslint/no-unsafe-call": "off",
+    "import/no-dynamic-require": "off",
+    "@typescript-eslint/no-unsafe-return": "off",
+    "@typescript-eslint/no-use-before-define": "off"
   },
   "settings": {
     "import/parsers": {
@@ -10,8 +28,7 @@
     },
     "import/resolver": {
       "typescript": {
-        "alwaysTryTypes": true,
-        "project": "./tsconfig.json"
+        "alwaysTryTypes": true
       }
     }
   }
