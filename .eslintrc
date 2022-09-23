@@ -1,6 +1,18 @@
 {
   "extends": [ "wesbos/typescript" ],
+  "plugins": ["import"],
   "rules": {
     "@typescript-eslint/ban-ts-comment": "off"
+  },
+  "settings": {
+    "import/parsers": {
+      "@typescript-eslint/parser": [".ts", ".tsx"]
+    },
+    "import/resolver": {
+      "typescript": {
+        "alwaysTryTypes": true,
+        "project": "./tsconfig.json"
+      }
+    }
   }
 }
