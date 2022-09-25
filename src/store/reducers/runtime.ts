@@ -3,7 +3,7 @@ import { KnownDevice } from '@onekeyfe/hd-core';
 
 type InitialState = {
   device: KnownDevice | null;
-  pageStatus: 'initialize' | 'search' | 'search-timeout' | 'connected';
+  pageStatus: 'initialize' | 'searching' | 'search-timeout' | 'connected';
 };
 
 const initialState: InitialState = {

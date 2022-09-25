@@ -6,4 +6,4 @@ export { default as ReleaseInfo } from './ReleaseInfo';
 export { default as UploadFirmware } from './UploadFirmware';
 export { default as ConfirmUpdate } from './ConfirmUpdate';
 export { default as BootloaderContent } from './BootloaderContent';
-export { default as SearchTimeout } from './SearchTimeout';
+export { default as SearchDevice } from './SearchDevice';
