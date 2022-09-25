@@ -38,7 +38,7 @@ export default function SearchTimeout() {
                 className="text-brand-500"
                 href="https://help.onekey.so/hc/zh-cn"
               >
-                • 请联系技术支持
+                请联系技术支持
               </a>
             </p>
           </div>

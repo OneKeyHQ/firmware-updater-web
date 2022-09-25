@@ -1,84 +1,56 @@
-import { CheckIcon } from '@heroicons/react/24/solid';
+import { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
+import { classNames } from '@/utils';
 
-const steps = [
-  { id: '1', name: 'Connect', href: '#', status: 'complete' },
-  { id: '2', name: 'Firmware', href: '#', status: 'current' },
-];
+export default function Step() {
+  const pageStatus = useSelector(
+    (state: RootState) => state.runtime.pageStatus
+  );
 
-export default function Steps() {
+  const [stepState, setStepState] = useState<'connect' | 'firmware'>('connect');
+
+  useEffect(() => {
+    setStepState(pageStatus !== 'connected' ? 'connect' : 'firmware');
+  }, [pageStatus]);
+
   return (
-    <nav aria-label="Progress" className="w-1/2 mx-auto">
-      <ol className="divide-y divide-gray-300 rounded-md border border-gray-300 md:flex md:divide-y-0">
-        {steps.map((step, stepIdx) => (
-          <li key={step.name} className="relative md:flex md:flex-1">
-            {/* eslint-disable-next-line no-nested-ternary */}
-            {step.status === 'complete' ? (
-              <a href={step.href} className="group flex w-full items-center">
-                <span className="flex items-center px-6 py-4 text-sm font-medium">
-                  <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-brand-600 group-hover:bg-brand-800">
-                    <CheckIcon
-                      className="h-6 w-6 text-white"
-                      aria-hidden="true"
-                    />
-                  </span>
-                  <span className="ml-4 text-sm font-medium text-gray-900">
-                    {step.name}
-                  </span>
-                </span>
-              </a>
-            ) : step.status === 'current' ? (
-              <a
-                href={step.href}
-                className="flex items-center px-6 py-4 text-sm font-medium"
-                aria-current="step"
-              >
-                <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border-2 border-brand-500">
-                  <span className="text-brand-500">{step.id}</span>
-                </span>
-                <span className="ml-4 text-sm font-medium text-brand-500">
-                  {step.name}
-                </span>
-              </a>
-            ) : (
-              <a href={step.href} className="group flex items-center">
-                <span className="flex items-center px-6 py-4 text-sm font-medium">
-                  <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border-2 border-gray-300 group-hover:border-gray-400">
-                    <span className="text-gray-500 group-hover:text-gray-900">
-                      {step.id}
-                    </span>
-                  </span>
-                  <span className="ml-4 text-sm font-medium text-gray-500 group-hover:text-gray-900">
-                    {step.name}
-                  </span>
-                </span>
-              </a>
-            )}
-            {stepIdx !== steps.length - 1 ? (
-              <>
-                {/* Arrow separator for lg screens and up */}
-                <div
-                  className="absolute top-0 right-0 hidden h-full w-5 md:block"
-                  aria-hidden="true"
-                >
-                  <svg
-                    className="h-full w-full text-gray-300"
-                    viewBox="0 0 22 80"
-                    fill="none"
-                    preserveAspectRatio="none"
-                  >
-                    <path
-                      d="M0 -2L20 40L0 82"
-                      vectorEffect="non-scaling-stroke"
-                      stroke="currentcolor"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </div>
-              </>
-            ) : null}
+    <div className="w-1/2 mx-auto">
+      <h2 className="sr-only">Steps</h2>
+
+      <div className="relative after:inset-x-0 after:h-0.5 after:absolute after:top-1/2 after:-translate-y-1/2 after:block after:rounded-lg after:bg-gray-100">
+        <ol className="relative z-10 flex justify-between text-sm font-medium text-gray-500">
+          <li className="flex items-center p-2 bg-white">
+            <span
+              className={classNames(
+                'w-6 h-6 text-[10px] font-bold leading-6 text-center rounded-full',
+                stepState === 'connect'
+                  ? 'bg-brand-500 text-white'
+                  : 'bg-gray-100'
+              )}
+            >
+              1
+            </span>
+
+            <span className="hidden sm:block sm:ml-2">Connect</span>
           </li>
-        ))}
-      </ol>
-    </nav>
+
+          <li className="flex items-center p-2 bg-white">
+            <span
+              className={classNames(
+                'w-6 h-6 text-[10px] font-bold leading-6 text-center rounded-full',
+                stepState === 'firmware'
+                  ? 'bg-brand-500 text-white'
+                  : 'bg-gray-100'
+              )}
+            >
+              2
+            </span>
+
+            <span className="hidden sm:block sm:ml-2">Firmware</span>
+          </li>
+        </ol>
+      </div>
+    </div>
   );
 }
