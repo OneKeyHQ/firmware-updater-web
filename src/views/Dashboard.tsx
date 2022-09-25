@@ -5,6 +5,8 @@ import {
   ReleaseInfo,
   UploadFirmware,
   ConfirmUpdate,
+  BootloaderContent,
+  SearchTimeout,
 } from '@/components';
 
 export default function Dashboard() {
@@ -40,6 +42,8 @@ export default function Dashboard() {
                 <ReleaseInfo />
                 <UploadFirmware />
                 <ConfirmUpdate />
+                <BootloaderContent />
+                <SearchTimeout />
               </div>
             </div>
           </div>
