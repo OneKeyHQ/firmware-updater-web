@@ -2,8 +2,8 @@ import React, { useState, useEffect, useCallback, FC } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { IDeviceType } from '@onekeyfe/hd-core';
 import { RootState } from '@/store';
-import { setSelectedVersion } from '@/store/reducers/runtime';
-import type { TabType } from './index';
+import { setSelectedUploadType } from '@/store/reducers/runtime';
+import type { TabType } from './ReleaseInfo';
 
 type DataSource = {
   version: string;
@@ -12,8 +12,8 @@ type DataSource = {
 
 const Table: FC<{ tabType: TabType }> = ({ tabType }) => {
   const dispatch = useDispatch();
-  const selectedVersion = useSelector(
-    (state: RootState) => state.runtime.selectedVersion
+  const selectedUploadType = useSelector(
+    (state: RootState) => state.runtime.selectedUploadType
   );
   const device = useSelector((state: RootState) => state.runtime.device);
   const releaseMap = useSelector(
@@ -64,18 +64,17 @@ const Table: FC<{ tabType: TabType }> = ({ tabType }) => {
                   <tr
                     style={{
                       backgroundColor:
-                        tabType === selectedVersion ? '#dff7e6' : 'white',
+                        tabType === selectedUploadType ? '#dff7e6' : 'white',
                     }}
                   >
                     <td className="flex flex-row items-center whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
                       <input
                         name="notification-method"
                         type="radio"
-                        defaultChecked={false}
                         className="h-4 w-4 border-gray-300 text-brand-600 focus:ring-brand-500"
-                        checked={tabType === selectedVersion}
+                        checked={tabType === selectedUploadType}
                         onChange={() => {
-                          dispatch(setSelectedVersion(tabType));
+                          dispatch(setSelectedUploadType(tabType));
                         }}
                       />
                       <label

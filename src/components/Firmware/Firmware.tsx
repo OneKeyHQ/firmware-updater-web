@@ -2,9 +2,9 @@ import { FC, useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { Button } from '@onekeyhq/ui-components';
-import { ReleaseInfo } from '@/components';
 import { getDeviceType } from '@onekeyfe/hd-core';
-import UploadFirmware from './UploadFirmware';
+import { serviceHardware } from '@/hardware';
+import ReleaseInfo from './ReleaseInfo';
 import BootloaderTips from './BootloaderTips';
 
 const Description: FC<{ text: string; value: string }> = ({ text, value }) => (
@@ -14,31 +14,49 @@ const Description: FC<{ text: string; value: string }> = ({ text, value }) => (
   </div>
 );
 
-const ConfirmUpdate: FC = () => (
-  <div className="flex justify-center items-center flex-col">
-    <div className="relative flex items-start">
-      <div className="flex h-5 items-center">
-        <input
-          id="comments"
-          aria-describedby="comments-description"
-          name="comments"
-          type="checkbox"
-          className="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
-        />
+const ConfirmUpdate: FC = () => {
+  const device = useSelector((state: RootState) => state.runtime.device);
+  const selectedUploadType = useSelector(
+    (state: RootState) => state.runtime.selectedUploadType
+  );
+  const [confirmProtocol, setConfirmProtocol] = useState(false);
+
+  return (
+    <div className="flex justify-center items-center flex-col">
+      <div className="relative flex items-start">
+        <div className="flex h-5 items-center">
+          <input
+            id="comments"
+            aria-describedby="comments-description"
+            name="comments"
+            type="checkbox"
+            className="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+            checked={confirmProtocol}
+            onChange={(e) => {
+              const inputValue = e.target.checked;
+              setConfirmProtocol(inputValue);
+            }}
+          />
+        </div>
+        <div className="ml-3 text-sm">
+          <label htmlFor="comments" className="font-normal text-gray-700">
+            我确认设备是空的或我已经有了恢复种子
+          </label>
+        </div>
       </div>
-      <div className="ml-3 text-sm">
-        <label htmlFor="comments" className="font-normal text-gray-700">
-          我确认设备是空的或我已经有了恢复种子
-        </label>
+      <div className="py-4">
+        <Button
+          type="primary"
+          size="xl"
+          disabled={!(device && selectedUploadType && confirmProtocol)}
+          onClick={() => serviceHardware.firmwareUpdate()}
+        >
+          确定
+        </Button>
       </div>
     </div>
-    <div className="py-4">
-      <Button type="primary" size="xl" disabled>
-        确定
-      </Button>
-    </div>
-  </div>
-);
+  );
+};
 
 export default function Firmware() {
   const device = useSelector((state: RootState) => state.runtime.device);
@@ -87,9 +105,8 @@ export default function Firmware() {
         </div>
       </div>
       <ReleaseInfo />
-      <UploadFirmware />
       <ConfirmUpdate />
-      <BootloaderTips />
+      {/* <BootloaderTips /> */}
     </div>
   );
 }

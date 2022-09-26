@@ -127,6 +127,30 @@ class ServiceHardware {
     };
     store.dispatch(setReleaseMap(deviceMap));
   }
+
+  async firmwareUpdate() {
+    const state = store.getState();
+    const hardwareSDK = await this.getSDKInstance();
+    const { device, releaseMap, selectedUploadType } = state.runtime;
+    const params: any =
+      state.runtime.selectedUploadType === 'binary'
+        ? {
+            binary: [],
+          }
+        : {
+            updateType: state.runtime.selectedUploadType,
+          };
+
+    if (
+      device?.deviceType &&
+      (selectedUploadType === 'firmware' || selectedUploadType === 'ble')
+    ) {
+      const version =
+        releaseMap[device.deviceType][selectedUploadType][0].version;
+      params.version = version;
+    }
+    await hardwareSDK.firmwareUpdateV2(undefined, params);
+  }
 }
 
 export default ServiceHardware;

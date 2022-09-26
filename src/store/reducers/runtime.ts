@@ -7,7 +7,7 @@ type InitialState = {
   pageStatus: 'initialize' | 'searching' | 'search-timeout' | 'connected';
   bridgeVersion: string;
   releaseMap: DeviceTypeMap;
-  selectedVersion: 'firmware' | 'ble' | 'binary' | null;
+  selectedUploadType: 'firmware' | 'ble' | 'binary' | null;
 };
 
 const initialState: InitialState = {
@@ -15,7 +15,7 @@ const initialState: InitialState = {
   pageStatus: 'initialize',
   bridgeVersion: '',
   releaseMap: {} as DeviceTypeMap,
-  selectedVersion: null,
+  selectedUploadType: null,
 };
 
 export const runtimeSlice = createSlice({
@@ -40,11 +40,11 @@ export const runtimeSlice = createSlice({
     setReleaseMap(state, action: PayloadAction<InitialState['releaseMap']>) {
       state.releaseMap = action.payload;
     },
-    setSelectedVersion(
+    setSelectedUploadType(
       state,
-      action: PayloadAction<InitialState['selectedVersion']>
+      action: PayloadAction<InitialState['selectedUploadType']>
     ) {
-      state.selectedVersion = action.payload;
+      state.selectedUploadType = action.payload;
     },
   },
 });
@@ -54,7 +54,7 @@ export const {
   setPageStatus,
   setBridgeVersion,
   setReleaseMap,
-  setSelectedVersion,
+  setSelectedUploadType,
 } = runtimeSlice.actions;
 
 export default runtimeSlice.reducer;

@@ -1,8 +1,11 @@
 import { useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { classNames } from '@/utils';
-import { setSelectedVersion } from '@/store/reducers/runtime';
+import type { RootState } from '@/store';
+import { setSelectedUploadType } from '@/store/reducers/runtime';
+import { Alert } from '@onekeyhq/ui-components';
 import Table from './Table';
+import UploadFirmware from './UploadFirmware';
 
 export type TabType = 'firmware' | 'ble';
 
@@ -14,6 +17,9 @@ const tabs = [
 export default function ReleaseInfo() {
   const [currentTab, setCurrentTab] = useState<TabType>('firmware');
   const dispatch = useDispatch();
+  const selectedUploadType = useSelector(
+    (state: RootState) => state.runtime.selectedUploadType
+  );
   return (
     <div>
       <div className="sm:hidden">
@@ -49,7 +55,7 @@ export default function ReleaseInfo() {
                 aria-current={tab.key === currentTab ? 'page' : undefined}
                 onClick={() => {
                   setCurrentTab(tab.key as TabType);
-                  dispatch(setSelectedVersion(null));
+                  dispatch(setSelectedUploadType(null));
                 }}
               >
                 {tab.name}
@@ -59,6 +65,15 @@ export default function ReleaseInfo() {
         </div>
       </div>
       <Table tabType={currentTab} />
+      <UploadFirmware />
+      {selectedUploadType && (
+        <div className="mb-4">
+          <Alert
+            title="安装或升级固件前，请确保您的内容有备份或恢复种子，并将它们准备好。"
+            type="warning"
+          />
+        </div>
+      )}
     </div>
   );
 }
