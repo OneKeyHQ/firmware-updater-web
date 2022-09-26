@@ -65,6 +65,7 @@ export default function Dashboard() {
     };
 
     initProcess();
+    serviceHardware.getReleaseInfo();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

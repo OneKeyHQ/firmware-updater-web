@@ -68,9 +68,16 @@ export default function Firmware() {
     <div className="content">
       <h1 className="text-3xl text-center font-light py-4">安装固件</h1>
       <div className="flex flex-row-reverse">
-        <div className="w-1/2">
+        <div className="md:w-1/2 sm:w-full">
           <Description text="状态" value={device ? '已连接' : '未连接'} />
-          <Description text="固件版本" value={device?.features.se_ver ?? '-'} />
+          <Description
+            text="Bootloader 版本"
+            value={device?.features.bootloader_version ?? '-'}
+          />
+          <Description
+            text="固件版本"
+            value={device?.features.onekey_version ?? '-'}
+          />
           <Description
             text="蓝牙固件版本"
             value={device?.features.ble_ver ?? '-'}

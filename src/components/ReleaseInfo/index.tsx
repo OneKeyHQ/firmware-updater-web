@@ -1,28 +1,32 @@
+import { useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { classNames } from '@/utils';
+import { setSelectedVersion } from '@/store/reducers/runtime';
 import Table from './Table';
 
+export type TabType = 'firmware' | 'ble';
+
 const tabs = [
-  { name: '固件', href: '#', current: true },
-  { name: '蓝牙固件', href: '#', current: false },
+  { name: '固件', key: 'firmware' },
+  { name: '蓝牙固件', key: 'ble' },
 ];
 
-function classNames(...classes: string[]) {
-  return classes.filter(Boolean).join(' ');
-}
-
-export default function Example() {
+export default function ReleaseInfo() {
+  const [currentTab, setCurrentTab] = useState<TabType>('firmware');
+  const dispatch = useDispatch();
   return (
     <div>
       <div className="sm:hidden">
         <label htmlFor="tabs" className="sr-only">
           Select a tab
         </label>
-        {/* Use an "onChange" listener to redirect the user to the selected tab URL. */}
         <select
           id="tabs"
           name="tabs"
           className="block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-brand-500 focus:outline-none focus:ring-brand-500 sm:text-sm"
-          // @ts-expect-error
-          defaultValue={(tabs ?? []).find((tab) => tab?.current).name}
+          defaultValue={
+            (tabs ?? []).find((tab) => tab?.key === currentTab)?.name
+          }
         >
           {tabs.map((tab) => (
             <option key={tab.name}>{tab.name}</option>
@@ -33,24 +37,28 @@ export default function Example() {
         <div className="border-b border-gray-200">
           <nav className="-mb-px flex space-x-8" aria-label="Tabs">
             {tabs.map((tab) => (
-              <a
+              // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+              <div
                 key={tab.name}
-                href={tab.href}
                 className={classNames(
-                  tab.current
+                  currentTab === tab.key
                     ? 'border-brand-500 text-brand-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
                   'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm'
                 )}
-                aria-current={tab.current ? 'page' : undefined}
+                aria-current={tab.key === currentTab ? 'page' : undefined}
+                onClick={() => {
+                  setCurrentTab(tab.key as TabType);
+                  dispatch(setSelectedVersion(null));
+                }}
               >
                 {tab.name}
-              </a>
+              </div>
             ))}
           </nav>
         </div>
       </div>
-      <Table />
+      <Table tabType={currentTab} />
     </div>
   );
 }

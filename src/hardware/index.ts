@@ -8,7 +8,8 @@ import {
   UiResponseEvent,
 } from '@onekeyfe/hd-core';
 import { store } from '@/store';
-import { setBridgeVersion } from '@/store/reducers/runtime';
+import { setBridgeVersion, setReleaseMap } from '@/store/reducers/runtime';
+import type { RemoteConfigResponse } from '@/types';
 import { getHardwareSDKInstance } from './instance';
 
 let searchPromise: Deferred<void> | null = null;
@@ -111,6 +112,20 @@ class ServiceHardware {
           resolve(false);
         });
     });
+  }
+
+  async getReleaseInfo() {
+    const { data } = await axios.get<RemoteConfigResponse>(
+      `https://data.onekey.so/config.json?noCache=${new Date().getTime()}`
+    );
+
+    const deviceMap = {
+      classic: data.classic,
+      mini: data.mini,
+      touch: data.touch,
+      pro: data.pro,
+    };
+    store.dispatch(setReleaseMap(deviceMap));
   }
 }
 
