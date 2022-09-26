@@ -1,3 +1,5 @@
+/* eslint-disable class-methods-use-this */
+import axios from 'axios';
 import { createDeferred, Deferred } from '@onekeyfe/hd-shared';
 import {
   SearchDevice,
@@ -5,6 +7,8 @@ import {
   Unsuccessful,
   UiResponseEvent,
 } from '@onekeyfe/hd-core';
+import { store } from '@/store';
+import { setBridgeVersion } from '@/store/reducers/runtime';
 import { getHardwareSDKInstance } from './instance';
 
 let searchPromise: Deferred<void> | null = null;
@@ -86,6 +90,27 @@ class ServiceHardware {
 
   async sendUiResponse(response: UiResponseEvent) {
     return (await this.getSDKInstance()).uiResponse(response);
+  }
+
+  async checkBridgeStatus() {
+    return new Promise((resolve) => {
+      axios
+        .post('http://localhost:21320')
+        .then((res) => {
+          console.log(res);
+          if (res.status === 200) {
+            resolve(true);
+            store.dispatch(setBridgeVersion(res.data.version ?? ''));
+            console.log('store: ', store);
+          } else {
+            resolve(false);
+          }
+        })
+        .catch((e) => {
+          console.log(e);
+          resolve(false);
+        });
+    });
   }
 }
 

@@ -33,7 +33,13 @@ export default function Dashboard() {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    serviceHardware.getSDKInstance().then(() => {
+    const initProcess = async () => {
+      const bridgeStatus = await serviceHardware.checkBridgeStatus();
+      if (!bridgeStatus) {
+        // TODO: show bridge failed content
+        return;
+      }
+      await serviceHardware.getSDKInstance();
       dispatch(setPageStatus('searching'));
       serviceHardware.startDeviceScan(
         (response) => {
@@ -63,7 +69,9 @@ export default function Dashboard() {
           dispatch(setPageStatus('search-timeout'));
         }
       }, 5000);
-    });
+    };
+
+    initProcess();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

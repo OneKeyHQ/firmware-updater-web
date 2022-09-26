@@ -2,10 +2,14 @@ import ConnectImage from '@/images/connect-device.svg';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 
-export default function SearchTimeout() {
+export default function SearchDevice() {
   const pageStatus = useSelector(
     (state: RootState) => state.runtime.pageStatus
   );
+  const bridgeVersion = useSelector(
+    (state: RootState) => state.runtime.bridgeVersion
+  );
+
   return (
     <div className="flex flex-col justify-center items-center py-4">
       <h1 className="text-3xl font-normal">请检查连接工具并连接您的设备</h1>
@@ -15,7 +19,7 @@ export default function SearchTimeout() {
         正在搜索您的设备...
       </p>
       <p className="text-xs font-normal text-gray-500 py-3">
-        Onekey Bridge 正在运行，版本: 2.1.0
+        Onekey Bridge 正在运行，版本: {bridgeVersion}
       </p>
       {pageStatus === 'search-timeout' ? (
         <>
