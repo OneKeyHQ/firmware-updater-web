@@ -19,6 +19,9 @@ export const runtimeSlice = createSlice({
   reducers: {
     setDevice(state, action: PayloadAction<InitialState['device']>) {
       state.device = action.payload;
+      if (state.device) {
+        state.pageStatus = 'connected';
+      }
     },
     setPageStatus(state, action: PayloadAction<InitialState['pageStatus']>) {
       state.pageStatus = action.payload;

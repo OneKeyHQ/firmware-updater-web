@@ -1,15 +1,7 @@
 import { useEffect, FC } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import type { KnownDevice } from '@onekeyfe/hd-core';
-import {
-  Steps,
-  Description,
-  ReleaseInfo,
-  UploadFirmware,
-  ConfirmUpdate,
-  BootloaderContent,
-  SearchDevice,
-} from '@/components';
+import { Steps, SearchDevice, Firmware } from '@/components';
 import { serviceHardware } from '@/hardware';
 import { RootState } from '@/store';
 import { setPageStatus, setDevice } from '@/store/reducers/runtime';
@@ -22,7 +14,8 @@ const Content: FC = () => {
   if (pageStatus === 'searching' || pageStatus === 'search-timeout') {
     return <SearchDevice />;
   }
-  return null;
+
+  return <Firmware />;
 };
 
 export default function Dashboard() {
@@ -68,7 +61,7 @@ export default function Dashboard() {
         if (serviceHardware.isSearch) {
           dispatch(setPageStatus('search-timeout'));
         }
-      }, 5000);
+      }, 30000);
     };
 
     initProcess();
@@ -89,26 +82,6 @@ export default function Dashboard() {
         <Steps />
       </div>
       <Content />
-      {/* <div className="content">
-        <h1 className="text-3xl text-center font-light py-4">安装固件</h1>
-        <div className="flex flex-row-reverse">
-          <div className="w-1/2">
-            <Description text="状态" value="未连接" />
-            <Description text="固件版本" value="3.1.0" />
-            <Description text="蓝牙固件版本" value="2.0.4" />
-            <Description text="设备类型" value="OneKey Touch" />
-            <Description
-              text="设备序列号"
-              value="TC01WBD202207290806060000020"
-            />
-          </div>
-        </div>
-        <ReleaseInfo />
-        <UploadFirmware />
-        <ConfirmUpdate />
-        <BootloaderContent />
-        <SearchTimeout /> */}
-      {/* </div> */}
     </>
   );
 }
