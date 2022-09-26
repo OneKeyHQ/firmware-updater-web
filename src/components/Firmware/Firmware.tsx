@@ -1,6 +1,9 @@
-import { FC } from 'react';
+import { FC, useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
 import { Button } from '@onekeyhq/ui-components';
 import { ReleaseInfo } from '@/components';
+import { getDeviceType } from '@onekeyfe/hd-core';
 import UploadFirmware from './UploadFirmware';
 import BootloaderTips from './BootloaderTips';
 
@@ -38,16 +41,42 @@ const ConfirmUpdate: FC = () => (
 );
 
 export default function Firmware() {
+  const device = useSelector((state: RootState) => state.runtime.device);
+  const [deviceType, setDeviceType] = useState('');
+  useEffect(() => {
+    const originType = getDeviceType(device?.features);
+    let typeFlag = '';
+    switch (originType) {
+      case 'classic':
+        typeFlag = 'OneKey Classic';
+        break;
+      case 'mini':
+        typeFlag = 'OneKey Mini';
+        break;
+      case 'touch':
+        typeFlag = 'OneKey Touch';
+        break;
+      case 'pro':
+        typeFlag = 'OneKey Pro';
+        break;
+      default:
+        break;
+    }
+    setDeviceType(typeFlag);
+  }, [device, deviceType]);
   return (
     <div className="content">
       <h1 className="text-3xl text-center font-light py-4">安装固件</h1>
       <div className="flex flex-row-reverse">
         <div className="w-1/2">
-          <Description text="状态" value="未连接" />
-          <Description text="固件版本" value="3.1.0" />
-          <Description text="蓝牙固件版本" value="2.0.4" />
-          <Description text="设备类型" value="OneKey Touch" />
-          <Description text="设备序列号" value="TC01WBD202207290806060000020" />
+          <Description text="状态" value={device ? '已连接' : '未连接'} />
+          <Description text="固件版本" value={device?.features.se_ver ?? '-'} />
+          <Description
+            text="蓝牙固件版本"
+            value={device?.features.ble_ver ?? '-'}
+          />
+          <Description text="设备类型" value={deviceType} />
+          <Description text="设备序列号" value={device?.uuid ?? '-'} />
         </div>
       </div>
       <ReleaseInfo />
