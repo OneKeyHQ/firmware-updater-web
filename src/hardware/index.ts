@@ -20,6 +20,7 @@ import {
   setShowErrorAlert,
 } from '@/store/reducers/firmware';
 import type { RemoteConfigResponse } from '@/types';
+import arrayBufferToBuffer from '@/utils';
 import { getHardwareSDKInstance } from './instance';
 
 let searchPromise: Deferred<void> | null = null;
@@ -31,6 +32,8 @@ class ServiceHardware {
   isSearch = false;
 
   timer: ReturnType<typeof setInterval> | null = null;
+
+  file: File | undefined;
 
   async getSDKInstance() {
     return getHardwareSDKInstance().then((instance) => {
@@ -192,15 +195,15 @@ class ServiceHardware {
     const state = store.getState();
     const hardwareSDK = await this.getSDKInstance();
     const { device, releaseMap, selectedUploadType } = state.runtime;
-    const params: any =
-      state.runtime.selectedUploadType === 'binary'
-        ? {
-            binary: [],
-          }
-        : {
-            updateType: state.runtime.selectedUploadType,
-          };
+    const params: any = {};
 
+    // binary params
+    if (selectedUploadType === 'binary') {
+      params.binary = await this.getFileBuffer();
+      params.updateType = 'firmware';
+    }
+
+    // common params
     if (
       device?.deviceType &&
       (selectedUploadType === 'firmware' || selectedUploadType === 'ble')
@@ -208,7 +211,9 @@ class ServiceHardware {
       const version =
         releaseMap[device.deviceType][selectedUploadType][0].version;
       params.version = version;
+      params.updateType = state.runtime.selectedUploadType;
     }
+
     try {
       store.dispatch(setShowProgressBar(true));
       const response = await hardwareSDK.firmwareUpdateV2(undefined, params);
@@ -227,6 +232,25 @@ class ServiceHardware {
         setShowErrorAlert({ type: 'error', message: '固件安装失败' })
       );
     }
+  }
+
+  setFile(file: File) {
+    this.file = file;
+  }
+
+  getFileBuffer() {
+    return new Promise((resolve, reject) => {
+      if (!this.file) {
+        reject(new Error('no file'));
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        const fw = arrayBufferToBuffer(reader.result);
+        resolve(fw);
+      };
+      reader.readAsArrayBuffer(this.file);
+    });
   }
 }
 

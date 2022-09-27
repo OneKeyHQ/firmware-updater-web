@@ -11,6 +11,7 @@ type InitialState = {
   showResultAlert: boolean;
   resultTip: string;
   resultType: 'error' | 'success';
+  file: ArrayBuffer | undefined;
 };
 
 const initialState: InitialState = {
@@ -24,6 +25,7 @@ const initialState: InitialState = {
   showResultAlert: false,
   resultType: 'error',
   resultTip: '',
+  file: undefined,
 };
 
 export const firmwareSlice = createSlice({
@@ -71,6 +73,9 @@ export const firmwareSlice = createSlice({
       state.showProgressBar = action.payload;
       state.showFirmwareUpdate = true;
     },
+    setFile(state, action: PayloadAction<InitialState['file']>) {
+      state.file = action.payload;
+    },
   },
 });
 
@@ -82,6 +87,7 @@ export const {
   setShowButtonAlert,
   setShowErrorAlert,
   setShowProgressBar,
+  setFile,
 } = firmwareSlice.actions;
 
 export default firmwareSlice.reducer;
