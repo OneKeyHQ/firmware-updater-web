@@ -7,6 +7,7 @@ type InitialState = {
   pageStatus:
     | 'initialize'
     | 'uninstall-bridge'
+    | 'download-bridge'
     | 'searching'
     | 'search-timeout'
     | 'connected';

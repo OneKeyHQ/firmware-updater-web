@@ -1,15 +1,17 @@
 /* eslint-disable no-nested-ternary */
 import { useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { Button } from '@onekeyhq/ui-components';
 import ConnectImage from '@/images/connect-device.svg';
 import { getSystemKey } from '@/utils';
+import { setPageStatus } from '@/store/reducers/runtime';
 import Select from '../Select';
 
 type Option = { label: string; value: string };
 
 export default function SearchDevice() {
+  const dispatch = useDispatch();
   const pageStatus = useSelector(
     (state: RootState) => state.runtime.pageStatus
   );
@@ -41,7 +43,7 @@ export default function SearchDevice() {
         正在搜索您的设备...
       </p>
       <p className="text-xs font-normal text-gray-500 py-3">
-        {pageStatus === 'uninstall-bridge'
+        {pageStatus === 'uninstall-bridge' || pageStatus === 'download-bridge'
           ? '未识别到设备？尝试安装 Onekey Bridge！Onekey Bridge 是一个能够将设备和浏览器连接的工具。'
           : `Onekey Bridge 正在运行，版本: ${bridgeVersion}`}
       </p>
@@ -84,12 +86,32 @@ export default function SearchDevice() {
               />
             </div>
             <a href={currentTarget.value} className="w-28 flex">
-              <Button type="primary" size="lg" className="flex-1">
+              <Button
+                href={currentTarget.value}
+                type="primary"
+                size="lg"
+                className="flex-1"
+                onClick={() => {
+                  dispatch(setPageStatus('download-bridge'));
+                }}
+              >
                 下载
               </Button>
             </a>
           </div>
         )
+      ) : pageStatus === 'download-bridge' ? (
+        <div className="flex flex-col items-center justify-center">
+          <p className="text-sm font-normal text-gray-500 pt-3 pb-1">
+            1.正在等待安装
+          </p>
+          <p className="text-sm font-normal text-gray-500 py-2">
+            2.双击以运行安装程序
+          </p>
+          <p className="text-sm font-normal text-gray-500 py-2">
+            3.正在检测 Onekey Bridge 是否已安装...
+          </p>
+        </div>
       ) : null}
     </div>
   );
