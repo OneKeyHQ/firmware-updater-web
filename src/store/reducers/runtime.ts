@@ -15,6 +15,7 @@ type InitialState = {
   releaseMap: DeviceTypeMap;
   bridgeReleaseMap: BridgeReleaseMap;
   selectedUploadType: 'firmware' | 'ble' | 'binary' | null;
+  locale: 'zh-CN' | 'en-US';
 };
 
 const initialState: InitialState = {
@@ -24,6 +25,7 @@ const initialState: InitialState = {
   releaseMap: {} as DeviceTypeMap,
   bridgeReleaseMap: {} as BridgeReleaseMap,
   selectedUploadType: null,
+  locale: 'en-US',
 };
 
 export const runtimeSlice = createSlice({
@@ -60,6 +62,9 @@ export const runtimeSlice = createSlice({
     ) {
       state.selectedUploadType = action.payload;
     },
+    setLocale(state, action: PayloadAction<InitialState['locale']>) {
+      state.locale = action.payload;
+    },
   },
 });
 
@@ -70,6 +75,7 @@ export const {
   setReleaseMap,
   setBridgeReleaseMap,
   setSelectedUploadType,
+  setLocale,
 } = runtimeSlice.actions;
 
 export default runtimeSlice.reducer;

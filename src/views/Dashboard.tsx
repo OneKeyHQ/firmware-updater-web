@@ -1,4 +1,5 @@
 import { useEffect, useCallback, FC } from 'react';
+import { useIntl } from 'react-intl';
 import { useSelector, useDispatch } from 'react-redux';
 import type { KnownDevice } from '@onekeyfe/hd-core';
 import { Steps, SearchDevice, Firmware } from '@/components';
@@ -26,6 +27,7 @@ const Content: FC = () => {
 };
 
 export default function Dashboard() {
+  const intl = useIntl();
   const pageStatus = useSelector(
     (state: RootState) => state.runtime.pageStatus
   );
