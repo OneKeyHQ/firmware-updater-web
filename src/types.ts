@@ -56,3 +56,17 @@ export type AssetsMap = {
 export type RemoteConfigResponse = {
   bridge: AssetsMap['bridge'];
 } & DeviceTypeMap;
+
+export type BridgeSystem =
+  | 'linux64Deb'
+  | 'linux64Rpm'
+  | 'linux32Deb'
+  | 'linux32Rpm'
+  | 'mac'
+  | 'win';
+export type BridgeReleaseMap = {
+  [K in BridgeSystem]: {
+    value: string;
+    label: string;
+  };
+};

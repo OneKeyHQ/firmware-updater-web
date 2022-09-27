@@ -10,7 +10,11 @@ import {
 } from '@onekeyfe/hd-core';
 import { createDeferred, Deferred } from '@onekeyfe/hd-shared';
 import { store } from '@/store';
-import { setBridgeVersion, setReleaseMap } from '@/store/reducers/runtime';
+import {
+  setBridgeReleaseMap,
+  setBridgeVersion,
+  setReleaseMap,
+} from '@/store/reducers/runtime';
 import {
   setMaxProgress,
   setShowPinAlert,
@@ -19,8 +23,8 @@ import {
   setShowProgressBar,
   setShowErrorAlert,
 } from '@/store/reducers/firmware';
-import type { RemoteConfigResponse } from '@/types';
-import arrayBufferToBuffer from '@/utils';
+import type { BridgeReleaseMap, RemoteConfigResponse } from '@/types';
+import { arrayBufferToBuffer } from '@/utils';
 import { getHardwareSDKInstance } from './instance';
 
 let searchPromise: Deferred<void> | null = null;
@@ -189,6 +193,28 @@ class ServiceHardware {
       pro: data.pro,
     };
     store.dispatch(setReleaseMap(deviceMap));
+
+    const bridgeMap: BridgeReleaseMap = {
+      linux64Deb: {
+        value: data.bridge.linux64Deb,
+        label: 'Linux 64-bit (deb)',
+      },
+      linux64Rpm: {
+        value: data.bridge.linux64Rpm,
+        label: 'Linux 64-bit (rpm)',
+      },
+      linux32Deb: {
+        value: data.bridge.linux32Deb,
+        label: 'Linux 32-bit (deb)',
+      },
+      linux32Rpm: {
+        value: data.bridge.linux32Rpm,
+        label: 'Linux 32-bit (rpm)',
+      },
+      mac: { value: data.bridge.mac, label: 'Mac OS X' },
+      win: { value: data.bridge.win, label: 'Window' },
+    };
+    store.dispatch(setBridgeReleaseMap(bridgeMap));
   }
 
   async firmwareUpdate() {

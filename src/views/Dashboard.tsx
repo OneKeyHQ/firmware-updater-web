@@ -11,7 +11,11 @@ const Content: FC = () => {
     (state: RootState) => state.runtime.pageStatus
   );
 
-  if (pageStatus === 'searching' || pageStatus === 'search-timeout') {
+  if (
+    pageStatus === 'searching' ||
+    pageStatus === 'search-timeout' ||
+    pageStatus === 'uninstall-bridge'
+  ) {
     return <SearchDevice />;
   }
 
@@ -29,7 +33,7 @@ export default function Dashboard() {
     const initProcess = async () => {
       const bridgeStatus = await serviceHardware.checkBridgeStatus();
       if (!bridgeStatus) {
-        // TODO: show bridge failed content
+        dispatch(setPageStatus('uninstall-bridge'));
         return;
       }
       await serviceHardware.getSDKInstance();

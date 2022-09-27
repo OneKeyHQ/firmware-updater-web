@@ -1,6 +1,13 @@
-import ConnectImage from '@/images/connect-device.svg';
+/* eslint-disable no-nested-ternary */
+import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
+import { Button } from '@onekeyhq/ui-components';
+import ConnectImage from '@/images/connect-device.svg';
+import { getSystemKey } from '@/utils';
+import Select from '../Select';
+
+type Option = { label: string; value: string };
 
 export default function SearchDevice() {
   const pageStatus = useSelector(
@@ -9,6 +16,21 @@ export default function SearchDevice() {
   const bridgeVersion = useSelector(
     (state: RootState) => state.runtime.bridgeVersion
   );
+  const bridgeReleaseMap = useSelector(
+    (state: RootState) => state.runtime.bridgeReleaseMap
+  );
+
+  const [options, setOptions] = useState<Option[]>([]);
+  const [currentTarget, setCurrentTarget] = useState<Option | null>(null);
+  useEffect(() => {
+    const system = getSystemKey();
+    setCurrentTarget(bridgeReleaseMap[system]);
+
+    const items = Object.values(bridgeReleaseMap)
+      .filter((item) => item.value && item.value.length)
+      .map((item) => item);
+    setOptions(items);
+  }, [bridgeReleaseMap]);
 
   return (
     <div className="flex flex-col justify-center items-center py-4">
@@ -19,7 +41,9 @@ export default function SearchDevice() {
         正在搜索您的设备...
       </p>
       <p className="text-xs font-normal text-gray-500 py-3">
-        Onekey Bridge 正在运行，版本: {bridgeVersion}
+        {pageStatus === 'uninstall-bridge'
+          ? '未识别到设备？尝试安装 Onekey Bridge！Onekey Bridge 是一个能够将设备和浏览器连接的工具。'
+          : `Onekey Bridge 正在运行，版本: ${bridgeVersion}`}
       </p>
       {pageStatus === 'search-timeout' ? (
         <>
@@ -47,6 +71,25 @@ export default function SearchDevice() {
             </p>
           </div>
         </>
+      ) : pageStatus === 'uninstall-bridge' ? (
+        currentTarget && (
+          <div className="flex items-center p-6">
+            <div className="w-52 pr-3">
+              <Select
+                options={options}
+                defaultValue={currentTarget}
+                onChange={(e) => {
+                  setCurrentTarget(e);
+                }}
+              />
+            </div>
+            <a href={currentTarget.value} className="w-28 flex">
+              <Button type="primary" size="lg" className="flex-1">
+                下载
+              </Button>
+            </a>
+          </div>
+        )
       ) : null}
     </div>
   );

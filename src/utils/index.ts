@@ -1,10 +1,11 @@
+import { BridgeSystem } from '@/types';
 import { Buffer } from 'buffer';
 
 export function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ');
 }
 
-const arrayBufferToBuffer = (ab: any): any => {
+export const arrayBufferToBuffer = (ab: any): any => {
   const buffer: any = Buffer.alloc(ab.byteLength);
   const view = new Uint8Array(ab);
   // eslint-disable-next-line no-plusplus
@@ -14,4 +15,9 @@ const arrayBufferToBuffer = (ab: any): any => {
   return buffer;
 };
 
-export default arrayBufferToBuffer;
+export const getSystemKey: () => BridgeSystem = () => {
+  if (window.navigator.userAgent.indexOf('Win') !== -1) return 'win';
+  if (window.navigator.userAgent.indexOf('Mac') !== -1) return 'mac';
+  if (window.navigator.userAgent.indexOf('Linux') !== -1) return 'linux64Deb';
+  return 'win';
+};

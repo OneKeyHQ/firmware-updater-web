@@ -1,12 +1,18 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import type { KnownDevice } from '@onekeyfe/hd-core';
-import { DeviceTypeMap } from '@/types';
+import { BridgeReleaseMap, DeviceTypeMap } from '@/types';
 
 type InitialState = {
   device: KnownDevice | null;
-  pageStatus: 'initialize' | 'searching' | 'search-timeout' | 'connected';
+  pageStatus:
+    | 'initialize'
+    | 'uninstall-bridge'
+    | 'searching'
+    | 'search-timeout'
+    | 'connected';
   bridgeVersion: string;
   releaseMap: DeviceTypeMap;
+  bridgeReleaseMap: BridgeReleaseMap;
   selectedUploadType: 'firmware' | 'ble' | 'binary' | null;
 };
 
@@ -15,6 +21,7 @@ const initialState: InitialState = {
   pageStatus: 'initialize',
   bridgeVersion: '',
   releaseMap: {} as DeviceTypeMap,
+  bridgeReleaseMap: {} as BridgeReleaseMap,
   selectedUploadType: null,
 };
 
@@ -40,6 +47,12 @@ export const runtimeSlice = createSlice({
     setReleaseMap(state, action: PayloadAction<InitialState['releaseMap']>) {
       state.releaseMap = action.payload;
     },
+    setBridgeReleaseMap(
+      state,
+      action: PayloadAction<InitialState['bridgeReleaseMap']>
+    ) {
+      state.bridgeReleaseMap = action.payload;
+    },
     setSelectedUploadType(
       state,
       action: PayloadAction<InitialState['selectedUploadType']>
@@ -54,6 +67,7 @@ export const {
   setPageStatus,
   setBridgeVersion,
   setReleaseMap,
+  setBridgeReleaseMap,
   setSelectedUploadType,
 } = runtimeSlice.actions;
 
