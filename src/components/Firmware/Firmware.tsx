@@ -6,6 +6,7 @@ import { getDeviceType } from '@onekeyfe/hd-core';
 import { serviceHardware } from '@/hardware';
 import ReleaseInfo from './ReleaseInfo';
 import BootloaderTips from './BootloaderTips';
+import ProgressBar from './ProgressBar';
 
 const Description: FC<{ text: string; value: string }> = ({ text, value }) => (
   <div className="flex items-center justify-between text-sm text-gray-800 py-1">
@@ -61,6 +62,7 @@ const ConfirmUpdate: FC = () => {
 export default function Firmware() {
   const device = useSelector((state: RootState) => state.runtime.device);
   const [deviceType, setDeviceType] = useState('');
+  const [showProgress] = useState(false);
   useEffect(() => {
     const originType = getDeviceType(device?.features);
     let typeFlag = '';
@@ -85,28 +87,34 @@ export default function Firmware() {
   return (
     <div className="content">
       <h1 className="text-3xl text-center font-light py-4">安装固件</h1>
-      <div className="flex flex-row-reverse">
-        <div className="md:w-1/2 sm:w-full">
-          <Description text="状态" value={device ? '已连接' : '未连接'} />
-          <Description
-            text="Bootloader 版本"
-            value={device?.features.bootloader_version ?? '-'}
-          />
-          <Description
-            text="固件版本"
-            value={device?.features.onekey_version ?? '-'}
-          />
-          <Description
-            text="蓝牙固件版本"
-            value={device?.features.ble_ver ?? '-'}
-          />
-          <Description text="设备类型" value={deviceType} />
-          <Description text="设备序列号" value={device?.uuid ?? '-'} />
-        </div>
-      </div>
-      <ReleaseInfo />
-      <ConfirmUpdate />
-      {/* <BootloaderTips /> */}
+      {!showProgress ? (
+        <>
+          <div className="flex flex-row-reverse">
+            <div className="md:w-1/2 sm:w-full">
+              <Description text="状态" value={device ? '已连接' : '未连接'} />
+              <Description
+                text="Bootloader 版本"
+                value={device?.features.bootloader_version ?? '-'}
+              />
+              <Description
+                text="固件版本"
+                value={device?.features.onekey_version ?? '-'}
+              />
+              <Description
+                text="蓝牙固件版本"
+                value={device?.features.ble_ver ?? '-'}
+              />
+              <Description text="设备类型" value={deviceType} />
+              <Description text="设备序列号" value={device?.uuid ?? '-'} />
+            </div>
+          </div>
+          <ReleaseInfo />
+          <ConfirmUpdate />
+          {/* <BootloaderTips /> */}
+        </>
+      ) : (
+        <ProgressBar />
+      )}
     </div>
   );
 }

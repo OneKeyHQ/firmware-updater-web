@@ -6,14 +6,11 @@ export default function UploadFirmware() {
   const [fileInfo, setFileInfo] = useState<File | undefined>();
 
   const onClick = () => {
-    console.log(inputRef.current);
     inputRef.current?.click();
   };
 
   const onInputChange = () => {
-    console.log(1);
     const selectedFile = inputRef?.current?.files?.[0];
-    console.log(selectedFile);
     setFileInfo(selectedFile);
   };
 

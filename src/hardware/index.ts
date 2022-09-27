@@ -1,14 +1,23 @@
 /* eslint-disable class-methods-use-this */
 import axios from 'axios';
-import { createDeferred, Deferred } from '@onekeyfe/hd-shared';
 import {
   SearchDevice,
   Success,
   Unsuccessful,
   UiResponseEvent,
+  UI_EVENT,
+  UI_REQUEST,
 } from '@onekeyfe/hd-core';
+import { createDeferred, Deferred } from '@onekeyfe/hd-shared';
 import { store } from '@/store';
 import { setBridgeVersion, setReleaseMap } from '@/store/reducers/runtime';
+import {
+  setProgress,
+  setMaxProgress,
+  setShowPinAlert,
+  setShowButtonAlert,
+  setUploadTip,
+} from '@/store/reducers/firmware';
 import type { RemoteConfigResponse } from '@/types';
 import { getHardwareSDKInstance } from './instance';
 
@@ -25,7 +34,38 @@ class ServiceHardware {
   async getSDKInstance() {
     return getHardwareSDKInstance().then((instance) => {
       if (!this.registeredEvents) {
-        // empty
+        instance.on(UI_EVENT, (e) => {
+          const { type, payload } = e;
+          if (type === UI_REQUEST.REQUEST_PIN) {
+            store.dispatch(setShowPinAlert(true));
+          } else if (type === UI_REQUEST.REQUEST_BUTTON) {
+            store.dispatch(setShowButtonAlert(true));
+          } else if (type === UI_REQUEST.FIRMWARE_TIP) {
+            const { message = '' } = payload.data ?? {};
+            switch (message) {
+              case 'AutoRebootToBootloader':
+                break;
+              case 'GoToBootloaderSuccess':
+                break;
+              case 'DownloadFirmware':
+                break;
+              case 'DownloadFirmwareSuccess':
+                break;
+              case 'ConfirmOnDevice':
+                break;
+              case 'FirmwareEraseSuccess':
+                break;
+              default:
+                break;
+            }
+          } else if (type === UI_REQUEST.FIRMWARE_PROGRESS) {
+            if (payload.progress === 0) {
+              store.dispatch(setMaxProgress(99));
+            } else if (payload.progress === 100) {
+              store.dispatch(setMaxProgress(100));
+            }
+          }
+        });
       }
 
       return instance;
@@ -98,11 +138,9 @@ class ServiceHardware {
       axios
         .post('http://localhost:21320')
         .then((res) => {
-          console.log(res);
           if (res.status === 200) {
             resolve(true);
             store.dispatch(setBridgeVersion(res.data.version ?? ''));
-            console.log('store: ', store);
           } else {
             resolve(false);
           }

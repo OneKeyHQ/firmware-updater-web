@@ -1,9 +1,9 @@
 import { configureStore } from '@reduxjs/toolkit';
-import device from './reducers/device';
+import firmware from './reducers/firmware';
 import runtime from './reducers/runtime';
 
 export const store = configureStore({
-  reducer: { device, runtime },
+  reducer: { runtime, firmware },
 });
 
 export type RootState = ReturnType<typeof store.getState>;
