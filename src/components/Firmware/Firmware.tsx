@@ -1,12 +1,49 @@
 import { FC, useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
-import { Button } from '@onekeyhq/ui-components';
+import { Button, Alert } from '@onekeyhq/ui-components';
 import { getDeviceType } from '@onekeyfe/hd-core';
 import { serviceHardware } from '@/hardware';
 import ReleaseInfo from './ReleaseInfo';
 import BootloaderTips from './BootloaderTips';
 import ProgressBar from './ProgressBar';
+
+const DeviceEventAlert: FC = () => {
+  const showPinAlert = useSelector(
+    (state: RootState) => state.firmware.showPinAlert
+  );
+  const showButtonAlert = useSelector(
+    (state: RootState) => state.firmware.showButtonAlert
+  );
+  return (
+    <>
+      {showPinAlert && <Alert type="warning" title="请在设备上输入 PIN 码" />}
+      {showButtonAlert && <Alert type="warning" title="请在设备上确认" />}
+    </>
+  );
+};
+
+const ResultAlert: FC = () => {
+  const showResultAlert = useSelector(
+    (state: RootState) => state.firmware.showResultAlert
+  );
+  const resultType = useSelector(
+    (state: RootState) => state.firmware.resultType
+  );
+  const resultTip = useSelector((state: RootState) => state.firmware.resultTip);
+  if (!showResultAlert) {
+    return null;
+  }
+  return (
+    <div className="p-8">
+      <Alert
+        type={resultType}
+        title={resultType === 'success' ? resultTip : '固件安装失败'}
+        content={resultType === 'success' ? '请重新连接设备' : resultTip}
+      />
+    </div>
+  );
+};
 
 const Description: FC<{ text: string; value: string }> = ({ text, value }) => (
   <div className="flex items-center justify-between text-sm text-gray-800 py-1">
@@ -61,8 +98,13 @@ const ConfirmUpdate: FC = () => {
 
 export default function Firmware() {
   const device = useSelector((state: RootState) => state.runtime.device);
+  const showProgressBar = useSelector(
+    (state: RootState) => state.firmware.showProgressBar
+  );
+  const showFirmwareUpdate = useSelector(
+    (state: RootState) => state.firmware.showFirmwareUpdate
+  );
   const [deviceType, setDeviceType] = useState('');
-  const [showProgress] = useState(false);
   useEffect(() => {
     const originType = getDeviceType(device?.features);
     let typeFlag = '';
@@ -87,7 +129,7 @@ export default function Firmware() {
   return (
     <div className="content">
       <h1 className="text-3xl text-center font-light py-4">安装固件</h1>
-      {!showProgress ? (
+      {!showFirmwareUpdate ? (
         <>
           <div className="flex flex-row-reverse">
             <div className="md:w-1/2 sm:w-full">
@@ -113,7 +155,11 @@ export default function Firmware() {
           {/* <BootloaderTips /> */}
         </>
       ) : (
-        <ProgressBar />
+        <>
+          <ResultAlert />
+          <DeviceEventAlert />
+          {showProgressBar && <ProgressBar />}
+        </>
       )}
     </div>
   );

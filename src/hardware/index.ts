@@ -12,11 +12,12 @@ import { createDeferred, Deferred } from '@onekeyfe/hd-shared';
 import { store } from '@/store';
 import { setBridgeVersion, setReleaseMap } from '@/store/reducers/runtime';
 import {
-  setProgress,
   setMaxProgress,
   setShowPinAlert,
   setShowButtonAlert,
-  setUploadTip,
+  setUpdateTip,
+  setShowProgressBar,
+  setShowErrorAlert,
 } from '@/store/reducers/firmware';
 import type { RemoteConfigResponse } from '@/types';
 import { getHardwareSDKInstance } from './instance';
@@ -40,28 +41,49 @@ class ServiceHardware {
             store.dispatch(setShowPinAlert(true));
           } else if (type === UI_REQUEST.REQUEST_BUTTON) {
             store.dispatch(setShowButtonAlert(true));
+          } else if (type === UI_REQUEST.CLOSE_UI_WINDOW) {
+            store.dispatch(setShowPinAlert(false));
+            store.dispatch(setShowButtonAlert(false));
           } else if (type === UI_REQUEST.FIRMWARE_TIP) {
             const { message = '' } = payload.data ?? {};
             switch (message) {
               case 'AutoRebootToBootloader':
+                // 5
+                store.dispatch(setMaxProgress(5));
                 break;
               case 'GoToBootloaderSuccess':
+                // 10
+                store.dispatch(setMaxProgress(10));
                 break;
               case 'DownloadFirmware':
+                // 15
+                store.dispatch(setMaxProgress(15));
                 break;
               case 'DownloadFirmwareSuccess':
+                // 25
+                store.dispatch(setMaxProgress(25));
                 break;
               case 'ConfirmOnDevice':
+                store.dispatch(setShowButtonAlert(true));
                 break;
               case 'FirmwareEraseSuccess':
+                // 30
+                store.dispatch(setMaxProgress(30));
                 break;
               default:
                 break;
             }
           } else if (type === UI_REQUEST.FIRMWARE_PROGRESS) {
-            if (payload.progress === 0) {
+            const progress = store.getState().firmware.progress;
+            if (
+              progress < 99 &&
+              payload.progress >= 0 &&
+              payload.progress < 100
+            ) {
+              // 99
               store.dispatch(setMaxProgress(99));
             } else if (payload.progress === 100) {
+              // 100
               store.dispatch(setMaxProgress(100));
             }
           }
@@ -187,7 +209,24 @@ class ServiceHardware {
         releaseMap[device.deviceType][selectedUploadType][0].version;
       params.version = version;
     }
-    await hardwareSDK.firmwareUpdateV2(undefined, params);
+    try {
+      store.dispatch(setShowProgressBar(true));
+      const response = await hardwareSDK.firmwareUpdateV2(undefined, params);
+      if (!response.success) {
+        store.dispatch(
+          setShowErrorAlert({ type: 'error', message: response.payload.error })
+        );
+        return;
+      }
+      store.dispatch(
+        setShowErrorAlert({ type: 'success', message: '固件安装成功' })
+      );
+    } catch (e) {
+      console.log(e);
+      store.dispatch(
+        setShowErrorAlert({ type: 'error', message: '固件安装失败' })
+      );
+    }
   }
 }
 
