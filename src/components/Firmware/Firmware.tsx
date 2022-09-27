@@ -41,6 +41,11 @@ const ResultAlert: FC = () => {
         title={resultType === 'success' ? resultTip : '固件安装失败'}
         content={resultType === 'success' ? '请重新连接设备' : resultTip}
       />
+      <div className="flex items-center justify-center p-8">
+        <Button type="primary" onClick={() => window.location.reload()}>
+          继续更新
+        </Button>
+      </div>
     </div>
   );
 };
