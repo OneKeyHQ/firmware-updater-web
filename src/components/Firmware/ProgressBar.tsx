@@ -21,8 +21,10 @@ export default function ProgressBar() {
     const deviceType = getDeviceType(device?.features);
     const isBle = uploadType === 'ble';
     let time = 100;
-    if (deviceType === 'classic' || deviceType === 'mini') {
+    if (deviceType === 'classic') {
       time = isBle ? 100 : 300;
+    } else if (deviceType === 'mini') {
+      time = 500;
     } else if (deviceType === 'touch') {
       time = isBle ? 100 : 1000;
     }

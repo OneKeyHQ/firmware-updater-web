@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
 import { classNames } from '@/utils';
@@ -17,10 +17,24 @@ export default function ReleaseInfo() {
   const selectedUploadType = useSelector(
     (state: RootState) => state.runtime.selectedUploadType
   );
-  const tabs = [
-    { name: intl.formatMessage({ id: 'TR_FIRMWARE' }), key: 'firmware' },
-    { name: intl.formatMessage({ id: 'TR_BLUETOOTH_FIRMWARE' }), key: 'ble' },
-  ];
+  const device = useSelector((state: RootState) => state.runtime.device);
+  const [tabs, setTabs] = useState<{ name: string; key: string }[]>([]);
+  useEffect(() => {
+    if (device?.deviceType === 'mini') {
+      setTabs([
+        { name: intl.formatMessage({ id: 'TR_FIRMWARE' }), key: 'firmware' },
+      ]);
+    } else {
+      setTabs([
+        { name: intl.formatMessage({ id: 'TR_FIRMWARE' }), key: 'firmware' },
+        {
+          name: intl.formatMessage({ id: 'TR_BLUETOOTH_FIRMWARE' }),
+          key: 'ble',
+        },
+      ]);
+    }
+  }, [device, intl]);
+
   return (
     <div>
       <div className="sm:hidden">

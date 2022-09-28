@@ -1,4 +1,5 @@
 import React, { FC } from 'react';
+import { useIntl } from 'react-intl';
 import ReconnectImage from '@/images/disconnect-device.svg';
 
 const Container: FC<{ children: React.ReactElement }> = ({ children }) => (
@@ -9,15 +10,32 @@ const Container: FC<{ children: React.ReactElement }> = ({ children }) => (
 );
 
 export default function BootloaderTip() {
+  const intl = useIntl();
   return (
     <Container>
       <div>
-        <h3 className="font-medium py-2">请按以下步骤操作开始安装固件</h3>
+        <h3 className="text-base font-medium text-gray-500 py-2">
+          {intl.formatMessage({ id: 'TR_FIRMWARE_INSTALL_TIPS_TITLE' })}
+        </h3>
         <ul>
-          <li>1.断开设备连接</li>
-          <li>2. 同时按住 和电源键，重启后先松开电源键</li>
-          <li>3. 此时设备显示 bootloader 字样</li>
-          <li>4. 重新连接设备</li>
+          <li className="text-sm font-normal text-gray-500 py-2">
+            1.{' '}
+            {intl.formatMessage({
+              id: 'TR_MINI_FIRMWARE_INSTALL_TIPS_1',
+            })}
+          </li>
+          <li className="text-sm font-normal text-gray-500 py-2">
+            2.{' '}
+            {intl.formatMessage({
+              id: 'TR_MINI_FIRMWARE_INSTALL_TIPS_2',
+            })}
+          </li>
+          <li className="text-sm font-normal text-gray-500 py-2">
+            3.{' '}
+            {intl.formatMessage({
+              id: 'TR_MINI_FIRMWARE_INSTALL_TIPS_3',
+            })}
+          </li>
         </ul>
       </div>
     </Container>

@@ -1,13 +1,17 @@
 import { FC, useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
 import { RootState } from '@/store';
 import { Button, Alert } from '@onekeyhq/ui-components';
-import { getDeviceType } from '@onekeyfe/hd-core';
+import { getDeviceType, KnownDevice } from '@onekeyfe/hd-core';
 import { serviceHardware } from '@/hardware';
+import { setDevice } from '@/store/reducers/runtime';
 import ReleaseInfo from './ReleaseInfo';
 import BootloaderTips from './BootloaderTips';
 import ProgressBar from './ProgressBar';
+
+let timer: ReturnType<typeof setInterval>;
+let isPollingUpdateDevice = false;
 
 const DeviceEventAlert: FC = () => {
   const intl = useIntl();
@@ -114,7 +118,12 @@ const ConfirmUpdate: FC = () => {
           type="primary"
           size="xl"
           disabled={!(device && selectedUploadType && confirmProtocol)}
-          onClick={() => serviceHardware.firmwareUpdate()}
+          onClick={() => {
+            if (timer) {
+              clearInterval(timer);
+            }
+            serviceHardware.firmwareUpdate();
+          }}
         >
           {intl.formatMessage({ id: 'TR_FIRMWARE_HEADING' })}
         </Button>
@@ -125,6 +134,7 @@ const ConfirmUpdate: FC = () => {
 
 export default function Firmware() {
   const intl = useIntl();
+  const dispatch = useDispatch();
   const device = useSelector((state: RootState) => state.runtime.device);
   const showProgressBar = useSelector(
     (state: RootState) => state.firmware.showProgressBar
@@ -133,6 +143,45 @@ export default function Firmware() {
     (state: RootState) => state.firmware.showFirmwareUpdate
   );
   const [deviceType, setDeviceType] = useState('');
+
+  const [isMiniAndNotInBootloader, setIsMiniAndNotInBootloader] =
+    useState(false);
+  useEffect(() => {
+    const type = getDeviceType(device?.features);
+    if (type !== 'mini') {
+      setIsMiniAndNotInBootloader(false);
+      return;
+    }
+    setIsMiniAndNotInBootloader(!device?.features.bootloader_mode);
+  }, [device]);
+
+  useEffect(() => {
+    if (isPollingUpdateDevice) return;
+    timer = setInterval(async () => {
+      const response = await serviceHardware.searchDevices();
+      if (!response.success) {
+        return;
+      }
+      if (response.payload.length > 0) {
+        if (!device) {
+          dispatch(setDevice(response.payload?.[0] as KnownDevice));
+        } else {
+          const existDevice = response.payload.find(
+            (d) => (d as any).path === device.path
+          );
+          if (existDevice) {
+            dispatch(setDevice(existDevice as KnownDevice));
+          } else {
+            dispatch(setDevice(response.payload?.[0] as KnownDevice));
+          }
+        }
+      }
+    }, 5000);
+    isPollingUpdateDevice = true;
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dispatch]);
+
   useEffect(() => {
     const originType = getDeviceType(device?.features);
     let typeFlag = '';
@@ -154,6 +203,7 @@ export default function Firmware() {
     }
     setDeviceType(typeFlag);
   }, [device, deviceType]);
+
   return (
     <div className="content">
       <h1 className="text-3xl text-center font-light py-4">
@@ -204,8 +254,7 @@ export default function Firmware() {
             </div>
           </div>
           <ReleaseInfo />
-          <ConfirmUpdate />
-          {/* <BootloaderTips /> */}
+          {isMiniAndNotInBootloader ? <BootloaderTips /> : <ConfirmUpdate />}
         </>
       ) : (
         <>
