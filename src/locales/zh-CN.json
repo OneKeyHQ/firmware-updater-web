@@ -203,7 +203,7 @@
   "TR_WRITE_DOWN_NTH_WORD": "Write down {NthWord} from your device to your recovery seed card.",
   "TR_WRONG_EMAIL_FORMAT": "Wrong email format",
 	"TR_INPUT_PIN_CODE": "请在设备上输入 PIN 码",
-	"TR_PLEASE_CONFIRM_ON_DEVICE": "请在设备商确认",
+	"TR_PLEASE_CONFIRM_ON_DEVICE": "请在设备上确认",
 	"TR_FIRMWARE_INSTALLED_FAILED": "固件安装失败",
 	"TR_CONTINUE_UPDATING": "继续更新",
 	"TR_GO_TO_BOOTLOADER": "请确认并进入 Bootloader 模式",

@@ -7,6 +7,7 @@ import {
   UiResponseEvent,
   UI_EVENT,
   UI_REQUEST,
+  UI_RESPONSE,
 } from '@onekeyfe/hd-core';
 import { createDeferred, Deferred } from '@onekeyfe/hd-shared';
 import { store } from '@/store';
@@ -25,6 +26,8 @@ import {
 } from '@/store/reducers/firmware';
 import type { BridgeReleaseMap, RemoteConfigResponse } from '@/types';
 import { arrayBufferToBuffer } from '@/utils';
+// eslint-disable-next-line import/no-cycle
+import { formatMessage } from '@/Provider';
 import { getHardwareSDKInstance } from './instance';
 
 let searchPromise: Deferred<void> | null = null;
@@ -45,6 +48,10 @@ class ServiceHardware {
         instance.on(UI_EVENT, (e) => {
           const { type, payload } = e;
           if (type === UI_REQUEST.REQUEST_PIN) {
+            this.sendUiResponse({
+              type: UI_RESPONSE.RECEIVE_PIN,
+              payload: '@@ONEKEY_INPUT_PIN_IN_DEVICE',
+            });
             store.dispatch(setShowPinAlert(true));
           } else if (type === UI_REQUEST.REQUEST_BUTTON) {
             store.dispatch(setShowButtonAlert(true));
@@ -57,25 +64,49 @@ class ServiceHardware {
               case 'AutoRebootToBootloader':
                 // 5
                 store.dispatch(setMaxProgress(5));
+                store.dispatch(
+                  setUpdateTip(
+                    formatMessage({ id: 'TR_GO_TO_BOOTLOADER' }) ?? ''
+                  )
+                );
                 break;
               case 'GoToBootloaderSuccess':
                 // 10
                 store.dispatch(setMaxProgress(10));
+                store.dispatch(
+                  setUpdateTip(
+                    formatMessage({ id: 'TR_GO_TO_BOOTLOADER_SUCCESS' }) ?? ''
+                  )
+                );
                 break;
               case 'DownloadFirmware':
                 // 15
                 store.dispatch(setMaxProgress(15));
+                store.dispatch(
+                  setUpdateTip(
+                    formatMessage({ id: 'TR_DOWNLOAD_FIRMWARE' }) ?? ''
+                  )
+                );
                 break;
               case 'DownloadFirmwareSuccess':
                 // 25
                 store.dispatch(setMaxProgress(25));
+                store.dispatch(
+                  setUpdateTip(
+                    formatMessage({ id: 'TR_DOWNLOAD_FIRMWARE_SUCCESS' }) ?? ''
+                  )
+                );
                 break;
               case 'ConfirmOnDevice':
                 store.dispatch(setShowButtonAlert(true));
+                store.dispatch(setUpdateTip(''));
                 break;
               case 'FirmwareEraseSuccess':
                 // 30
                 store.dispatch(setMaxProgress(30));
+                store.dispatch(
+                  setUpdateTip(formatMessage({ id: 'TR_ERASE_SUCCESS' }) ?? '')
+                );
                 break;
               default:
                 break;
@@ -89,9 +120,13 @@ class ServiceHardware {
             ) {
               // 99
               store.dispatch(setMaxProgress(99));
+              store.dispatch(
+                setUpdateTip(formatMessage({ id: 'TR_INSTALLING' }) ?? '')
+              );
             } else if (payload.progress === 100) {
               // 100
               store.dispatch(setMaxProgress(100));
+              store.dispatch(setUpdateTip(''));
             }
           }
         });
