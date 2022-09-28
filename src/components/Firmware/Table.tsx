@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, FC } from 'react';
+import { marked } from 'marked';
 import { useSelector, useDispatch } from 'react-redux';
 import { useIntl } from 'react-intl';
 import { IDeviceType } from '@onekeyfe/hd-core';
@@ -88,7 +89,12 @@ const Table: FC<{ tabType: TabType }> = ({ tabType }) => {
                       </label>
                     </td>
                     <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800">
-                      {dataSource?.changelog}
+                      <p
+                        // eslint-disable-next-line react/no-danger
+                        dangerouslySetInnerHTML={{
+                          __html: marked.parse(dataSource?.changelog ?? ''),
+                        }}
+                      />
                     </td>
                   </tr>
                 </tbody>
