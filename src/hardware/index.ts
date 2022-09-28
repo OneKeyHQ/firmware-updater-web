@@ -26,8 +26,7 @@ import {
 } from '@/store/reducers/firmware';
 import type { BridgeReleaseMap, RemoteConfigResponse } from '@/types';
 import { arrayBufferToBuffer } from '@/utils';
-// eslint-disable-next-line import/no-cycle
-import { formatMessage } from '@/Provider';
+import { formatMessage } from '@/locales';
 import { getHardwareSDKInstance } from './instance';
 
 let searchPromise: Deferred<void> | null = null;

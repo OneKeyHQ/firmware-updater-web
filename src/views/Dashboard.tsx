@@ -3,7 +3,6 @@ import { useIntl } from 'react-intl';
 import { useSelector, useDispatch } from 'react-redux';
 import type { KnownDevice } from '@onekeyfe/hd-core';
 import { Steps, SearchDevice, Firmware } from '@/components';
-// eslint-disable-next-line import/no-cycle
 import { serviceHardware } from '@/hardware';
 import { RootState } from '@/store';
 import { setPageStatus, setDevice } from '@/store/reducers/runtime';
