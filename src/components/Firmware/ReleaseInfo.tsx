@@ -4,7 +4,7 @@ import { useIntl } from 'react-intl';
 import { classNames } from '@/utils';
 import type { RootState } from '@/store';
 import { setSelectedUploadType } from '@/store/reducers/runtime';
-import { Alert } from '@onekeyhq/ui-components';
+import { Alert } from '@onekeyfe/ui-components';
 import Table from './Table';
 import UploadFirmware from './UploadFirmware';
 

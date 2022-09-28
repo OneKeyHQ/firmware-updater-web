@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
 import { RootState } from '@/store';
-import { Button } from '@onekeyhq/ui-components';
+import { Button } from '@onekeyfe/ui-components';
 import ConnectImage from '@/images/connect-device.svg';
 import { getSystemKey } from '@/utils';
 import { setPageStatus } from '@/store/reducers/runtime';

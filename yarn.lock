@@ -2102,10 +2102,10 @@
     "@onekeyfe/hd-transport-http" "^0.1.54"
     "@onekeyfe/hd-transport-webusb" "^0.1.54"
 
-"@onekeyhq/ui-components@^0.0.43":
-  version "0.0.43"
-  resolved "https://npm.pkg.github.com/download/@OneKeyHQ/ui-components/0.0.43/47ff250150bb32db836357963beefc6f84213b38#47ff250150bb32db836357963beefc6f84213b38"
-  integrity sha512-IIhF5bjiIOH9w9pRfaK2DfVq3bWXV2kgZ5yFkY97B3vWoOY9ZvVHibZJYfVNZzqSLJEosYp8nLbZ2MGYtQmALA==
+"@onekeyfe/ui-components@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@onekeyfe/ui-components/-/ui-components-1.0.0.tgz#9662a07477f7430df7542c1e18b1c8d154fd3340"
+  integrity sha512-gQebrMQyejfQzxfWah2g+ud8nVd7HBbaXTqmar0lpt8Xu8Pc0WPI0/S5dUNBuRU2FVJSe1DgOXRdeaLO3UUnbg==
   dependencies:
     "@ethersproject/providers" "^5.4.5"
     "@headlessui/react" "^1.4.0"

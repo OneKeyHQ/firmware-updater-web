@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { getDeviceType } from '@onekeyfe/hd-core';
-import { Progress } from '@onekeyhq/ui-components';
+import { Progress } from '@onekeyfe/ui-components';
 import { RootState } from '@/store';
 import { setProgress } from '@/store/reducers/firmware';
 

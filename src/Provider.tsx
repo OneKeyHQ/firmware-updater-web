@@ -1,12 +1,9 @@
-import React from 'react';
 import { Provider, useSelector } from 'react-redux';
-import { IntlProvider, IntlShape, MessageDescriptor } from 'react-intl';
-import { UIProvider } from '@onekeyhq/ui-components';
-import LOCALES from '@/locales';
-import { RootState, store } from './store';
+import { IntlProvider } from 'react-intl';
+import { UIProvider } from '@onekeyfe/ui-components';
+import LOCALES, { intlRef } from '@/locales';
+import { RootState, store } from '@/store';
 import App from './App';
-
-export const intlRef = React.createRef<IntlShape>();
 
 const InternalProvider = () => {
   const locale = useSelector((state: RootState) => state.runtime.locale);
@@ -38,11 +35,4 @@ export default function AppProvider() {
       <InternalProvider />
     </Provider>
   );
-}
-
-export function formatMessage(
-  descriptor: MessageDescriptor,
-  values?: Record<string, any>
-) {
-  return intlRef?.current?.formatMessage(descriptor, values);
 }

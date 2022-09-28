@@ -2,7 +2,7 @@ import { FC, useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
 import { RootState } from '@/store';
-import { Button, Alert } from '@onekeyhq/ui-components';
+import { Button, Alert } from '@onekeyfe/ui-components';
 import { getDeviceType, KnownDevice } from '@onekeyfe/hd-core';
 import { serviceHardware } from '@/hardware';
 import { setDevice } from '@/store/reducers/runtime';

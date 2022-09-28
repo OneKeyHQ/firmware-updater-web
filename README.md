@@ -1,6 +1,6 @@
-# Getting Started with Create React App
+# Firmware update
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Firmware Upgrade Application for OneKey Hardware Wallet.
 
 ## Available Scripts
 
@@ -10,6 +10,8 @@ In the project directory, you can run:
 
 Runs the app in the development mode.\
 Open [https://localhost:8000](https://localhost:8000) to view it in the browser.
+
+Due to cross-domain issues with OneKey Bridge, please always develop on port 8000 ⚠️.
 
 The page will reload if you make edits.\
 You will also see any lint errors in the console.
@@ -28,9 +30,3 @@ The build is minified and the filenames include the hashes.\
 Your app is ready to be deployed!
 
 See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
