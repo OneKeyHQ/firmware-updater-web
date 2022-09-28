@@ -105,7 +105,7 @@ export default function Dashboard() {
   if (pageStatus === 'initialize') {
     return (
       <div className="text-gray-800 text-sm text-center py-2">
-        初始化中，请稍后（请确保设备已经退出休眠模式）...
+        {intl.formatMessage({ id: 'TR_INIT' })}
       </div>
     );
   }

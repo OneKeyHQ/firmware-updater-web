@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import type { KnownDevice } from '@onekeyfe/hd-core';
 import { BridgeReleaseMap, DeviceTypeMap } from '@/types';
+import { getDefaultLocale } from '@/utils';
 
 type InitialState = {
   device: KnownDevice | null;
@@ -25,7 +26,7 @@ const initialState: InitialState = {
   releaseMap: {} as DeviceTypeMap,
   bridgeReleaseMap: {} as BridgeReleaseMap,
   selectedUploadType: null,
-  locale: 'en-US',
+  locale: getDefaultLocale(),
 };
 
 export const runtimeSlice = createSlice({

@@ -1,5 +1,6 @@
-import { Fragment } from 'react';
+import React, { Fragment } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useIntl } from 'react-intl';
 import { Disclosure, Popover, Transition } from '@headlessui/react';
 import { GlobeAsiaAustraliaIcon } from '@heroicons/react/20/solid';
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
@@ -7,17 +8,13 @@ import { classNames } from '@/utils';
 import { RootState } from '@/store';
 import { setLocale } from '@/store/reducers/runtime';
 
-const navigation = [
-  { name: '官网', href: 'https://onekey.so/' },
-  { name: '技术支持', href: 'https://help.onekey.so/hc/zh-cn' },
-];
-
 const locales = [
   { name: '中文（简体）', value: 'zh-CN' },
   { name: 'English', value: 'en-US' },
 ];
 
-function LocalePopover() {
+// eslint-disable-next-line prefer-arrow-callback
+const LocalePopover = React.memo(function LocalPopover() {
   const dispatch = useDispatch();
   const locale = useSelector((state: RootState) => state.runtime.locale);
   return (
@@ -77,9 +74,18 @@ function LocalePopover() {
       )}
     </Popover>
   );
-}
+});
 
 export default function Header() {
+  const intl = useIntl();
+  const navigation = [
+    { name: intl.formatMessage({ id: 'TR_HOME' }), href: 'https://onekey.so/' },
+    {
+      name: intl.formatMessage({ id: 'TR_SUPPORT' }),
+      href: 'https://help.onekey.so/hc/zh-cn',
+    },
+  ];
+
   return (
     <div className="min-h-full">
       <Disclosure as="nav" className="bg-white shadow-sm">

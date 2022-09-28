@@ -74,7 +74,7 @@
   "TR_FIRMWARE": "固件",
   "TR_FIRMWARE_BOOTLOADER_VERSION": "bootloader 版本",
   "TR_FIRMWARE_DELETE_FILE": "删除文件",
-  "TR_FIRMWARE_FROM_LOCALE_FILE": "选择本地",
+  "TR_FIRMWARE_FROM_LOCALE_FILE": "选择本地文件",
   "TR_FIRMWARE_HEADING": "安装固件",
   "TR_FIRMWARE_INSTALLED": "完美！您的设备已经安装了最新的固件。可以继续操作。",
   "TR_FIRMWARE_INSTALLED_TEXT": "固件版本： {version}",
@@ -104,7 +104,7 @@
   "TR_INSTALL_ERROR_OCCURRED": "固件安装过程中发生错误：{error}",
   "TR_INSTRUCTION_TO_SKIP_OR_WIPE": "您可能会跳过设置过程，继续钱包或擦除设备，以重新进行启动过程。",
   "TR_I_HAVE_READ_INSTRUCTIONS": "I have read the instructions and agree",
-  "TR_LAST_RESORT_INSTRUCTION": "如果以上方式没有帮助，{ContactSupportLink}",
+  "TR_LAST_RESORT_INSTRUCTION": "如果以上方式没有帮助，",
   "TR_LEARN_MORE_LINK": "Learn more.",
   "TR_MAKE_SURE_IT_IS_WELL_CONNECTED": "为防止通信错误，请确保您的设备已经正常通过 USB 连接计算机。",
   "TR_MENU": "Menu",
@@ -201,5 +201,14 @@
   "TR_WIPE_WARNING": "此处为危险区域，擦拭设备会擦除所有数据，并且无法还原。",
   "TR_WORDS": "{count} words",
   "TR_WRITE_DOWN_NTH_WORD": "Write down {NthWord} from your device to your recovery seed card.",
-  "TR_WRONG_EMAIL_FORMAT": "Wrong email format"
+  "TR_WRONG_EMAIL_FORMAT": "Wrong email format",
+	"TR_INPUT_PIN_CODE": "请在设备上输入 PIN 码",
+	"TR_PLEASE_CONFIRM_ON_DEVICE": "请在设备商确认",
+	"TR_FIRMWARE_INSTALLED_FAILED": "固件安装失败",
+	"TR_CONTINUE_UPDATING": "继续更新",
+	"TR_GO_TO_BOOTLOADER": "请确认并进入 Bootloader 模式",
+	"TR_GO_TO_BOOTLOADER_SUCCESS": "进入 Bootloader 模式成功",
+	"TR_DOWNLOAD_FIRMWARE": "下载固件",
+	"TR_DOWNLOAD_FIRMWARE_SUCCESS": "下载固件成功",
+	"TR_ERASE_SUCCESS": "擦除设备成功"
 }

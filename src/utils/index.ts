@@ -21,3 +21,10 @@ export const getSystemKey: () => BridgeSystem = () => {
   if (window.navigator.userAgent.indexOf('Linux') !== -1) return 'linux64Deb';
   return 'win';
 };
+
+export const getDefaultLocale = () => {
+  if (/^zh\b/.test(navigator.language)) {
+    return 'zh-CN';
+  }
+  return 'en-US';
+};

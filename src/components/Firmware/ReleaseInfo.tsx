@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useIntl } from 'react-intl';
 import { classNames } from '@/utils';
 import type { RootState } from '@/store';
 import { setSelectedUploadType } from '@/store/reducers/runtime';
@@ -9,17 +10,17 @@ import UploadFirmware from './UploadFirmware';
 
 export type TabType = 'firmware' | 'ble';
 
-const tabs = [
-  { name: '固件', key: 'firmware' },
-  { name: '蓝牙固件', key: 'ble' },
-];
-
 export default function ReleaseInfo() {
+  const intl = useIntl();
   const [currentTab, setCurrentTab] = useState<TabType>('firmware');
   const dispatch = useDispatch();
   const selectedUploadType = useSelector(
     (state: RootState) => state.runtime.selectedUploadType
   );
+  const tabs = [
+    { name: intl.formatMessage({ id: 'TR_FIRMWARE' }), key: 'firmware' },
+    { name: intl.formatMessage({ id: 'TR_BLUETOOTH_FIRMWARE' }), key: 'ble' },
+  ];
   return (
     <div>
       <div className="sm:hidden">
@@ -69,7 +70,7 @@ export default function ReleaseInfo() {
       {selectedUploadType && (
         <div className="mb-4">
           <Alert
-            title="安装或升级固件前，请确保您的内容有备份或恢复种子，并将它们准备好。"
+            title={intl.formatMessage({ id: 'TR_WARNING_BEFORE_INSTALL' })}
             type="warning"
           />
         </div>

@@ -1,11 +1,13 @@
 import { useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useIntl } from 'react-intl';
 import { Button, Alert } from '@onekeyhq/ui-components';
 import { serviceHardware } from '@/hardware';
 import { setSelectedUploadType } from '@/store/reducers/runtime';
 import { RootState } from '@/store';
 
 export default function UploadFirmware() {
+  const intl = useIntl();
   const dispatch = useDispatch();
   const selectedUploadType = useSelector(
     (state: RootState) => state.runtime.selectedUploadType
@@ -36,7 +38,7 @@ export default function UploadFirmware() {
       />
       {!fileInfo?.name ? (
         <Button className="my-3" onClick={() => onClick()}>
-          选择本地文件
+          {intl.formatMessage({ id: 'TR_FIRMWARE_FROM_LOCALE_FILE' })}
         </Button>
       ) : (
         <>
@@ -63,7 +65,7 @@ export default function UploadFirmware() {
             <div className="py-3">
               <Alert
                 type="error"
-                title="在设备上安装自定义固件将擦除设备上的所有账户，并可能导致设备不稳定。绝对不要执行此操作，除非您真的知道您在做什么！"
+                title={intl.formatMessage({ id: 'TR_ERROR_BEFORE_INSTALL' })}
               />
             </div>
           )}

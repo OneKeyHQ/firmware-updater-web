@@ -1,5 +1,6 @@
 import { FC, useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
+import { useIntl } from 'react-intl';
 import { RootState } from '@/store';
 import { Button, Alert } from '@onekeyhq/ui-components';
 import { getDeviceType } from '@onekeyfe/hd-core';
@@ -9,6 +10,7 @@ import BootloaderTips from './BootloaderTips';
 import ProgressBar from './ProgressBar';
 
 const DeviceEventAlert: FC = () => {
+  const intl = useIntl();
   const showPinAlert = useSelector(
     (state: RootState) => state.firmware.showPinAlert
   );
@@ -17,13 +19,24 @@ const DeviceEventAlert: FC = () => {
   );
   return (
     <>
-      {showPinAlert && <Alert type="warning" title="请在设备上输入 PIN 码" />}
-      {showButtonAlert && <Alert type="warning" title="请在设备上确认" />}
+      {showPinAlert && (
+        <Alert
+          type="warning"
+          title={intl.formatMessage({ id: 'TR_INPUT_PIN_CODE' })}
+        />
+      )}
+      {showButtonAlert && (
+        <Alert
+          type="warning"
+          title={intl.formatMessage({ id: 'TR_PLEASE_CONFIRM_ON_DEVICE' })}
+        />
+      )}
     </>
   );
 };
 
 const ResultAlert: FC = () => {
+  const intl = useIntl();
   const showResultAlert = useSelector(
     (state: RootState) => state.firmware.showResultAlert
   );
@@ -38,12 +51,20 @@ const ResultAlert: FC = () => {
     <div className="p-8">
       <Alert
         type={resultType}
-        title={resultType === 'success' ? resultTip : '固件安装失败'}
-        content={resultType === 'success' ? '请重新连接设备' : resultTip}
+        title={
+          resultType === 'success'
+            ? resultTip
+            : intl.formatMessage({ id: 'TR_FIRMWARE_INSTALLED_FAILED' })
+        }
+        content={
+          resultType === 'success'
+            ? intl.formatMessage({ id: 'TR_CONNECT_YOUR_DEVICE_AGAIN' })
+            : resultTip
+        }
       />
       <div className="flex items-center justify-center p-8">
         <Button type="primary" onClick={() => window.location.reload()}>
-          继续更新
+          {intl.formatMessage({ id: 'TR_CONTINUE_UPDATING' })}
         </Button>
       </div>
     </div>
@@ -58,6 +79,7 @@ const Description: FC<{ text: string; value: string }> = ({ text, value }) => (
 );
 
 const ConfirmUpdate: FC = () => {
+  const intl = useIntl();
   const device = useSelector((state: RootState) => state.runtime.device);
   const selectedUploadType = useSelector(
     (state: RootState) => state.runtime.selectedUploadType
@@ -83,7 +105,7 @@ const ConfirmUpdate: FC = () => {
         </div>
         <div className="ml-3 text-sm">
           <label htmlFor="comments" className="font-normal text-gray-700">
-            我确认设备是空的或我已经有了恢复种子
+            {intl.formatMessage({ id: 'TR_FIRMWARE_USER_ENSURE' })}
           </label>
         </div>
       </div>
@@ -94,7 +116,7 @@ const ConfirmUpdate: FC = () => {
           disabled={!(device && selectedUploadType && confirmProtocol)}
           onClick={() => serviceHardware.firmwareUpdate()}
         >
-          确定
+          {intl.formatMessage({ id: 'TR_FIRMWARE_HEADING' })}
         </Button>
       </div>
     </div>
@@ -102,6 +124,7 @@ const ConfirmUpdate: FC = () => {
 };
 
 export default function Firmware() {
+  const intl = useIntl();
   const device = useSelector((state: RootState) => state.runtime.device);
   const showProgressBar = useSelector(
     (state: RootState) => state.firmware.showProgressBar
@@ -133,26 +156,51 @@ export default function Firmware() {
   }, [device, deviceType]);
   return (
     <div className="content">
-      <h1 className="text-3xl text-center font-light py-4">安装固件</h1>
+      <h1 className="text-3xl text-center font-light py-4">
+        {intl.formatMessage({ id: 'TR_FIRMWARE_HEADING' })}
+      </h1>
       {!showFirmwareUpdate ? (
         <>
           <div className="flex flex-row-reverse">
             <div className="md:w-1/2 sm:w-full">
-              <Description text="状态" value={device ? '已连接' : '未连接'} />
               <Description
-                text="Bootloader 版本"
+                text={intl.formatMessage({ id: 'TR_FIRMWARE_STATUS' })}
+                value={
+                  device
+                    ? intl.formatMessage({ id: 'TR_DEVICE_CONNECT' })
+                    : intl.formatMessage({ id: 'TR_DEVICE_DISCONNECT' })
+                }
+              />
+              <Description
+                text={intl.formatMessage({
+                  id: 'TR_FIRMWARE_BOOTLOADER_VERSION',
+                })}
                 value={device?.features.bootloader_version ?? '-'}
               />
               <Description
-                text="固件版本"
+                text={intl.formatMessage({
+                  id: 'TR_FIRMWARE_VERSION',
+                })}
                 value={device?.features.onekey_version ?? '-'}
               />
               <Description
-                text="蓝牙固件版本"
+                text={intl.formatMessage({
+                  id: 'TR_BLUETOOTH_FIRMWARE_VERSION',
+                })}
                 value={device?.features.ble_ver ?? '-'}
               />
-              <Description text="设备类型" value={deviceType} />
-              <Description text="设备序列号" value={device?.uuid ?? '-'} />
+              <Description
+                text={intl.formatMessage({
+                  id: 'TR_DEVICE_TYPE',
+                })}
+                value={deviceType}
+              />
+              <Description
+                text={intl.formatMessage({
+                  id: 'TR_DEVICE_NUMBER',
+                })}
+                value={device?.uuid ?? '-'}
+              />
             </div>
           </div>
           <ReleaseInfo />

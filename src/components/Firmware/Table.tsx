@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, FC } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
+import { useIntl } from 'react-intl';
 import { IDeviceType } from '@onekeyfe/hd-core';
 import { RootState } from '@/store';
 import { setSelectedUploadType } from '@/store/reducers/runtime';
@@ -11,7 +12,9 @@ type DataSource = {
 };
 
 const Table: FC<{ tabType: TabType }> = ({ tabType }) => {
+  const intl = useIntl();
   const dispatch = useDispatch();
+  const locale = useSelector((state: RootState) => state.runtime.locale);
   const selectedUploadType = useSelector(
     (state: RootState) => state.runtime.selectedUploadType
   );
@@ -32,10 +35,10 @@ const Table: FC<{ tabType: TabType }> = ({ tabType }) => {
     const item = releaseInfo[tabType];
     const data = {
       version: Array.isArray(item[0].version) && item[0].version.join('.'),
-      changelog: item[0].changelog['zh-CN'],
+      changelog: item[0].changelog[locale],
     };
     setDataSource(data as DataSource);
-  }, [getReleaseInfo, tabType]);
+  }, [getReleaseInfo, tabType, locale]);
 
   return (
     <div className="px-4 sm:px-6 lg:px-8">
@@ -50,13 +53,13 @@ const Table: FC<{ tabType: TabType }> = ({ tabType }) => {
                       scope="col"
                       className="w-32 py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
                     >
-                      版本
+                      {intl.formatMessage({ id: 'TR_VERSION' })}
                     </th>
                     <th
                       scope="col"
                       className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
                     >
-                      更新日志
+                      {intl.formatMessage({ id: 'TR_CHANGE_LOG' })}
                     </th>
                   </tr>
                 </thead>
