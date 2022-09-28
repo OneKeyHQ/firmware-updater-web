@@ -9,7 +9,7 @@
     "@onekeyfe/hd-core": "0.1.54",
     "@onekeyfe/hd-shared": "0.1.54",
     "@onekeyfe/hd-web-sdk": "0.1.54",
-    "@onekeyhq/ui-components": "^0.0.43",
+    "@onekeyfe/ui-components": "^1.0.0",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.3",
     "@reduxjs/toolkit": "^1.8.5",
     "@svgr/webpack": "^5.5.0",

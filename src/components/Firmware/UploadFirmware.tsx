@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
-import { Button, Alert } from '@onekeyhq/ui-components';
+import { Button, Alert } from '@onekeyfe/ui-components';
 import { serviceHardware } from '@/hardware';
 import { setSelectedUploadType } from '@/store/reducers/runtime';
 import { RootState } from '@/store';

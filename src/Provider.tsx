@@ -1,6 +1,6 @@
 import { Provider, useSelector } from 'react-redux';
 import { IntlProvider } from 'react-intl';
-import { UIProvider } from '@onekeyhq/ui-components';
+import { UIProvider } from '@onekeyfe/ui-components';
 import LOCALES, { intlRef } from '@/locales';
 import { RootState, store } from '@/store';
 import App from './App';
