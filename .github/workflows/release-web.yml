@@ -10,6 +10,7 @@ jobs:
       HOST_PATH: '${{ github.event.repository.name }}/${{ github.sha }}/'
       PUBLIC_URL: 'https://web.onekey-asset.com/${{ github.event.repository.name }}/${{ github.sha }}/'
       NODE_ENV: 'production'
+      CI: false
     steps:
       - uses: actions/checkout@v3
       - name: Setup Environment
