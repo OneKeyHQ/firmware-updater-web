@@ -6,6 +6,7 @@
   },
   "plugins": ["import"],
   "rules": {
+    "import/no-cycle": "off",
     "strict": "off",
     "global-require": "off",
     "prefer-destructuring": "off",
