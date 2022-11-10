@@ -213,7 +213,7 @@ export default function Firmware() {
 
   const isBootLoader = device?.features?.bootloader_mode;
   const isGreaterThan340 = semver.gte(
-    device?.features?.onekey_version ?? '',
+    device?.features?.onekey_version ?? '0.0.0',
     '3.4.0'
   );
 
