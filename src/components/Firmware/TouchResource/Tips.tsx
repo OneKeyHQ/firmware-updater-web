@@ -10,7 +10,7 @@ export const EmptyTips: FC<{ version: string }> = ({ version }) => {
           {
             id: 'TR_FIRMWARE_UPDATE_1',
           },
-          { version }
+          { version: '3.4.0' }
         )}
       </p>
       <p>
