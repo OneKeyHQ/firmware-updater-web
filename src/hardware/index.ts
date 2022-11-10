@@ -294,6 +294,12 @@ class ServiceHardware {
     }
   }
 
+  async uploadFullResource() {
+    const hardwareSDK = await this.getSDKInstance();
+    const response = await hardwareSDK.deviceFullyUploadResource('', {});
+    return !!response.success;
+  }
+
   setFile(file: File) {
     this.file = file;
   }

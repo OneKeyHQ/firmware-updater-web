@@ -1,11 +1,17 @@
+/* eslint-disable no-nested-ternary */
 import { FC, useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import semver from 'semver';
 import { useIntl } from 'react-intl';
 import { RootState } from '@/store';
-import { Button, Alert } from '@onekeyfe/ui-components';
+import { Button, Alert, Link } from '@onekeyfe/ui-components';
 import { getDeviceType, KnownDevice } from '@onekeyfe/hd-core';
 import { serviceHardware } from '@/hardware';
 import { setDevice } from '@/store/reducers/runtime';
+import { RestartToHomeTip, ListTips, EmptyTips } from './TouchResource/Tips';
+import ResourceButton from './TouchResource/Button';
+
+import ConfirmDialog from '../Modal';
 import ReleaseInfo from './ReleaseInfo';
 import BootloaderTips from './BootloaderTips';
 import ProgressBar from './ProgressBar';
@@ -75,7 +81,7 @@ const ResultAlert: FC = () => {
   );
 };
 
-const Description: FC<{ text: string; value: string }> = ({ text, value }) => (
+const Description: FC<{ text: string; value: any }> = ({ text, value }) => (
   <div className="flex items-center justify-between text-sm text-gray-800 py-1">
     <span>{text}:</span>
     <span>{value}</span>
@@ -133,6 +139,7 @@ const ConfirmUpdate: FC = () => {
 };
 
 export default function Firmware() {
+  const [modalStatus, setModalStatus] = useState(false);
   const intl = useIntl();
   const dispatch = useDispatch();
   const device = useSelector((state: RootState) => state.runtime.device);
@@ -204,6 +211,12 @@ export default function Firmware() {
     setDeviceType(typeFlag);
   }, [device, deviceType]);
 
+  const isBootLoader = device?.features?.bootloader_mode;
+  const isGreaterThan340 = semver.gte(
+    device?.features?.onekey_version ?? '',
+    '3.4.0'
+  );
+
   return (
     <div className="content">
       <h1 className="text-3xl text-center font-light py-4">
@@ -251,8 +264,46 @@ export default function Firmware() {
                 })}
                 value={device?.uuid ?? '-'}
               />
+              {['touch'].includes(getDeviceType(device?.features)) && (
+                <Description
+                  text={intl.formatMessage({ id: 'TR_RES_REPAIR' })}
+                  value={
+                    <Link
+                      className="cursor-pointer"
+                      type="plain"
+                      onClick={() => {
+                        setModalStatus(true);
+                      }}
+                    >
+                      {intl.formatMessage({ id: 'TR_CLICK_TO_REPAIR' })}
+                    </Link>
+                  }
+                />
+              )}
+              {['touch'].includes(getDeviceType(device?.features)) && (
+                <ConfirmDialog
+                  okCancel
+                  cancelText={intl.formatMessage({ id: 'TR_CLOSE' })}
+                  visible={modalStatus}
+                  onCancel={() => setModalStatus(false)}
+                >
+                  {isBootLoader ? (
+                    <RestartToHomeTip />
+                  ) : isGreaterThan340 ? (
+                    <ListTips />
+                  ) : (
+                    <EmptyTips
+                      version={device?.features?.onekey_version ?? '-'}
+                    />
+                  )}
+                  {!isBootLoader && isGreaterThan340 ? (
+                    <ResourceButton />
+                  ) : null}
+                </ConfirmDialog>
+              )}
             </div>
           </div>
+
           <ReleaseInfo />
           {isMiniAndNotInBootloader ? <BootloaderTips /> : <ConfirmUpdate />}
         </>

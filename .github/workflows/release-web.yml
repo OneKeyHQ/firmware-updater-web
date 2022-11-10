@@ -46,6 +46,6 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: app-monorepo-${{ github.sha }}
+          name: firmware-updater-${{ github.sha }}
           path: |
             ./build/
