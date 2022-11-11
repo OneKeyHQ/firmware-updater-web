@@ -264,46 +264,47 @@ export default function Firmware() {
                 })}
                 value={device?.uuid ?? '-'}
               />
-              {['touch'].includes(getDeviceType(device?.features)) && (
-                <Description
-                  text={intl.formatMessage({ id: 'TR_RES_REPAIR' })}
-                  value={
-                    <Link
-                      className="cursor-pointer"
-                      type="plain"
-                      onClick={() => {
-                        setModalStatus(true);
-                      }}
-                    >
-                      {intl.formatMessage({ id: 'TR_CLICK_TO_REPAIR' })}
-                    </Link>
-                  }
-                />
-              )}
-              {['touch'].includes(getDeviceType(device?.features)) && (
-                <ConfirmDialog
-                  okCancel
-                  cancelText={intl.formatMessage({ id: 'TR_CLOSE' })}
-                  visible={modalStatus}
-                  onCancel={() => setModalStatus(false)}
-                >
-                  {isBootLoader ? (
-                    <RestartToHomeTip />
-                  ) : isGreaterThan340 ? (
-                    <ListTips />
-                  ) : (
-                    <EmptyTips
-                      version={device?.features?.onekey_version ?? '-'}
-                    />
-                  )}
-                  {!isBootLoader && isGreaterThan340 ? (
-                    <ResourceButton />
-                  ) : null}
-                </ConfirmDialog>
-              )}
             </div>
           </div>
-
+          {['touch'].includes(getDeviceType(device?.features)) && (
+            <ConfirmDialog
+              okCancel
+              cancelText={intl.formatMessage({ id: 'TR_CLOSE' })}
+              visible={modalStatus}
+              onCancel={() => setModalStatus(false)}
+            >
+              {isBootLoader ? (
+                <RestartToHomeTip />
+              ) : isGreaterThan340 ? (
+                <ListTips />
+              ) : (
+                <EmptyTips version={device?.features?.onekey_version ?? '-'} />
+              )}
+              {!isBootLoader && isGreaterThan340 ? <ResourceButton /> : null}
+            </ConfirmDialog>
+          )}
+          {['touch'].includes(getDeviceType(device?.features)) && (
+            <div className="my-2">
+              <Alert
+                contentClassName="items-center"
+                title={intl.formatMessage({
+                  id: 'TR_RES_REPAIR',
+                })}
+                type="warning"
+                action={
+                  <Link
+                    className="cursor-pointer"
+                    type="plain"
+                    onClick={() => {
+                      setModalStatus(true);
+                    }}
+                  >
+                    {intl.formatMessage({ id: 'TR_CLICK_TO_REPAIR' })}
+                  </Link>
+                }
+              />
+            </div>
+          )}
           <ReleaseInfo />
           {isMiniAndNotInBootloader ? <BootloaderTips /> : <ConfirmUpdate />}
         </>
