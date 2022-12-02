@@ -17,6 +17,7 @@ type InitialState = {
   bridgeReleaseMap: BridgeReleaseMap;
   selectedUploadType: 'firmware' | 'ble' | 'binary' | null;
   locale: 'zh-CN' | 'en-US';
+  currentTab: 'firmware' | 'ble';
 };
 
 const initialState: InitialState = {
@@ -27,6 +28,7 @@ const initialState: InitialState = {
   bridgeReleaseMap: {} as BridgeReleaseMap,
   selectedUploadType: null,
   locale: getDefaultLocale(),
+  currentTab: 'firmware',
 };
 
 export const runtimeSlice = createSlice({
@@ -66,6 +68,9 @@ export const runtimeSlice = createSlice({
     setLocale(state, action: PayloadAction<InitialState['locale']>) {
       state.locale = action.payload;
     },
+    setCurrentTab(state, action: PayloadAction<InitialState['currentTab']>) {
+      state.currentTab = action.payload;
+    },
   },
 });
 
@@ -77,6 +82,7 @@ export const {
   setBridgeReleaseMap,
   setSelectedUploadType,
   setLocale,
+  setCurrentTab,
 } = runtimeSlice.actions;
 
 export default runtimeSlice.reducer;

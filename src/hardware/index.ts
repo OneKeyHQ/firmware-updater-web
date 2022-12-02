@@ -254,13 +254,14 @@ class ServiceHardware {
   async firmwareUpdate() {
     const state = store.getState();
     const hardwareSDK = await this.getSDKInstance();
-    const { device, releaseMap, selectedUploadType } = state.runtime;
+    const { device, releaseMap, selectedUploadType, currentTab } =
+      state.runtime;
     const params: any = {};
 
     // binary params
     if (selectedUploadType === 'binary') {
       params.binary = await this.getFileBuffer();
-      params.updateType = 'firmware';
+      params.updateType = currentTab;
     }
 
     // common params

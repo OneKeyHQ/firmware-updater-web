@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
 import { classNames } from '@/utils';
 import type { RootState } from '@/store';
-import { setSelectedUploadType } from '@/store/reducers/runtime';
+import { setSelectedUploadType, setCurrentTab } from '@/store/reducers/runtime';
 import { Alert } from '@onekeyfe/ui-components';
 import Table from './Table';
 import UploadFirmware from './UploadFirmware';
@@ -12,7 +12,9 @@ export type TabType = 'firmware' | 'ble';
 
 export default function ReleaseInfo() {
   const intl = useIntl();
-  const [currentTab, setCurrentTab] = useState<TabType>('firmware');
+  const currentTab = useSelector(
+    (state: RootState) => state.runtime.currentTab
+  );
   const dispatch = useDispatch();
   const selectedUploadType = useSelector(
     (state: RootState) => state.runtime.selectedUploadType
@@ -69,7 +71,7 @@ export default function ReleaseInfo() {
                 )}
                 aria-current={tab.key === currentTab ? 'page' : undefined}
                 onClick={() => {
-                  setCurrentTab(tab.key as TabType);
+                  dispatch(setCurrentTab(tab.key as TabType));
                   dispatch(setSelectedUploadType(null));
                 }}
               >
