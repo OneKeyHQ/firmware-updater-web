@@ -5,29 +5,28 @@ on:
     branches: [main]
 
 jobs:
-  build-web:
+  build:
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [16.x]
-
+    env:
+      HOST_PATH: '${{ github.event.repository.name }}/${{ github.sha }}/'
+      PUBLIC_URL: 'https://web.onekey-asset.com/${{ github.event.repository.name }}/${{ github.sha }}/'
+      NODE_ENV: 'production'
+      CI: false
     steps:
-      - name: Check out Git repository
-        uses: actions/checkout@v2
-
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v2
+      - uses: actions/checkout@v3
+      - name: Setup Environment
+        uses: actions/setup-node@v3
         with:
-          node-version: ${{ matrix.node-version }}
           registry-url: 'https://npm.pkg.github.com'
           always-auth: true
           scope: '@onekeyhq'
+          node-version: '16.x'
 
       - name: Install Dependency
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: yarn
+        run: |
+          yarn
 
       - name: Build Target
         env:
@@ -35,4 +34,3 @@ jobs:
           NODE_OPTIONS: '--max_old_space_size=4096'
         run: |
           yarn build
-      
