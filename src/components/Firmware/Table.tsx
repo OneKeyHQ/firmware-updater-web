@@ -33,13 +33,17 @@ const Table: FC<{ tabType: TabType }> = ({ tabType }) => {
 
   useEffect(() => {
     const releaseInfo = getReleaseInfo();
-    const item = releaseInfo[tabType];
+    const firmwareField =
+      device?.deviceType === 'touch' && tabType === 'firmware'
+        ? 'firmware-v2'
+        : tabType;
+    const item = releaseInfo[firmwareField];
     const data = {
-      version: Array.isArray(item[0].version) && item[0].version.join('.'),
-      changelog: item[0].changelog[locale],
+      version: Array.isArray(item?.[0].version) && item?.[0].version.join('.'),
+      changelog: item?.[0].changelog[locale],
     };
     setDataSource(data as DataSource);
-  }, [getReleaseInfo, tabType, locale]);
+  }, [getReleaseInfo, tabType, locale, device]);
 
   return (
     <div className="px-4 sm:px-6 lg:px-8">
