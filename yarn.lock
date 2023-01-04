@@ -2156,60 +2156,60 @@
   resolved "https://registry.yarnpkg.com/@onekeyfe/cross-inpage-provider-types/-/cross-inpage-provider-types-0.0.17.tgz#0c88c1a2febac44ec1600e0e59da732579cbd045"
   integrity sha512-QqjIPXQHb3UG9w79ujjL5L5Qd6oCrymQ/x2J2rYICtr56G6shHTmUvRZxAvne0ZsLv8UBGqZWbepVdnPipehYQ==
 
-"@onekeyfe/hd-core@0.2.15", "@onekeyfe/hd-core@^0.2.15":
-  version "0.2.15"
-  resolved "https://registry.yarnpkg.com/@onekeyfe/hd-core/-/hd-core-0.2.15.tgz#3311602cbdb30f4a7d1e4fc9d58c58d353a9116f"
-  integrity sha512-9eHQ7/PoQOpdYMpAWvGdp0+lwrEtsFNdytuiyzqwuVOKfjPHVw61LUDYYVXZEdDDE2qBykSoko5ElkIyvf0V5Q==
+"@onekeyfe/hd-core@0.2.16", "@onekeyfe/hd-core@^0.2.16":
+  version "0.2.16"
+  resolved "https://registry.yarnpkg.com/@onekeyfe/hd-core/-/hd-core-0.2.16.tgz#f805327d1c7f03f26f72f404b77de4bb42997fdf"
+  integrity sha512-oEdB/8zgz7y3CdqkcYkjlPnnpO/ZgUjHXuC53pFiImERAeY9IYxL1ATZyKl/9njtlT87v7T7m02qw/568vgZZA==
   dependencies:
-    "@onekeyfe/hd-shared" "^0.2.15"
-    "@onekeyfe/hd-transport" "^0.2.15"
+    "@onekeyfe/hd-shared" "^0.2.16"
+    "@onekeyfe/hd-transport" "^0.2.16"
     axios "^0.27.2"
     bignumber.js "^9.0.2"
     jszip "^3.10.1"
     parse-uri "^1.0.7"
     semver "^7.3.7"
 
-"@onekeyfe/hd-shared@0.2.15", "@onekeyfe/hd-shared@^0.2.15":
-  version "0.2.15"
-  resolved "https://registry.yarnpkg.com/@onekeyfe/hd-shared/-/hd-shared-0.2.15.tgz#4ed81751a7e055dcb64950647358493a0dc0c4e2"
-  integrity sha512-7W4Itd/er+d6FOb5Wi1yGKKEb/FXA7t6wDecftTdumqU4P5/UWSDqXP1rF0+kmiGLrBhbtVGxy8ZyuGE7uN8bQ==
+"@onekeyfe/hd-shared@0.2.16", "@onekeyfe/hd-shared@^0.2.16":
+  version "0.2.16"
+  resolved "https://registry.yarnpkg.com/@onekeyfe/hd-shared/-/hd-shared-0.2.16.tgz#289f2bf8b9674026c3805d5a92630ae3929342ff"
+  integrity sha512-5WBCZp3ijjAVm2aMp2RJzgV4MpVOLgH6Lc9ThhodSXs6Brbm3R621vSnxrpLo9CULBUI/Zw5Wh2Pc69Gxi3Z6w==
 
-"@onekeyfe/hd-transport-http@^0.2.15":
-  version "0.2.15"
-  resolved "https://registry.yarnpkg.com/@onekeyfe/hd-transport-http/-/hd-transport-http-0.2.15.tgz#c9520e24ea93fe8df7d363ea49312c723e457af0"
-  integrity sha512-bKA7JtGRCQf+ZzEaCaoWEkSQvxt5X0akJCCa7IYp4wZ3yaYkkP4/wK1NAU2wk9u7F+epmCLp9IbhHHaaXf0gVw==
+"@onekeyfe/hd-transport-http@^0.2.16":
+  version "0.2.16"
+  resolved "https://registry.yarnpkg.com/@onekeyfe/hd-transport-http/-/hd-transport-http-0.2.16.tgz#8ad225e728acaae23a1d94f32e17245a3b390827"
+  integrity sha512-9dQndJHOML80rvGzGzHr7TKZHgVULXkPYyQZlM9ul2Y7K7vLROQvPfjez2iDTVl+BWJuN0gD4zIQHjPAIkiQMA==
   dependencies:
-    "@onekeyfe/hd-shared" "^0.2.15"
-    "@onekeyfe/hd-transport" "^0.2.15"
+    "@onekeyfe/hd-shared" "^0.2.16"
+    "@onekeyfe/hd-transport" "^0.2.16"
     axios "^0.27.2"
 
-"@onekeyfe/hd-transport-webusb@^0.2.15":
-  version "0.2.15"
-  resolved "https://registry.yarnpkg.com/@onekeyfe/hd-transport-webusb/-/hd-transport-webusb-0.2.15.tgz#db3590f58283b319da22a9dd926a818134801881"
-  integrity sha512-9bqfzSwUk+P/FclZ4wIdsUHzr7qF3ZCtPLZp2mGgalclytzIiEPALtK+aC2Q+q9HAhgU8+0KB084/cdCaNyeWA==
+"@onekeyfe/hd-transport-webusb@^0.2.16":
+  version "0.2.16"
+  resolved "https://registry.yarnpkg.com/@onekeyfe/hd-transport-webusb/-/hd-transport-webusb-0.2.16.tgz#a6a88d212a5535154e7bc81caf52693e620c71a6"
+  integrity sha512-OqxuSBnUaFOwq7cCpWHazaL2YhI0HNEUJnIY/F8bSmmh9LTPa55npwtaUINiPLIwGtNy8rStfclePKvUUztDAQ==
   dependencies:
-    "@onekeyfe/hd-shared" "^0.2.15"
-    "@onekeyfe/hd-transport" "^0.2.15"
+    "@onekeyfe/hd-shared" "^0.2.16"
+    "@onekeyfe/hd-transport" "^0.2.16"
 
-"@onekeyfe/hd-transport@^0.2.15":
-  version "0.2.15"
-  resolved "https://registry.yarnpkg.com/@onekeyfe/hd-transport/-/hd-transport-0.2.15.tgz#fbc286a906954b2dae4e2fb40b9c8d8666b7f987"
-  integrity sha512-JYDpfoV06xVig72aoqfzHQvAft18nORVO6zJfS3Gp8EjgQ0kcu/CAZmskAca5UG+S+qsGhTPli06/o/rCX17SQ==
+"@onekeyfe/hd-transport@^0.2.16":
+  version "0.2.16"
+  resolved "https://registry.yarnpkg.com/@onekeyfe/hd-transport/-/hd-transport-0.2.16.tgz#d0d427225de84737612ac4d209cfbf867ff7f689"
+  integrity sha512-T8HsXjSxUPOk8P1EZCVW4POtjgejae0gA5qECe1SIqsW6+KhniPXbDa0sYq94RCtALiDlwfw1c/XEi1qzuUQKQ==
   dependencies:
     bytebuffer "^5.0.1"
     long "^4.0.0"
     protobufjs "^6.11.2"
 
-"@onekeyfe/hd-web-sdk@0.2.15":
-  version "0.2.15"
-  resolved "https://registry.yarnpkg.com/@onekeyfe/hd-web-sdk/-/hd-web-sdk-0.2.15.tgz#41ec1866eb36e2bbe33da439b49e65d7f0ae8fb4"
-  integrity sha512-AZkNkVy+fs/yeDAiu8/PVpsNTS//VlK/TAmV83jnZ2wsUlkeaREw76Bm0JoEVYMudovWNHhgm7cZVtkEImAWDg==
+"@onekeyfe/hd-web-sdk@0.2.16":
+  version "0.2.16"
+  resolved "https://registry.yarnpkg.com/@onekeyfe/hd-web-sdk/-/hd-web-sdk-0.2.16.tgz#395a430e1299588f0f0844e29ab3b2995c64123f"
+  integrity sha512-jpSkbamIqfS6Sb8UFxkShC73EQcUmDhgyWqXzZKtJLmF+B5a+CD8b/7PrVmn0s9R8665eWkYe5b8IvUNtGpAEQ==
   dependencies:
     "@onekeyfe/cross-inpage-provider-core" "^0.0.17"
-    "@onekeyfe/hd-core" "^0.2.15"
-    "@onekeyfe/hd-shared" "^0.2.15"
-    "@onekeyfe/hd-transport-http" "^0.2.15"
-    "@onekeyfe/hd-transport-webusb" "^0.2.15"
+    "@onekeyfe/hd-core" "^0.2.16"
+    "@onekeyfe/hd-shared" "^0.2.16"
+    "@onekeyfe/hd-transport-http" "^0.2.16"
+    "@onekeyfe/hd-transport-webusb" "^0.2.16"
 
 "@onekeyfe/ui-components@^1.0.0":
   version "1.0.0"
