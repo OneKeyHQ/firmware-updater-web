@@ -2,7 +2,11 @@ import React, { useState, useEffect, useCallback, FC } from 'react';
 import { marked } from 'marked';
 import { useSelector, useDispatch } from 'react-redux';
 import { useIntl } from 'react-intl';
-import { IDeviceType } from '@onekeyfe/hd-core';
+import {
+  Features,
+  getFirmwareUpdateField,
+  IDeviceType,
+} from '@onekeyfe/hd-core';
 import { RootState } from '@/store';
 import { setSelectedUploadType } from '@/store/reducers/runtime';
 import type { TabType } from './ReleaseInfo';
@@ -33,10 +37,10 @@ const Table: FC<{ tabType: TabType }> = ({ tabType }) => {
 
   useEffect(() => {
     const releaseInfo = getReleaseInfo();
-    const firmwareField =
-      device?.deviceType === 'touch' && tabType === 'firmware'
-        ? 'firmware-v2'
-        : tabType;
+    const firmwareField = getFirmwareUpdateField(
+      device?.features ?? ({} as Features),
+      tabType
+    );
     const item = releaseInfo[firmwareField];
     const data = {
       version: Array.isArray(item?.[0].version) && item?.[0].version.join('.'),

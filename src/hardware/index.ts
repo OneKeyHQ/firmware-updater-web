@@ -8,6 +8,7 @@ import {
   UI_EVENT,
   UI_REQUEST,
   UI_RESPONSE,
+  getFirmwareUpdateField,
 } from '@onekeyfe/hd-core';
 import { createDeferred, Deferred } from '@onekeyfe/hd-shared';
 import { store } from '@/store';
@@ -271,10 +272,10 @@ class ServiceHardware {
       device?.deviceType &&
       (selectedUploadType === 'firmware' || selectedUploadType === 'ble')
     ) {
-      const firmwareField =
-        device?.deviceType === 'touch' && selectedUploadType === 'firmware'
-          ? 'firmware-v2'
-          : selectedUploadType;
+      const firmwareField = getFirmwareUpdateField(
+        device.features,
+        selectedUploadType
+      );
       const version = releaseMap[device.deviceType][firmwareField]?.[0].version;
       params.version = version;
       params.updateType = state.runtime.selectedUploadType;
