@@ -101,7 +101,7 @@
   "TR_FIRMWARE_INSTALL_TIPS_TITLE": "请按照以下步骤操作，开始固件安装",
   "TR_FIRMWARE_STATUS": "状态",
   "TR_FIRMWARE_SUBHEADING": "设备未安装固件，为确保您可以立即开始使用最新功能。在设备启动期间始终检查已安装固件的真实性。如果固件没有正确签名，则将显示警告。",
-  "TR_FIRMWARE_USER_ENSURE": "我确认设备是空的或我已经有了恢复种子",
+  "TR_FIRMWARE_USER_ENSURE": "我确认设备是空的或我已经有了当前设备的助记词，升级失败之后可能会导致设备助记词被抹去，我可以用记录的助记词重新恢复",
   "TR_FIRMWARE_VERSION": "固件版本",
   "TR_FIRST_PIN_ENTERED": "Good. You entered a new pin. But to make sure you did not make mistake, please enter it again. Look at your device now, numbers are now different.",
   "TR_FOUND_OK_DEVICE": "找到一个已成功连接的设备，您现在可以继续。",

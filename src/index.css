@@ -1,3 +1,12 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+#markdown-wrapper h3 {
+  font-weight: 600;
+}
+
+#markdown-wrapper ul {
+  list-style: disc;
+  padding-left: 1.5em;
+}

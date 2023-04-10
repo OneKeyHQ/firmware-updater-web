@@ -98,6 +98,7 @@ const Table: FC<{ tabType: TabType }> = ({ tabType }) => {
                     </td>
                     <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800">
                       <p
+                        id="markdown-wrapper"
                         // eslint-disable-next-line react/no-danger
                         dangerouslySetInnerHTML={{
                           __html: marked.parse(dataSource?.changelog ?? ''),
