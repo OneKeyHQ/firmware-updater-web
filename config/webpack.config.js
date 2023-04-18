@@ -338,11 +338,6 @@ module.exports = function (webpackEnv) {
           babelRuntimeRegenerator,
         ]),
       ],
-      fallback: {
-        stream: false,
-        assert: false,
-        buffer: require.resolve('buffer'),
-      },
     },
     module: {
       strictExportPresence: true,
@@ -570,7 +565,6 @@ module.exports = function (webpackEnv) {
         },
       ].filter(Boolean),
     },
-    ignoreWarnings: [/Failed to parse source map/],
     plugins: [
       // Generates an `index.html` file with the <script> injected.
       new HtmlWebpackPlugin({
@@ -751,9 +745,6 @@ module.exports = function (webpackEnv) {
             },
           },
         }),
-      new webpack.ProvidePlugin({
-        Buffer: ['buffer', 'Buffer'],
-      }),
     ].filter(Boolean),
     // Turn off performance processing because we utilize
     // our own hints via the FileSizeReporter

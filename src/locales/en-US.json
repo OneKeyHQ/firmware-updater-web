@@ -220,12 +220,10 @@
 	"TR_INPUT_PIN_CODE": "Please Enter PIN on Device",
 	"TR_PLEASE_CONFIRM_ON_DEVICE": "Please confirm on device",
 	"TR_FIRMWARE_INSTALLED_FAILED": "Failed to install firmware",
-  "TR_FIRMWARE_INSTALLED_SUCCESS": "Firmware installed successfully",
 	"TR_CONTINUE_UPDATING": "Continue updating",
 	"TR_GO_TO_BOOTLOADER": "Please confirm and enter bootloader mode",
 	"TR_GO_TO_BOOTLOADER_SUCCESS": "Bootloader mode entered successfully",
 	"TR_DOWNLOAD_FIRMWARE": "Download firmware",
 	"TR_DOWNLOAD_FIRMWARE_SUCCESS": "Download firmware successfully",
-	"TR_ERASE_SUCCESS": "Erase device successfully",
-  "TR_USE_DESKTOP_CLIENT_TO_INSTALL": "Please use the OneKey desktop client to update"
+	"TR_ERASE_SUCCESS": "Erase device successfully"
 }
