@@ -37,10 +37,11 @@ const Table: FC<{ tabType: TabType }> = ({ tabType }) => {
 
   useEffect(() => {
     const releaseInfo = getReleaseInfo();
-    const firmwareField = getFirmwareUpdateField(
-      device?.features ?? ({} as Features),
-      tabType
-    );
+    // const firmwareField = getFirmwareUpdateField(
+    //   device?.features ?? ({} as Features),
+    //   tabType
+    // );
+    const firmwareField = tabType;
     const item = releaseInfo[firmwareField];
     const data = {
       version: Array.isArray(item?.[0].version) && item?.[0].version.join('.'),

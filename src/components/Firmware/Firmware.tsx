@@ -149,6 +149,7 @@ export default function Firmware() {
   const showFirmwareUpdate = useSelector(
     (state: RootState) => state.firmware.showFirmwareUpdate
   );
+  const installType = useSelector((s: RootState) => s.runtime.installType);
   const [deviceType, setDeviceType] = useState('');
 
   const [isMiniAndNotInBootloader, setIsMiniAndNotInBootloader] =
@@ -220,7 +221,12 @@ export default function Firmware() {
   return (
     <div className="content">
       <h1 className="text-3xl text-center font-light py-4">
-        {intl.formatMessage({ id: 'TR_FIRMWARE_HEADING' })}
+        {intl.formatMessage({
+          id:
+            installType === 'bootloader'
+              ? 'TR_BOOTLOADER_HEADING'
+              : 'TR_FIRMWARE_HEADING',
+        })}
       </h1>
       {!showFirmwareUpdate ? (
         <>

@@ -16,6 +16,7 @@ import {
   setBridgeReleaseMap,
   setBridgeVersion,
   setReleaseMap,
+  setInstallType,
 } from '@/store/reducers/runtime';
 import {
   setMaxProgress,
@@ -24,9 +25,10 @@ import {
   setUpdateTip,
   setShowProgressBar,
   setShowErrorAlert,
+  setProgress,
 } from '@/store/reducers/firmware';
 import type { BridgeReleaseMap, RemoteConfigResponse } from '@/types';
-import { arrayBufferToBuffer } from '@/utils';
+import { arrayBufferToBuffer, wait } from '@/utils';
 import { formatMessage } from '@/locales';
 import { getHardwareSDKInstance } from './instance';
 
@@ -219,6 +221,7 @@ class ServiceHardware {
   async getReleaseInfo() {
     const { data } = await axios.get<RemoteConfigResponse>(
       `https://data.onekey.so/config.json?noCache=${new Date().getTime()}`
+      // `https://data.onekey.so/pre-config.json?noCache=${new Date().getTime()}`
     );
 
     const deviceMap = {
@@ -252,6 +255,52 @@ class ServiceHardware {
     store.dispatch(setBridgeReleaseMap(bridgeMap));
   }
 
+  async checkUpdateBootloaderForClassic(version: number[]) {
+    const state = store.getState();
+    const hardwareSDK = await this.getSDKInstance();
+    const { device, selectedUploadType } = state.runtime;
+
+    if (!device?.deviceType || !selectedUploadType) return true;
+
+    // Check if need to update classic bootloader
+    try {
+      const checkBootloaderRes = await hardwareSDK.checkBootloaderRelease(
+        undefined,
+        {
+          willUpdateFirmwareVersion: version.join('.'),
+        }
+      );
+      if (!checkBootloaderRes.success) {
+        return true;
+      }
+      if (!checkBootloaderRes.payload?.shouldUpdate) {
+        return true;
+      }
+
+      store.dispatch(setInstallType('bootloader'));
+      store.dispatch(setProgress(0));
+      store.dispatch(setMaxProgress(0));
+      store.dispatch(setShowProgressBar(true));
+      const response = await hardwareSDK.firmwareUpdateV2(undefined, {
+        updateType: 'firmware',
+        platform: 'web',
+        isUpdateBootloader: false,
+      });
+      if (!response.success) {
+        const message =
+          response.payload.code === 413
+            ? formatMessage({ id: 'TR_USE_DESKTOP_CLIENT_TO_INSTALL' }) ?? ''
+            : response.payload.error;
+        store.dispatch(setShowErrorAlert({ type: 'error', message }));
+        return false;
+      }
+      await wait(3500);
+      return true;
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
   async firmwareUpdate() {
     const state = store.getState();
     const hardwareSDK = await this.getSDKInstance();
@@ -272,16 +321,28 @@ class ServiceHardware {
       device?.deviceType &&
       (selectedUploadType === 'firmware' || selectedUploadType === 'ble')
     ) {
-      const firmwareField = getFirmwareUpdateField(
-        device.features,
-        selectedUploadType
-      );
+      // const firmwareField = getFirmwareUpdateField(
+      //   device.features,
+      //   selectedUploadType
+      // );
+      const firmwareField = selectedUploadType;
       const version = releaseMap[device.deviceType][firmwareField]?.[0].version;
       params.version = version;
       params.updateType = state.runtime.selectedUploadType;
     }
 
+    const updateBootloader = await this.checkUpdateBootloaderForClassic(
+      params.version
+    );
+
+    if (!updateBootloader) {
+      return;
+    }
+
     try {
+      store.dispatch(setInstallType('firmware'));
+      store.dispatch(setProgress(0));
+      store.dispatch(setMaxProgress(0));
       store.dispatch(setShowProgressBar(true));
       const response = await hardwareSDK.firmwareUpdateV2(undefined, params);
       if (!response.success) {

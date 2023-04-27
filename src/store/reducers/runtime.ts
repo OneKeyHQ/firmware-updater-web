@@ -18,6 +18,7 @@ type InitialState = {
   selectedUploadType: 'firmware' | 'ble' | 'binary' | null;
   locale: 'zh-CN' | 'en-US';
   currentTab: 'firmware' | 'ble';
+  installType: 'firmware' | 'bootloader';
 };
 
 const initialState: InitialState = {
@@ -29,6 +30,7 @@ const initialState: InitialState = {
   selectedUploadType: null,
   locale: getDefaultLocale(),
   currentTab: 'firmware',
+  installType: 'firmware',
 };
 
 export const runtimeSlice = createSlice({
@@ -71,6 +73,9 @@ export const runtimeSlice = createSlice({
     setCurrentTab(state, action: PayloadAction<InitialState['currentTab']>) {
       state.currentTab = action.payload;
     },
+    setInstallType(state, action: PayloadAction<InitialState['installType']>) {
+      state.installType = action.payload;
+    },
   },
 });
 
@@ -83,6 +88,7 @@ export const {
   setSelectedUploadType,
   setLocale,
   setCurrentTab,
+  setInstallType,
 } = runtimeSlice.actions;
 
 export default runtimeSlice.reducer;

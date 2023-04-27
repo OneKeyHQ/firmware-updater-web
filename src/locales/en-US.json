@@ -91,6 +91,7 @@
   "TR_FIRMWARE_DELETE_FILE": "delete",
   "TR_FIRMWARE_FROM_LOCALE_FILE": "select from local file",
   "TR_FIRMWARE_HEADING": "Install Firmware",
+  "TR_BOOTLOADER_HEADING": "Install Bootloader",
   "TR_FIRMWARE_INSTALLED": "Perfect. The newest firmware is installed. Time to continue",
   "TR_FIRMWARE_INSTALLED_TEXT": "This device has already installed firmware version: {version}",
   "TR_FIRMWARE_INSTALL_DISCONNECT_DEVICE": "Disconnect device",

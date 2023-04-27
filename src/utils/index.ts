@@ -28,3 +28,8 @@ export const getDefaultLocale = () => {
   }
   return 'en-US';
 };
+
+export const wait = (ms: number) =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
