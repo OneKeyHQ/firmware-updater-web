@@ -8,6 +8,7 @@ import {
   UI_EVENT,
   UI_REQUEST,
   UI_RESPONSE,
+  getFirmwareUpdateField,
 } from '@onekeyfe/hd-core';
 import { createDeferred, Deferred } from '@onekeyfe/hd-shared';
 import { store } from '@/store';
@@ -256,7 +257,9 @@ class ServiceHardware {
     const hardwareSDK = await this.getSDKInstance();
     const { device, releaseMap, selectedUploadType, currentTab } =
       state.runtime;
-    const params: any = {};
+    const params: any = {
+      platform: 'web',
+    };
 
     // binary params
     if (selectedUploadType === 'binary') {
@@ -269,8 +272,11 @@ class ServiceHardware {
       device?.deviceType &&
       (selectedUploadType === 'firmware' || selectedUploadType === 'ble')
     ) {
-      const version =
-        releaseMap[device.deviceType][selectedUploadType][0].version;
+      const firmwareField = getFirmwareUpdateField(
+        device.features,
+        selectedUploadType
+      );
+      const version = releaseMap[device.deviceType][firmwareField]?.[0].version;
       params.version = version;
       params.updateType = state.runtime.selectedUploadType;
     }
@@ -279,9 +285,11 @@ class ServiceHardware {
       store.dispatch(setShowProgressBar(true));
       const response = await hardwareSDK.firmwareUpdateV2(undefined, params);
       if (!response.success) {
-        store.dispatch(
-          setShowErrorAlert({ type: 'error', message: response.payload.error })
-        );
+        const message =
+          response.payload.code === 413
+            ? formatMessage({ id: 'TR_USE_DESKTOP_CLIENT_TO_INSTALL' }) ?? ''
+            : response.payload.error;
+        store.dispatch(setShowErrorAlert({ type: 'error', message }));
         return;
       }
       store.dispatch(
@@ -290,7 +298,10 @@ class ServiceHardware {
     } catch (e) {
       console.log(e);
       store.dispatch(
-        setShowErrorAlert({ type: 'error', message: '固件安装失败' })
+        setShowErrorAlert({
+          type: 'error',
+          message: formatMessage({ id: 'TR_FIRMWARE_INSTALLED_FAILED' }) ?? '',
+        })
       );
     }
   }
