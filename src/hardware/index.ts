@@ -8,7 +8,6 @@ import {
   UI_EVENT,
   UI_REQUEST,
   UI_RESPONSE,
-  getFirmwareUpdateField,
 } from '@onekeyfe/hd-core';
 import { createDeferred, Deferred } from '@onekeyfe/hd-shared';
 import { store } from '@/store';
@@ -28,7 +27,8 @@ import {
   setProgress,
 } from '@/store/reducers/firmware';
 import type { BridgeReleaseMap, RemoteConfigResponse } from '@/types';
-import { arrayBufferToBuffer, wait } from '@/utils';
+import { arrayBufferToBuffer, wait, getFirmwareUpdateField } from '@/utils';
+import { downloadLegacyTouchFirmware } from '@/utils/touchFirmware';
 import { formatMessage } from '@/locales';
 import { getHardwareSDKInstance } from './instance';
 
@@ -221,7 +221,6 @@ class ServiceHardware {
   async getReleaseInfo() {
     const { data } = await axios.get<RemoteConfigResponse>(
       `https://data.onekey.so/config.json?noCache=${new Date().getTime()}`
-      // `https://data.onekey.so/pre-config.json?noCache=${new Date().getTime()}`
     );
 
     const deviceMap = {
@@ -260,7 +259,8 @@ class ServiceHardware {
     const hardwareSDK = await this.getSDKInstance();
     const { device, selectedUploadType } = state.runtime;
 
-    if (!device?.deviceType || !selectedUploadType) return true;
+    if (!device?.deviceType || !selectedUploadType || !Array.isArray(version))
+      return true;
 
     // Check if need to update classic bootloader
     try {
@@ -321,13 +321,18 @@ class ServiceHardware {
       device?.deviceType &&
       (selectedUploadType === 'firmware' || selectedUploadType === 'ble')
     ) {
-      // const firmwareField = getFirmwareUpdateField(
-      //   device.features,
-      //   selectedUploadType
-      // );
-      const firmwareField = selectedUploadType;
-      const version = releaseMap[device.deviceType][firmwareField]?.[0].version;
-      params.version = version;
+      const firmwareField = getFirmwareUpdateField(
+        device.features,
+        selectedUploadType
+      );
+      if (device.deviceType === 'touch' && firmwareField === 'firmware') {
+        const fw = await downloadLegacyTouchFirmware(firmwareField);
+        params.binary = fw;
+      } else {
+        const version =
+          releaseMap[device.deviceType][firmwareField]?.[0].version;
+        params.version = version;
+      }
       params.updateType = state.runtime.selectedUploadType;
     }
 
