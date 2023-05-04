@@ -2,10 +2,11 @@ import React, { useState, useEffect, useCallback, FC } from 'react';
 import { marked } from 'marked';
 import { useSelector, useDispatch } from 'react-redux';
 import { useIntl } from 'react-intl';
-import { IDeviceType } from '@onekeyfe/hd-core';
+import { IDeviceType, Features } from '@onekeyfe/hd-core';
 import { RootState } from '@/store';
 import { setSelectedUploadType } from '@/store/reducers/runtime';
 import type { TabType } from './ReleaseInfo';
+import { getFirmwareUpdateField } from '../../utils';
 
 type DataSource = {
   version: string;
@@ -33,13 +34,17 @@ const Table: FC<{ tabType: TabType }> = ({ tabType }) => {
 
   useEffect(() => {
     const releaseInfo = getReleaseInfo();
-    const item = releaseInfo[tabType];
+    const firmwareField = getFirmwareUpdateField(
+      device?.features ?? ({} as Features),
+      tabType
+    );
+    const item = releaseInfo[firmwareField];
     const data = {
-      version: Array.isArray(item[0].version) && item[0].version.join('.'),
-      changelog: item[0].changelog[locale],
+      version: Array.isArray(item?.[0].version) && item?.[0].version.join('.'),
+      changelog: item?.[0].changelog[locale],
     };
     setDataSource(data as DataSource);
-  }, [getReleaseInfo, tabType, locale]);
+  }, [getReleaseInfo, tabType, locale, device]);
 
   return (
     <div className="px-4 sm:px-6 lg:px-8">

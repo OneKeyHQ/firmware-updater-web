@@ -15,6 +15,7 @@ import {
   setBridgeReleaseMap,
   setBridgeVersion,
   setReleaseMap,
+  setInstallType,
 } from '@/store/reducers/runtime';
 import {
   setMaxProgress,
@@ -23,9 +24,11 @@ import {
   setUpdateTip,
   setShowProgressBar,
   setShowErrorAlert,
+  setProgress,
 } from '@/store/reducers/firmware';
 import type { BridgeReleaseMap, RemoteConfigResponse } from '@/types';
-import { arrayBufferToBuffer } from '@/utils';
+import { arrayBufferToBuffer, wait, getFirmwareUpdateField } from '@/utils';
+import { downloadLegacyTouchFirmware } from '@/utils/touchFirmware';
 import { formatMessage } from '@/locales';
 import { getHardwareSDKInstance } from './instance';
 
@@ -251,12 +254,61 @@ class ServiceHardware {
     store.dispatch(setBridgeReleaseMap(bridgeMap));
   }
 
+  async checkUpdateBootloaderForClassic(version: number[]) {
+    const state = store.getState();
+    const hardwareSDK = await this.getSDKInstance();
+    const { device, selectedUploadType } = state.runtime;
+
+    if (!device?.deviceType || !selectedUploadType || !Array.isArray(version))
+      return true;
+
+    // Check if need to update classic bootloader
+    try {
+      const checkBootloaderRes = await hardwareSDK.checkBootloaderRelease(
+        undefined,
+        {
+          willUpdateFirmwareVersion: version.join('.'),
+        }
+      );
+      if (!checkBootloaderRes.success) {
+        return true;
+      }
+      if (!checkBootloaderRes.payload?.shouldUpdate) {
+        return true;
+      }
+
+      store.dispatch(setInstallType('bootloader'));
+      store.dispatch(setProgress(0));
+      store.dispatch(setMaxProgress(0));
+      store.dispatch(setShowProgressBar(true));
+      const response = await hardwareSDK.firmwareUpdateV2(undefined, {
+        updateType: 'firmware',
+        platform: 'web',
+        isUpdateBootloader: false,
+      });
+      if (!response.success) {
+        const message =
+          response.payload.code === 413
+            ? formatMessage({ id: 'TR_USE_DESKTOP_CLIENT_TO_INSTALL' }) ?? ''
+            : response.payload.error;
+        store.dispatch(setShowErrorAlert({ type: 'error', message }));
+        return false;
+      }
+      await wait(3500);
+      return true;
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
   async firmwareUpdate() {
     const state = store.getState();
     const hardwareSDK = await this.getSDKInstance();
     const { device, releaseMap, selectedUploadType, currentTab } =
       state.runtime;
-    const params: any = {};
+    const params: any = {
+      platform: 'web',
+    };
 
     // binary params
     if (selectedUploadType === 'binary') {
@@ -269,19 +321,41 @@ class ServiceHardware {
       device?.deviceType &&
       (selectedUploadType === 'firmware' || selectedUploadType === 'ble')
     ) {
-      const version =
-        releaseMap[device.deviceType][selectedUploadType][0].version;
-      params.version = version;
+      const firmwareField = getFirmwareUpdateField(
+        device.features,
+        selectedUploadType
+      );
+      if (device.deviceType === 'touch' && firmwareField === 'firmware') {
+        const fw = await downloadLegacyTouchFirmware(firmwareField);
+        params.binary = fw;
+      } else {
+        const version =
+          releaseMap[device.deviceType][firmwareField]?.[0].version;
+        params.version = version;
+      }
       params.updateType = state.runtime.selectedUploadType;
     }
 
+    const updateBootloader = await this.checkUpdateBootloaderForClassic(
+      params.version
+    );
+
+    if (!updateBootloader) {
+      return;
+    }
+
     try {
+      store.dispatch(setInstallType('firmware'));
+      store.dispatch(setProgress(0));
+      store.dispatch(setMaxProgress(0));
       store.dispatch(setShowProgressBar(true));
       const response = await hardwareSDK.firmwareUpdateV2(undefined, params);
       if (!response.success) {
-        store.dispatch(
-          setShowErrorAlert({ type: 'error', message: response.payload.error })
-        );
+        const message =
+          response.payload.code === 413
+            ? formatMessage({ id: 'TR_USE_DESKTOP_CLIENT_TO_INSTALL' }) ?? ''
+            : response.payload.error;
+        store.dispatch(setShowErrorAlert({ type: 'error', message }));
         return;
       }
       store.dispatch(
@@ -290,7 +364,10 @@ class ServiceHardware {
     } catch (e) {
       console.log(e);
       store.dispatch(
-        setShowErrorAlert({ type: 'error', message: '固件安装失败' })
+        setShowErrorAlert({
+          type: 'error',
+          message: formatMessage({ id: 'TR_FIRMWARE_INSTALLED_FAILED' }) ?? '',
+        })
       );
     }
   }

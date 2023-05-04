@@ -1,5 +1,7 @@
 import { BridgeSystem } from '@/types';
 import { Buffer } from 'buffer';
+import { getDeviceType } from '@onekeyfe/hd-core';
+import type { Features } from '@onekeyfe/hd-core';
 
 export function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ');
@@ -27,4 +29,28 @@ export const getDefaultLocale = () => {
     return 'zh-CN';
   }
   return 'en-US';
+};
+
+export const wait = (ms: number) =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+
+export const getFirmwareUpdateField = (
+  features: Features,
+  updateType: 'firmware' | 'ble'
+) => {
+  const deviceType = getDeviceType(features);
+  if (updateType === 'ble') {
+    return 'ble';
+  }
+
+  if (deviceType === 'classic') {
+    return 'firmware-v2';
+  }
+
+  if (deviceType === 'touch') {
+    return 'firmware';
+  }
+  return 'firmware';
 };
