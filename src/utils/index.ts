@@ -1,4 +1,5 @@
 import { BridgeSystem } from '@/types';
+import semver from 'semver';
 import { Buffer } from 'buffer';
 import { getDeviceType } from '@onekeyfe/hd-core';
 import type { Features } from '@onekeyfe/hd-core';
@@ -45,7 +46,7 @@ export const getFirmwareUpdateField = (
     return 'ble';
   }
 
-  if (deviceType === 'classic') {
+  if (deviceType === 'classic' || deviceType === 'mini') {
     return 'firmware-v2';
   }
 
@@ -53,4 +54,45 @@ export const getFirmwareUpdateField = (
     return 'firmware';
   }
   return 'firmware';
+};
+
+export const getFirmwareUpdateFieldArray = (
+  features: Features,
+  updateType: 'firmware' | 'ble'
+): ('firmware' | 'ble' | 'firmware-v2' | 'firmware-v3')[] => {
+  const deviceType = getDeviceType(features);
+  if (updateType === 'ble') {
+    return ['ble'];
+  }
+
+  if (deviceType === 'classic' || deviceType === 'mini') {
+    return ['firmware-v2'];
+  }
+
+  if (deviceType === 'touch') {
+    const currentVersion = getDeviceFirmwareVersion(features).join('.');
+    if (semver.gt(currentVersion, '4.0.0')) {
+      return ['firmware-v3', 'firmware'];
+    }
+    if (semver.gte(currentVersion, '4.0.0')) {
+      return ['firmware-v2', 'firmware'];
+    }
+    return ['firmware'];
+  }
+  return ['firmware'];
+};
+
+export const getDeviceFirmwareVersion = (
+  features: Features | undefined
+): number[] => {
+  if (!features) return [0, 0, 0];
+
+  if (features.onekey_version) {
+    return features.onekey_version.split('.') as unknown as number[];
+  }
+  return [
+    features.major_version,
+    features.minor_version,
+    features.patch_version,
+  ];
 };

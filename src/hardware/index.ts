@@ -304,8 +304,13 @@ class ServiceHardware {
   async firmwareUpdate() {
     const state = store.getState();
     const hardwareSDK = await this.getSDKInstance();
-    const { device, releaseMap, selectedUploadType, currentTab } =
-      state.runtime;
+    const {
+      device,
+      releaseMap,
+      selectedUploadType,
+      selectedReleaseInfo,
+      currentTab,
+    } = state.runtime;
     const params: any = {
       platform: 'web',
     };
@@ -321,14 +326,14 @@ class ServiceHardware {
       device?.deviceType &&
       (selectedUploadType === 'firmware' || selectedUploadType === 'ble')
     ) {
-      const firmwareField = getFirmwareUpdateField(
-        device.features,
-        selectedUploadType
-      );
-      if (device.deviceType === 'touch' && firmwareField === 'firmware') {
+      const firmwareField = selectedReleaseInfo?.firmwareField;
+      if (
+        device.deviceType === 'touch' &&
+        (firmwareField === 'firmware' || firmwareField === 'firmware-v2')
+      ) {
         const fw = await downloadLegacyTouchFirmware(firmwareField);
         params.binary = fw;
-      } else {
+      } else if (firmwareField) {
         const version =
           releaseMap[device.deviceType][firmwareField]?.[0].version;
         params.version = version;
