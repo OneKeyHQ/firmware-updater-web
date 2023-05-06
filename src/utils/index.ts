@@ -46,7 +46,9 @@ export const getFirmwareUpdateField = (
     return 'ble';
   }
 
-  if (deviceType === 'classic' || deviceType === 'mini') {
+  // TODO: OPEN MINI FIELD
+  // if (deviceType === 'classic' || deviceType === 'mini') {
+  if (deviceType === 'classic') {
     return 'firmware-v2';
   }
 
@@ -76,6 +78,9 @@ export const getFirmwareUpdateFieldArray = (
     }
     if (semver.gte(currentVersion, '4.0.0')) {
       return ['firmware-v2', 'firmware'];
+    }
+    if (!currentVersion || semver.lt(currentVersion, '3.0.0')) {
+      return ['firmware-v3', 'firmware-v2', 'firmware'];
     }
     return ['firmware'];
   }

@@ -254,7 +254,7 @@ class ServiceHardware {
     store.dispatch(setBridgeReleaseMap(bridgeMap));
   }
 
-  async checkUpdateBootloaderForClassic(version: number[]) {
+  async checkUpdateBootloaderForClassicAndMini(version: number[]) {
     const state = store.getState();
     const hardwareSDK = await this.getSDKInstance();
     const { device, selectedUploadType } = state.runtime;
@@ -284,7 +284,7 @@ class ServiceHardware {
       const response = await hardwareSDK.firmwareUpdateV2(undefined, {
         updateType: 'firmware',
         platform: 'web',
-        isUpdateBootloader: false,
+        isUpdateBootloader: true,
       });
       if (!response.success) {
         const message =
@@ -294,7 +294,7 @@ class ServiceHardware {
         store.dispatch(setShowErrorAlert({ type: 'error', message }));
         return false;
       }
-      await wait(3500);
+      await wait(15000);
       return true;
     } catch (e) {
       console.log(e);
@@ -341,7 +341,7 @@ class ServiceHardware {
       params.updateType = state.runtime.selectedUploadType;
     }
 
-    const updateBootloader = await this.checkUpdateBootloaderForClassic(
+    const updateBootloader = await this.checkUpdateBootloaderForClassicAndMini(
       params.version
     );
 
