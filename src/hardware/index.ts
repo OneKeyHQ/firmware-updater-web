@@ -259,8 +259,13 @@ class ServiceHardware {
     const hardwareSDK = await this.getSDKInstance();
     const { device, selectedUploadType } = state.runtime;
 
-    if (!device?.deviceType || !selectedUploadType || !Array.isArray(version))
+    if (!device?.deviceType || !selectedUploadType || !Array.isArray(version)) {
       return true;
+    }
+
+    if (device?.deviceType !== 'classic' && device.deviceType !== 'mini') {
+      return true;
+    }
 
     // Check if need to update classic bootloader
     try {
