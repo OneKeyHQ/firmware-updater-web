@@ -254,13 +254,18 @@ class ServiceHardware {
     store.dispatch(setBridgeReleaseMap(bridgeMap));
   }
 
-  async checkUpdateBootloaderForClassic(version: number[]) {
+  async checkUpdateBootloaderForClassicAndMini(version: number[]) {
     const state = store.getState();
     const hardwareSDK = await this.getSDKInstance();
     const { device, selectedUploadType } = state.runtime;
 
-    if (!device?.deviceType || !selectedUploadType || !Array.isArray(version))
+    if (!device?.deviceType || !selectedUploadType || !Array.isArray(version)) {
       return true;
+    }
+
+    if (device?.deviceType !== 'classic' && device.deviceType !== 'mini') {
+      return true;
+    }
 
     // Check if need to update classic bootloader
     try {
@@ -284,7 +289,7 @@ class ServiceHardware {
       const response = await hardwareSDK.firmwareUpdateV2(undefined, {
         updateType: 'firmware',
         platform: 'web',
-        isUpdateBootloader: false,
+        isUpdateBootloader: true,
       });
       if (!response.success) {
         const message =
@@ -294,7 +299,7 @@ class ServiceHardware {
         store.dispatch(setShowErrorAlert({ type: 'error', message }));
         return false;
       }
-      await wait(3500);
+      await wait(15000);
       return true;
     } catch (e) {
       console.log(e);
@@ -304,8 +309,13 @@ class ServiceHardware {
   async firmwareUpdate() {
     const state = store.getState();
     const hardwareSDK = await this.getSDKInstance();
-    const { device, releaseMap, selectedUploadType, currentTab } =
-      state.runtime;
+    const {
+      device,
+      releaseMap,
+      selectedUploadType,
+      selectedReleaseInfo,
+      currentTab,
+    } = state.runtime;
     const params: any = {
       platform: 'web',
     };
@@ -321,14 +331,14 @@ class ServiceHardware {
       device?.deviceType &&
       (selectedUploadType === 'firmware' || selectedUploadType === 'ble')
     ) {
-      const firmwareField = getFirmwareUpdateField(
-        device.features,
-        selectedUploadType
-      );
-      if (device.deviceType === 'touch' && firmwareField === 'firmware') {
+      const firmwareField = selectedReleaseInfo?.firmwareField;
+      if (
+        device.deviceType === 'touch' &&
+        (firmwareField === 'firmware' || firmwareField === 'firmware-v2')
+      ) {
         const fw = await downloadLegacyTouchFirmware(firmwareField);
         params.binary = fw;
-      } else {
+      } else if (firmwareField) {
         const version =
           releaseMap[device.deviceType][firmwareField]?.[0].version;
         params.version = version;
@@ -336,7 +346,7 @@ class ServiceHardware {
       params.updateType = state.runtime.selectedUploadType;
     }
 
-    const updateBootloader = await this.checkUpdateBootloaderForClassic(
+    const updateBootloader = await this.checkUpdateBootloaderForClassicAndMini(
       params.version
     );
 

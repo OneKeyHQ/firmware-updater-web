@@ -30,6 +30,8 @@ export type IBLEFirmwareReleaseInfo = {
   };
 };
 
+export type IFirmwareField = 'firmware' | 'ble' | 'firmware-v2' | 'firmware-v3';
+
 export type DeviceTypeMap = {
   [k in IDeviceType]: {
     firmware: IFirmwareReleaseInfo[];

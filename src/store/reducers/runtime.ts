@@ -1,6 +1,12 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import type { KnownDevice } from '@onekeyfe/hd-core';
-import { BridgeReleaseMap, DeviceTypeMap } from '@/types';
+import {
+  BridgeReleaseMap,
+  DeviceTypeMap,
+  IFirmwareReleaseInfo,
+  IBLEFirmwareReleaseInfo,
+  IFirmwareField,
+} from '@/types';
 import { getDefaultLocale } from '@/utils';
 
 type InitialState = {
@@ -19,6 +25,10 @@ type InitialState = {
   locale: 'zh-CN' | 'en-US';
   currentTab: 'firmware' | 'ble';
   installType: 'firmware' | 'bootloader';
+  selectedReleaseInfo:
+    | (IFirmwareReleaseInfo & { firmwareField: IFirmwareField })
+    | (IBLEFirmwareReleaseInfo & { firmwareField: IFirmwareField })
+    | null;
 };
 
 const initialState: InitialState = {
@@ -31,6 +41,7 @@ const initialState: InitialState = {
   locale: getDefaultLocale(),
   currentTab: 'firmware',
   installType: 'firmware',
+  selectedReleaseInfo: null,
 };
 
 export const runtimeSlice = createSlice({
@@ -76,6 +87,12 @@ export const runtimeSlice = createSlice({
     setInstallType(state, action: PayloadAction<InitialState['installType']>) {
       state.installType = action.payload;
     },
+    setSelectedReleaseInfo(
+      state,
+      action: PayloadAction<InitialState['selectedReleaseInfo']>
+    ) {
+      state.selectedReleaseInfo = action.payload;
+    },
   },
 });
 
@@ -89,6 +106,7 @@ export const {
   setLocale,
   setCurrentTab,
   setInstallType,
+  setSelectedReleaseInfo,
 } = runtimeSlice.actions;
 
 export default runtimeSlice.reducer;
