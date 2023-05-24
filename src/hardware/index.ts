@@ -406,6 +406,20 @@ class ServiceHardware {
       reader.readAsArrayBuffer(this.file);
     });
   }
+
+  async checkBridgeRelease(willUpdateFirmwareVersion: string) {
+    const hardwareSDK = await this.getSDKInstance();
+    return hardwareSDK
+      ?.checkBridgeRelease(undefined, {
+        willUpdateFirmwareVersion,
+      })
+      .then((response) => {
+        if (!response.success) {
+          return { shouldUpdate: false, status: 'valid', releaseVersion: '' };
+        }
+        return response.payload;
+      });
+  }
 }
 
 export default ServiceHardware;

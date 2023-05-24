@@ -1,5 +1,5 @@
 /* eslint-disable no-nested-ternary */
-import { FC, useState, useEffect } from 'react';
+import { FC, useState, useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import semver from 'semver';
 import { useIntl } from 'react-intl';
@@ -15,6 +15,7 @@ import ConfirmDialog from '../Modal';
 import ReleaseInfo from './ReleaseInfo';
 import BootloaderTips from './BootloaderTips';
 import ProgressBar from './ProgressBar';
+import BridgeReleaseDialog from './BridgeReleaseDialog';
 
 let timer: ReturnType<typeof setInterval>;
 let isPollingUpdateDevice = false;
@@ -91,10 +92,45 @@ const Description: FC<{ text: string; value: any }> = ({ text, value }) => (
 const ConfirmUpdate: FC = () => {
   const intl = useIntl();
   const device = useSelector((state: RootState) => state.runtime.device);
+  const releaseMap = useSelector(
+    (state: RootState) => state.runtime.releaseMap
+  );
+  const selectedReleaseInfo = useSelector(
+    (state: RootState) => state.runtime.selectedReleaseInfo
+  );
   const selectedUploadType = useSelector(
     (state: RootState) => state.runtime.selectedUploadType
   );
   const [confirmProtocol, setConfirmProtocol] = useState(false);
+  const [bridgeReleaseModalVisible, setBridgeReleaseModalVisible] =
+    useState(false);
+  const [bridgeReleaseVersion, setBridgeReleaseVersion] = useState('');
+
+  const onHandleInstall = useCallback(async () => {
+    if (timer) {
+      clearInterval(timer);
+    }
+    if (
+      device?.deviceType &&
+      (selectedUploadType === 'firmware' || selectedUploadType === 'ble')
+    ) {
+      const firmwareField = selectedReleaseInfo?.firmwareField;
+      if (firmwareField) {
+        const version =
+          releaseMap[device.deviceType][firmwareField]?.[0].version;
+        const checkBridgeRelease = await serviceHardware.checkBridgeRelease(
+          version?.join('.') ?? ''
+        );
+        if (checkBridgeRelease?.shouldUpdate) {
+          setBridgeReleaseVersion(checkBridgeRelease.releaseVersion);
+          setBridgeReleaseModalVisible(true);
+          return;
+        }
+      }
+    }
+
+    serviceHardware.firmwareUpdate();
+  }, [device, selectedUploadType, selectedReleaseInfo, releaseMap]);
 
   return (
     <div className="flex justify-center items-center flex-col">
@@ -125,15 +161,17 @@ const ConfirmUpdate: FC = () => {
           size="xl"
           disabled={!(device && selectedUploadType && confirmProtocol)}
           onClick={() => {
-            if (timer) {
-              clearInterval(timer);
-            }
-            serviceHardware.firmwareUpdate();
+            onHandleInstall();
           }}
         >
           {intl.formatMessage({ id: 'TR_FIRMWARE_HEADING' })}
         </Button>
       </div>
+      <BridgeReleaseDialog
+        visible={bridgeReleaseModalVisible}
+        setVisible={setBridgeReleaseModalVisible}
+        version={bridgeReleaseVersion}
+      />
     </div>
   );
 };
