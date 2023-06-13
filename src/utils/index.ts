@@ -67,7 +67,7 @@ export const getFirmwareUpdateFieldArray = (
     return ['ble'];
   }
 
-  if (deviceType === 'classic') {
+  if (deviceType === 'classic' || deviceType === 'mini') {
     return ['firmware-v2'];
   }
 
