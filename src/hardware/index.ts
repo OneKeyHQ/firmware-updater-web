@@ -200,21 +200,10 @@ class ServiceHardware {
   }
 
   async checkBridgeStatus() {
-    return new Promise((resolve) => {
-      axios
-        .post('http://localhost:21320')
-        .then((res) => {
-          if (res.status === 200) {
-            resolve(true);
-            store.dispatch(setBridgeVersion(res.data.version ?? ''));
-          } else {
-            resolve(false);
-          }
-        })
-        .catch((e) => {
-          console.log(e);
-          resolve(false);
-        });
+    return new Promise(async (resolve) => {
+      const hardwareSDK = await this.getSDKInstance();
+      const res = await hardwareSDK?.checkBridgeStatus();
+      resolve(res.success);
     });
   }
 
