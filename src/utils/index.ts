@@ -46,10 +46,8 @@ export const getFirmwareUpdateField = (
     return 'ble';
   }
 
-  // TODO: OPEN MINI FIELD
-  // if (deviceType === 'classic' || deviceType === 'mini') {
-  if (deviceType === 'classic') {
-    return 'firmware-v2';
+  if (deviceType === 'classic' || deviceType === 'mini') {
+    return 'firmware-v3';
   }
 
   if (deviceType === 'touch') {
@@ -68,7 +66,7 @@ export const getFirmwareUpdateFieldArray = (
   }
 
   if (deviceType === 'classic' || deviceType === 'mini') {
-    return ['firmware-v2'];
+    return ['firmware-v3'];
   }
 
   if (deviceType === 'touch') {
