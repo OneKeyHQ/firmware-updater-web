@@ -1,5 +1,4 @@
 /* eslint-disable class-methods-use-this */
-import axios from 'axios';
 import {
   SearchDevice,
   Success,
@@ -13,7 +12,6 @@ import { createDeferred, Deferred } from '@onekeyfe/hd-shared';
 import { store } from '@/store';
 import {
   setBridgeReleaseMap,
-  setBridgeVersion,
   setReleaseMap,
   setInstallType,
 } from '@/store/reducers/runtime';
@@ -26,11 +24,13 @@ import {
   setShowErrorAlert,
   setProgress,
 } from '@/store/reducers/firmware';
-import type { BridgeReleaseMap, RemoteConfigResponse } from '@/types';
+import type { BridgeReleaseMap } from '@/types';
 import { arrayBufferToBuffer, wait, getFirmwareUpdateField } from '@/utils';
 import { downloadLegacyTouchFirmware } from '@/utils/touchFirmware';
 import { formatMessage } from '@/locales';
 import { getHardwareSDKInstance } from './instance';
+
+import ReleaseConfigJSON from './config.json';
 
 let searchPromise: Deferred<void> | null = null;
 class ServiceHardware {
@@ -208,17 +208,19 @@ class ServiceHardware {
   }
 
   async getReleaseInfo() {
-    const { data } = await axios.get<RemoteConfigResponse>(
-      `https://data.onekey.so/config.json?noCache=${new Date().getTime()}`
-    );
+    // const { data } = await axios.get<RemoteConfigResponse>(
+    //   `https://data.onekey.so/config.json?noCache=${new Date().getTime()}`
+    // );
 
+    const data = ReleaseConfigJSON as any;
+    await wait(0);
     const deviceMap = {
       classic: data.classic,
       mini: data.mini,
       touch: data.touch,
       pro: data.pro,
     };
-    store.dispatch(setReleaseMap(deviceMap));
+    store.dispatch(setReleaseMap(deviceMap as unknown as any));
 
     const bridgeMap: BridgeReleaseMap = {
       linux64Deb: {

@@ -57,7 +57,14 @@ function createWindow() {
     mainWindow.webContents.openDevTools();
   }
 
-  mainWindow.webContents.on('did-finish-load', () => {});
+  mainWindow.webContents.on('did-finish-load', () => {
+    mainWindow?.webContents.send('SET_ONEKEY_DESKTOP_GLOBALS', {
+      resourcesPath: (global as any).resourcesPath,
+      staticPath: `file://${staticPath}`,
+      preloadJsUrl: `file://${preloadJsUrl}?timestamp=${Date.now()}`,
+      sdkConnectSrc,
+    });
+  });
 
   mainWindow.on('closed', () => {
     mainWindow = null;
@@ -91,12 +98,6 @@ app.on('ready', () => {
     createWindow();
   }
   showMainWindow();
-  mainWindow?.webContents.send('SET_ONEKEY_DESKTOP_GLOBALS', {
-    resourcesPath: (global as any).resourcesPath,
-    staticPath: `file://${staticPath}`,
-    preloadJsUrl: `file://${preloadJsUrl}?timestamp=${Date.now()}`,
-    sdkConnectSrc,
-  });
 });
 
 app.on('window-all-closed', () => {
