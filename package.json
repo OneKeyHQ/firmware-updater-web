@@ -2,6 +2,8 @@
   "name": "firmware-update",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
+  "homepage": "./",
   "dependencies": {
     "@babel/core": "^7.19.1",
     "@babel/eslint-parser": "^7.19.1",
@@ -44,6 +46,8 @@
     "css-minimizer-webpack-plugin": "^3.2.0",
     "dotenv": "^10.0.0",
     "dotenv-expand": "^5.1.0",
+    "electron-is-dev": "^2.0.0",
+    "electron-log": "^5.0.2",
     "eslint": "^8.23.1",
     "eslint-config-airbnb": "^19.0.4",
     "eslint-config-airbnb-typescript": "^16.2.0",
@@ -69,6 +73,7 @@
     "marked": "^4.1.0",
     "memoizee": "^0.4.15",
     "mini-css-extract-plugin": "^2.4.5",
+    "node-fetch": "^3.3.2",
     "postcss": "^8.4.16",
     "postcss-flexbugs-fixes": "^5.0.2",
     "postcss-loader": "^6.2.1",
@@ -93,6 +98,7 @@
     "style-loader": "^3.3.1",
     "tailwindcss": "^3.1.8",
     "terser-webpack-plugin": "^5.2.5",
+    "ts-loader": "^9.5.1",
     "typescript": "^4.8.3",
     "web-vitals": "^2.1.4",
     "webpack": "^5.76.0",
@@ -101,11 +107,14 @@
     "workbox-webpack-plugin": "^6.4.1"
   },
   "scripts": {
-    "start": "HTTPS=true node scripts/start.js",
-    "build": "node scripts/build.js",
+    "desktop": "yarn copy:inject && yarn build:main && electron dist/main.js",
+    "start": "node scripts/start.js",
+    "build:renderer": "node scripts/build.js",
+    "build:main": "webpack --config development/webpack.main.config.js",
     "test": "node scripts/test.js",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "copy:inject": "bash development/copy-injected.sh"
   },
   "browserslist": {
     "production": [
@@ -178,5 +187,9 @@
   },
   "eslintConfig": {
     "extends": "react-app"
+  },
+  "devDependencies": {
+    "electron": "^28.1.0",
+    "webpack-cli": "^5.1.4"
   }
 }

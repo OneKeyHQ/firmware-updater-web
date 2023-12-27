@@ -5,6 +5,7 @@ import {
 } from '@onekeyfe/hd-web-sdk/build/onekey-js-sdk.min.js';
 import { getSDKVersion } from '@onekeyfe/hd-core';
 import type { ConnectSettings, CoreApi } from '@onekeyfe/hd-core';
+import { wait } from '@/utils';
 
 let initialized = false;
 
@@ -15,9 +16,17 @@ export const getHardwareSDKInstance = memoizee(
         resolve(HardwareSDK);
         return;
       }
+      await wait(2000);
+      console.log('===>>>window: ', window);
+      // @ts-expect-error
+      const connectSrc = window.ONEKEY_DESKTOP_GLOBALS?.sdkConnectSrc;
+      if (!connectSrc) {
+        reject(new Error('static sdkConnectSrc not found'));
+        return;
+      }
       const settings: Partial<ConnectSettings> = {
         debug: true,
-        connectSrc: 'https://jssdk.onekey.so/0.3.30/',
+        connectSrc,
         preRelease: false,
         fetchConfig: true,
       };

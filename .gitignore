@@ -10,6 +10,7 @@
 
 # production
 build/
+dist/
 
 # misc
 .DS_Store
@@ -26,3 +27,5 @@ yarn-error.log*
 yalc.lock
 
 .vscode
+
+public/static/js-sdk/
