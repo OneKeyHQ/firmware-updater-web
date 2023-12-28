@@ -13,6 +13,10 @@ export type IFirmwareReleaseInfo = {
   changelog: {
     [k in ILocale]: string;
   };
+  bootloaderVersion: IVersionArray;
+  bootloaderChangelog: {
+    [k in ILocale]: string;
+  };
 };
 
 /** BLE firmware config */
@@ -26,6 +30,10 @@ export type IBLEFirmwareReleaseInfo = {
   fingerprintWeb: string;
   version: IVersionArray;
   changelog: {
+    [k in ILocale]: string;
+  };
+  bootloaderVersion: IVersionArray;
+  bootloaderChangelog: {
     [k in ILocale]: string;
   };
 };

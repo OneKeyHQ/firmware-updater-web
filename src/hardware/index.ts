@@ -32,6 +32,14 @@ import { getHardwareSDKInstance } from './instance';
 
 import ReleaseConfigJSON from './config.json';
 
+declare global {
+  interface Window {
+    desktopApi: {
+      readFileAsBuffer: (filePath: string) => Promise<Buffer>;
+    };
+  }
+}
+
 let searchPromise: Deferred<void> | null = null;
 class ServiceHardware {
   scanMap: Record<string, boolean> = {};
@@ -337,13 +345,29 @@ class ServiceHardware {
       params.updateType = state.runtime.selectedUploadType;
     }
 
-    const updateBootloader = await this.checkUpdateBootloaderForClassicAndMini(
-      params.version
-    );
-
-    if (!updateBootloader) {
-      return;
+    if (device?.deviceType === 'mini') {
+      let binary: Buffer;
+      if (selectedUploadType === 'firmware') {
+        binary = await window.desktopApi.readFileAsBuffer(
+          'mini.3.4.0-Stable-0917-2bbd01c.signed.bin'
+        );
+        params.binary = binary;
+      } else if (selectedUploadType === 'bootloader') {
+        binary = await window.desktopApi.readFileAsBuffer(
+          'mini-boot.2.0.0-0518-b860d10.signed.bin'
+        );
+        params.binary = binary;
+      }
+      params.updateType = 'firmware';
     }
+
+    // const updateBootloader = await this.checkUpdateBootloaderForClassicAndMini(
+    //   params.version
+    // );
+
+    // if (!updateBootloader) {
+    //   return;
+    // }
 
     try {
       store.dispatch(setInstallType('firmware'));

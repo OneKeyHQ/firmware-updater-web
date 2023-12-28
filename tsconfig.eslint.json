@@ -6,7 +6,7 @@
 		"scripts",
     "tailwind.config.js",
     "postcss.config.js",
-    "main",
+    "main/**/*",
     "development/*"
   ]
 }

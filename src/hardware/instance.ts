@@ -17,9 +17,9 @@ export const getHardwareSDKInstance = memoizee(
         return;
       }
       await wait(2000);
-      console.log('===>>>window: ', window);
       // @ts-expect-error
       const connectSrc = window.ONEKEY_DESKTOP_GLOBALS?.sdkConnectSrc;
+      // const connectSrc = 'https://jssdk.onekey.so/0.3.34/';
       if (!connectSrc) {
         reject(new Error('static sdkConnectSrc not found'));
         return;

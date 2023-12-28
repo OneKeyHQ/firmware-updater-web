@@ -58,7 +58,7 @@ export const getFirmwareUpdateField = (
 
 export const getFirmwareUpdateFieldArray = (
   features: Features,
-  updateType: 'firmware' | 'ble'
+  updateType: 'firmware' | 'ble' | 'bootloader'
 ): ('firmware' | 'ble' | 'firmware-v2' | 'firmware-v4')[] => {
   const deviceType = getDeviceType(features);
   if (updateType === 'ble') {

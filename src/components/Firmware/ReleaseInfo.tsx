@@ -8,7 +8,7 @@ import { Alert } from '@onekeyfe/ui-components';
 import Table from './Table';
 import UploadFirmware from './UploadFirmware';
 
-export type TabType = 'firmware' | 'ble';
+export type TabType = 'firmware' | 'ble' | 'bootloader';
 
 export default function ReleaseInfo() {
   const intl = useIntl();
@@ -24,6 +24,10 @@ export default function ReleaseInfo() {
   useEffect(() => {
     if (device?.deviceType === 'mini') {
       setTabs([
+        {
+          name: intl.formatMessage({ id: 'TR_BOOTLOADER' }),
+          key: 'bootloader',
+        },
         { name: intl.formatMessage({ id: 'TR_FIRMWARE' }), key: 'firmware' },
       ]);
     } else {

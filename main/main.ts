@@ -1,10 +1,10 @@
-import { app, BrowserWindow, session } from 'electron';
+import { app, BrowserWindow, session, ipcMain } from 'electron';
 import isDev from 'electron-is-dev';
 import logger from 'electron-log';
+import path from 'path';
+import fs from 'fs';
+import { format as formatUrl } from 'url';
 import initProcess, { restartBridge } from './process/index';
-
-const path = require('path');
-const urlFormat = require('url');
 
 let mainWindow: BrowserWindow | null;
 
@@ -48,7 +48,7 @@ function createWindow() {
     },
   });
 
-  const startUrl = urlFormat.format({
+  const startUrl = formatUrl({
     pathname: path.join(__dirname, '../build/index.html'),
     protocol: 'file',
     slashes: true,
@@ -93,6 +93,22 @@ function createWindow() {
       callback({ cancel: false, requestHeaders: details.requestHeaders });
     }
   );
+  ipcMain.on('read-bin-file', (event, filePath, responseChannel) => {
+    const firmwarePath = isDev
+      ? path.join(staticPath, 'firmware/')
+      : path.join(__dirname, '../build/static/firmware/');
+    fs.readFile(path.join(firmwarePath, filePath), (error, data) => {
+      if (error) {
+        console.log('====>file error: ', error);
+        event.sender.send(responseChannel, {
+          success: false,
+          error: error.message,
+        });
+      } else {
+        event.sender.send(responseChannel, { success: true, data });
+      }
+    });
+  });
 }
 
 app.on('ready', () => {

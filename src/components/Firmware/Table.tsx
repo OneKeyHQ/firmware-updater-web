@@ -21,6 +21,8 @@ type DataSource = {
   changelog: string;
   data?: IFirmwareReleaseInfo[] | IBLEFirmwareReleaseInfo[];
   firmwareField: IFirmwareField;
+  bootloaderVersion: string;
+  bootloaderChangelog: string;
 };
 
 const Table: FC<{ tabType: TabType }> = ({ tabType }) => {
@@ -57,6 +59,10 @@ const Table: FC<{ tabType: TabType }> = ({ tabType }) => {
         version:
           Array.isArray(item?.[0].version) && item?.[0].version.join('.'),
         changelog: item?.[0].changelog[locale],
+        bootloaderVersion:
+          Array.isArray(item?.[0].bootloaderVersion) &&
+          item?.[0].bootloaderVersion.join('.'),
+        bootloaderChangelog: item?.[0].bootloaderChangelog[locale],
         data: item,
         firmwareField,
       };
@@ -64,6 +70,8 @@ const Table: FC<{ tabType: TabType }> = ({ tabType }) => {
     });
     setDataSource(releaseData as DataSource[]);
   }, [getReleaseInfo, tabType, locale, device]);
+
+  const isBootloader = tabType === 'bootloader';
 
   return (
     <div className="px-4 sm:px-6 lg:px-8">
@@ -129,14 +137,20 @@ const Table: FC<{ tabType: TabType }> = ({ tabType }) => {
                           htmlFor={item?.version}
                           className="ml-3 block text-sm font-normal text-gray-700"
                         >
-                          {item?.version}
+                          {isBootloader
+                            ? item?.bootloaderVersion
+                            : item?.version}
                         </label>
                       </td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800">
                         <p
                           // eslint-disable-next-line react/no-danger
                           dangerouslySetInnerHTML={{
-                            __html: marked.parse(item?.changelog ?? ''),
+                            __html: marked.parse(
+                              isBootloader
+                                ? item?.bootloaderChangelog ?? ''
+                                : item?.changelog ?? ''
+                            ),
                           }}
                         />
                       </td>

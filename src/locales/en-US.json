@@ -29,6 +29,7 @@
   "TR_BLUETOOTH": "bluetooth ",
   "TR_BLUETOOTH_FIRMWARE": "Bluetooth Firmware",
   "TR_BLUETOOTH_FIRMWARE_VERSION": "bluetooth firmware version",
+  "TR_BOOTLOADER": "bootloader",
   "TR_BOOKMARK_HEADING": "Browser bookmark",
   "TR_BOOKMARK_SUBHEADING": "Protect yourself against {TR_PHISHING_ATTACKS}. Bookmark OneKey Wallet (onekey.so) to avoid visiting fake sites.",
   "TR_BRIDGE_HEADING": "Onekey Bridge",

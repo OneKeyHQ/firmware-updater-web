@@ -108,9 +108,9 @@
   },
   "scripts": {
     "copy:inject": "bash development/copy-injected.sh",
-    "start": "node scripts/start.js",
-    "dev:renderer": "yarn start",
-    "desktop": "yarn build:main && yarn dev:renderer",
+    "start": "HTTPS=true node scripts/start.js",
+    "dev:renderer": "node scripts/start.js",
+    "dev:main": "yarn build:main && electron dist/main.js",
     "test": "node scripts/test.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
