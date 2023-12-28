@@ -1,5 +1,6 @@
 import { app, BrowserWindow, session } from 'electron';
 import isDev from 'electron-is-dev';
+import logger from 'electron-log';
 import initProcess, { restartBridge } from './process/index';
 
 const path = require('path');
@@ -24,9 +25,11 @@ const staticPath = isDev
 // static path
 const preloadJsUrl = path.join(staticPath, 'preload.js');
 
+logger.debug('preloadJsUrl', preloadJsUrl);
+
 const sdkConnectSrc = isDev
   ? `file://${path.join(staticPath, 'js-sdk/')}`
-  : path.join('/static', 'js-sdk/');
+  : path.join(__dirname, '../build/static/js-sdk/');
 
 function initChildProcess() {
   return initProcess();
@@ -46,12 +49,11 @@ function createWindow() {
   });
 
   const startUrl = urlFormat.format({
-    pathname: path.join(__dirname, '/../build/index.html'),
-    protocol: 'file:',
+    pathname: path.join(__dirname, '../build/index.html'),
+    protocol: 'file',
     slashes: true,
   });
-  // mainWindow.loadURL(isDev ? 'http://localhost:8000/' : startUrl);
-  mainWindow.loadURL(startUrl);
+  mainWindow.loadURL(isDev ? 'http://localhost:8000/' : startUrl);
 
   if (isDev) {
     mainWindow.webContents.openDevTools();

@@ -11,6 +11,8 @@
 # production
 build/
 dist/
+web-build/
+build-electron/
 
 # misc
 .DS_Store
@@ -29,3 +31,4 @@ yalc.lock
 .vscode
 
 public/static/js-sdk/
+asar/
