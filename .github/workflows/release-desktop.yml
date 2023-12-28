@@ -1,6 +1,9 @@
 name: release-desktop
 
-on: workflow_dispatch
+on:
+  push:
+    branches:
+      - electron 
 
 jobs:
   release-desktop:
