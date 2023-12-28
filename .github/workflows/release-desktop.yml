@@ -43,6 +43,7 @@ jobs:
       - name: Build and Sign Static Linux / Macos / Windows Installer
         env:
           NODE_OPTIONS: '--max_old_space_size=8192'
+          CI: false
         run: 'yarn build'
 
       - name: Upload Artifacts Mac
