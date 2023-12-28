@@ -4,7 +4,7 @@ import logger from 'electron-log';
 import path from 'path';
 import fs from 'fs';
 import { format as formatUrl } from 'url';
-import initProcess, { restartBridge } from './process/index';
+import initProcess from './process/index';
 
 let mainWindow: BrowserWindow | null;
 

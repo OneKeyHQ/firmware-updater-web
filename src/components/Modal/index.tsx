@@ -9,12 +9,12 @@ export type ConfirmDialogProps = {
   title?: ReactNode;
   /** 是否可见 */
   visible?: boolean;
-  /** 点击确定回调，使用 any 来使 */
-  onOk?: () => void;
+  // /** 点击确定回调，使用 any 来使 */
+  // onOk?: () => void;
   /** 点击模态框右上角叉、取消按钮、Props.maskClosable 值为 true 时的遮罩层或键盘按下 Esc 时的回调 */
   onCancel?: () => void;
   /** 确认按钮文字 */
-  okText?: React.ReactNode;
+  // okText?: React.ReactNode;
   /** 取消按钮文字 */
   cancelText?: React.ReactNode;
   /** 内容 */
@@ -37,10 +37,8 @@ export const iconColors = {
 
 const ConfirmDialog: FC<ConfirmDialogProps> = (props) => {
   const {
-    onOk,
     close,
     onCancel,
-    okText,
     okCancel,
     cancelText,
     visible,
@@ -53,11 +51,6 @@ const ConfirmDialog: FC<ConfirmDialogProps> = (props) => {
     onCancel?.();
     close?.({ triggerCancel: true });
   }, [close, onCancel]);
-
-  const handleOkClick = useCallback(() => {
-    onOk?.();
-    close?.({ triggerCancel: true });
-  }, [close, onOk]);
 
   const cancelActionNode = useMemo(
     () =>

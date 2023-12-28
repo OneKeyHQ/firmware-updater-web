@@ -25,7 +25,7 @@ import {
   setProgress,
 } from '@/store/reducers/firmware';
 import type { BridgeReleaseMap } from '@/types';
-import { arrayBufferToBuffer, wait, getFirmwareUpdateField } from '@/utils';
+import { arrayBufferToBuffer, wait } from '@/utils';
 import { downloadLegacyTouchFirmware } from '@/utils/touchFirmware';
 import { formatMessage } from '@/locales';
 import { getHardwareSDKInstance } from './instance';

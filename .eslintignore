@@ -1,1 +1,5 @@
 build/
+asar/
+dist/
+build-electron/
+public/static/
