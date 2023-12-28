@@ -117,6 +117,8 @@
     "clean:build": "rimraf ./build-electron && rimraf ./build && rimraf ./web-build && rimraf ./dist",
     "build:renderer": "rm -rf ./build && rm -rf ./web-build && NODE_ENV=production node scripts/build.js && mv ./web-build ./build && rsync -a public/static/ build/static",
     "build:main": "rimraf ./dist && yarn copy:inject && webpack --config development/webpack.main.config.js",
+    "build:electron": "export CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder build -mw --config development/electron-builder.config.js",
+    "build": "yarn clean:build && yarn build:renderer && yarn build:main && yarn build:electron",
     "build:electron:mac": "yarn clean:build && yarn build:renderer && yarn build:main && export CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder build -m --config development/electron-builder.config.js"
   },
   "browserslist": {

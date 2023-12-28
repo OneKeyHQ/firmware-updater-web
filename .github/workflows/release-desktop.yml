@@ -1,0 +1,76 @@
+name: release-desktop
+
+on: workflow_dispatch
+
+jobs:
+  release-desktop:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        node-version: [16.x]
+
+    if: ${{ !github.event.workflow_run || (github.event.workflow_run && github.event.workflow_run.conclusion == 'success') }}
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v3
+        with:
+          lfs: true
+
+      - name: Install Snapcraft
+        uses: samuelmeuli/action-snapcraft@v2
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          registry-url: 'https://npm.pkg.github.com'
+          always-auth: true
+          scope: '@onekeyhq'
+
+      - name: Get yarn cache directory path
+        id: yarn-cache-dir-path
+        run: echo "dir=$(yarn config get cacheFolder)" >> $GITHUB_OUTPUT
+
+      - name: Install Dep
+        env:
+          NODE_OPTIONS: '--max_old_space_size=8192'
+        run: |
+          yarn
+
+      - name: Build and Sign Static Linux / Macos / Windows Installer
+        env:
+          NODE_OPTIONS: '--max_old_space_size=8192'
+        run: 'yarn build'
+
+      - name: Upload Artifacts Mac
+        uses: actions/upload-artifact@v3
+        with:
+          name: onekey-desktop-mac
+          path: |
+            ./build-electron/*.dmg
+
+
+      - name: Upload Artifacts Windows
+        uses: actions/upload-artifact@v3
+        with:
+          name: onekey-desktop-windows
+          path: |
+            ./build-electron/*.exe
+
+      - name: Upload Artifacts Linux
+        uses: actions/upload-artifact@v3
+        with:
+          name: onekey-desktop-linux
+          path: |
+            ./build-electron/*.AppImage
+
+      - name: Upload Artifacts Release
+        uses: actions/upload-artifact@v3
+        with:
+          name: release
+          path: |
+            ./build-electron/*
+            !./build-electron/win-unpacked
+            !./build-electron/mac-arm64
+            !./build-electron/mac
+            !./build-electron/builder-debug.yml
