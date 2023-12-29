@@ -3,7 +3,7 @@ import isDev from 'electron-is-dev';
 import logger from 'electron-log';
 import path from 'path';
 import fs from 'fs';
-import { format as formatUrl } from 'url';
+import { format as formatUrl, parse } from 'url';
 import initProcess from './process/index';
 
 let mainWindow: BrowserWindow | null;
@@ -29,7 +29,7 @@ logger.debug('preloadJsUrl', preloadJsUrl);
 
 const sdkConnectSrc = isDev
   ? `file://${path.join(staticPath, 'js-sdk/')}`
-  : path.join(__dirname, '../build/static/js-sdk/');
+  : '/static/js-sdk/';
 
 function initChildProcess() {
   return initProcess();
@@ -93,6 +93,64 @@ function createWindow() {
       callback({ cancel: false, requestHeaders: details.requestHeaders });
     }
   );
+
+  if (!isDev) {
+    const PROTOCOL = 'file';
+    session.defaultSession.protocol.interceptFileProtocol(
+      PROTOCOL,
+      (request, callback) => {
+        const isJsSdkFile = request.url.indexOf('/static/js-sdk') > -1;
+        const isIFrameHtml =
+          request.url.indexOf('/static/js-sdk/iframe.html') > -1;
+
+        logger.debug('=====>request: ', request.url);
+
+        // resolve iframe path
+        if (isJsSdkFile && isIFrameHtml) {
+          callback({
+            path: path.join(__dirname, '../build/static/js-sdk/iframe.html'),
+          });
+          return;
+        }
+
+        if (isJsSdkFile) {
+          const urlPath = parse(request.url).pathname;
+          if (urlPath) {
+            const decodedPath = decodeURI(urlPath);
+            // Remove leading '/' on Windows
+            const normalizedPath =
+              process.platform === 'win32'
+                ? decodedPath.replace(/^\/+/, '')
+                : decodedPath;
+            // File path for files in js-sdk folder
+            const sdkFilePath = path.join(
+              __dirname,
+              `../build${normalizedPath}`
+            );
+            logger.debug('sdkfilePath: ', sdkFilePath);
+            callback({ path: sdkFilePath });
+            return;
+          }
+        }
+
+        // Otherwise, convert the file URL to a file path
+        const parsedUrl = parse(request.url);
+        let filePath = '';
+
+        if (parsedUrl.pathname) {
+          filePath = decodeURI(path.normalize(parsedUrl.pathname));
+        }
+
+        // Windows platform compatibility
+        if (process.platform === 'win32') {
+          filePath = filePath.replace(/^\/+/, '');
+        }
+
+        callback({ path: filePath });
+      }
+    );
+  }
+
   ipcMain.on('read-bin-file', (event, filePath, responseChannel) => {
     const firmwarePath = isDev
       ? path.join(staticPath, 'firmware/')
