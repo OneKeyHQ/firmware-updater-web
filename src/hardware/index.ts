@@ -349,12 +349,12 @@ class ServiceHardware {
       let binary: Buffer;
       if (selectedUploadType === 'firmware') {
         binary = await window.desktopApi.readFileAsBuffer(
-          'mini.3.4.0-Stable-0917-2bbd01c.signed.bin'
+          'mini.3.6.0-Stable-1226-ff9efe5.signed.bin'
         );
         params.binary = binary;
       } else if (selectedUploadType === 'bootloader') {
         binary = await window.desktopApi.readFileAsBuffer(
-          'mini-boot.2.0.0-0518-b860d10.signed.bin'
+          'mini_boot_update_2.0.1.signed.bin'
         );
         params.binary = binary;
       }

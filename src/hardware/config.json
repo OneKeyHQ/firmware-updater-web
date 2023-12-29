@@ -172,7 +172,7 @@
               "required": false,
               "version": [
                   3,
-                  4,
+                  6,
                   0
               ],
               "url": "https://web.onekey-asset.com/hardware/mini/firmware/v3.4.0/mini.3.4.0-Stable-0917-2bbd01c.signed.bin",
@@ -180,7 +180,7 @@
               "bootloaderVersion": [
                   2,
                   0,
-                  0
+                  1
               ],
               "bootloaderRelatedFirmwareVersion": [
                   3,
@@ -189,12 +189,12 @@
               ],
               "fingerprint": "",
               "changelog": {
-                  "zh-CN": "### 🐞 问题修复\r\n- 修复本地化翻译问题\r\n- 修复 SUI dApp 网站连接问题\r\n- 修复 Eternl 钱包无法连接的问题\r\n- 修复 Near 链 0 金额的转账信息展示问题\r\n- 输入 Passphrase 时上下按键的方向与输入 PIN 码时相同\r\n- 修复 Fetch.ai 链转账的金额显示问题\r\n\r\n### 💎 改进\r\n- 优化钱包创建和导入流程\r\n- 取消 BTC 派生路径地址 index 索引的限制\r\n",
-                  "en-US": "### 🐞 Bug Fixes\r\n- Fix localization translation issues\r\n- Fix SUI dApp connection issue\r\n- Fix the issue of unable to connect with Eternl wallet\r\n- Fix the display issue of Near chain zero-value token transfer\r\n- The direction of the up and down keys when entering a passphrase is the same as when entering a PIN code\r\n- Fix the display issue of Fetch.ai chain token transfer\r\n\r\n### 💎 Improvements\r\n- Optimize wallet creation and import process\r\n- Remove the address-index restriction of Bitcoin derivation path\r\n"
+                  "zh-CN": "### 🐞 安全问题\r\n",
+                  "en-US": "### 🐞 Bug Fixes\r\n- Security issues\r\n"
               },
               "bootloaderChangelog": {
-                  "zh-CN": "### ✨ 新功能\r\n- 新的固件验签算法\r\n- 不再支持安装非官方签名的固件\r\n- 升级前的电量检测，低电量或未插电禁止升级固件\r\n- 释放更多存储空间\r\n",
-                  "en-US": "### ✨ New Features\r\n- Add new firmware signature verification algorithm\r\n- No longer support installing firmware with unofficial signatures\r\n- Battery level checks before upgrade\r\n- Release more storage capacity\r\n"
+                  "zh-CN": "### ✨ 安全问题\r\n",
+                  "en-US": "### ✨ Security issues\r\n"
               }
           }
       ],
