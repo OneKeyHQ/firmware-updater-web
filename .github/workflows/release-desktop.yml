@@ -1,9 +1,6 @@
 name: release-desktop
 
-on:
-  push:
-    branches:
-      - electron 
+on: workflow_dispatch
 
 jobs:
   release-desktop:
@@ -50,7 +47,7 @@ jobs:
       - name: Upload Artifacts Mac
         uses: actions/upload-artifact@v3
         with:
-          name: onekey-desktop-mac
+          name: onekey-firmware-updater-mac
           path: |
             ./build-electron/*.dmg
 
@@ -58,16 +55,9 @@ jobs:
       - name: Upload Artifacts Windows
         uses: actions/upload-artifact@v3
         with:
-          name: onekey-desktop-windows
+          name: onekey-firmware-updater-windows
           path: |
             ./build-electron/*.exe
-
-      - name: Upload Artifacts Linux
-        uses: actions/upload-artifact@v3
-        with:
-          name: onekey-desktop-linux
-          path: |
-            ./build-electron/*.AppImage
 
       - name: Upload Artifacts Release
         uses: actions/upload-artifact@v3
