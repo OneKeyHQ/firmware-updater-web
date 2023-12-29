@@ -44,6 +44,7 @@ jobs:
         env:
           NODE_OPTIONS: '--max_old_space_size=8192'
           CI: false
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: 'yarn build'
 
       - name: Upload Artifacts Mac
