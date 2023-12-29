@@ -29,7 +29,11 @@ logger.debug('preloadJsUrl', preloadJsUrl);
 
 const sdkConnectSrc = isDev
   ? `file://${path.join(staticPath, 'js-sdk/')}`
-  : '/static/js-sdk/';
+  : formatUrl({
+      pathname: path.join(__dirname, '../build/static/js-sdk/'),
+      protocol: 'file',
+      slashes: true,
+    });
 
 function initChildProcess() {
   return initProcess();
@@ -94,62 +98,62 @@ function createWindow() {
     }
   );
 
-  if (!isDev) {
-    const PROTOCOL = 'file';
-    session.defaultSession.protocol.interceptFileProtocol(
-      PROTOCOL,
-      (request, callback) => {
-        const isJsSdkFile = request.url.indexOf('/static/js-sdk') > -1;
-        const isIFrameHtml =
-          request.url.indexOf('/static/js-sdk/iframe.html') > -1;
+  // if (!isDev) {
+  //   const PROTOCOL = 'file';
+  //   session.defaultSession.protocol.interceptFileProtocol(
+  //     PROTOCOL,
+  //     (request, callback) => {
+  //       const isJsSdkFile = request.url.indexOf('/static/js-sdk') > -1;
+  //       const isIFrameHtml =
+  //         request.url.indexOf('/static/js-sdk/iframe.html') > -1;
 
-        logger.debug('=====>request: ', request.url);
+  //       logger.debug('=====>request: ', request.url);
 
-        // resolve iframe path
-        if (isJsSdkFile && isIFrameHtml) {
-          callback({
-            path: path.join(__dirname, '../build/static/js-sdk/iframe.html'),
-          });
-          return;
-        }
+  //       // resolve iframe path
+  //       if (isJsSdkFile && isIFrameHtml) {
+  //         callback({
+  //           path: path.join(__dirname, '../build/static/js-sdk/iframe.html'),
+  //         });
+  //         return;
+  //       }
 
-        if (isJsSdkFile) {
-          const urlPath = parse(request.url).pathname;
-          if (urlPath) {
-            const decodedPath = decodeURI(urlPath);
-            // Remove leading '/' on Windows
-            const normalizedPath =
-              process.platform === 'win32'
-                ? decodedPath.replace(/^\/+/, '')
-                : decodedPath;
-            // File path for files in js-sdk folder
-            const sdkFilePath = path.join(
-              __dirname,
-              `../build${normalizedPath}`
-            );
-            logger.debug('sdkfilePath: ', sdkFilePath);
-            callback({ path: sdkFilePath });
-            return;
-          }
-        }
+  //       if (isJsSdkFile) {
+  //         const urlPath = parse(request.url).pathname;
+  //         if (urlPath) {
+  //           const decodedPath = decodeURI(urlPath);
+  //           // Remove leading '/' on Windows
+  //           const normalizedPath =
+  //             process.platform === 'win32'
+  //               ? decodedPath.replace(/^\/+/, '')
+  //               : decodedPath;
+  //           // File path for files in js-sdk folder
+  //           const sdkFilePath = path.join(
+  //             __dirname,
+  //             `../build${normalizedPath}`
+  //           );
+  //           logger.debug('sdkfilePath: ', sdkFilePath);
+  //           callback({ path: sdkFilePath });
+  //           return;
+  //         }
+  //       }
 
-        // Otherwise, convert the file URL to a file path
-        const parsedUrl = parse(request.url);
-        let filePath = '';
+  //       // Otherwise, convert the file URL to a file path
+  //       const parsedUrl = parse(request.url);
+  //       let filePath = '';
 
-        if (parsedUrl.pathname) {
-          filePath = decodeURI(path.normalize(parsedUrl.pathname));
-        }
+  //       if (parsedUrl.pathname) {
+  //         filePath = decodeURI(path.normalize(parsedUrl.pathname));
+  //       }
 
-        // Windows platform compatibility
-        if (process.platform === 'win32') {
-          filePath = filePath.replace(/^\/+/, '');
-        }
+  //       // Windows platform compatibility
+  //       if (process.platform === 'win32') {
+  //         filePath = filePath.replace(/^\/+/, '');
+  //       }
 
-        callback({ path: filePath });
-      }
-    );
-  }
+  //       callback({ path: filePath });
+  //     }
+  //   );
+  // }
 
   ipcMain.on('read-bin-file', (event, filePath, responseChannel) => {
     const firmwarePath = isDev
