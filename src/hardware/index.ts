@@ -354,7 +354,7 @@ class ServiceHardware {
         params.binary = binary;
       } else if (selectedUploadType === 'bootloader') {
         binary = await window.desktopApi.readFileAsBuffer(
-          'mini_boot_update_2.0.1.signed.bin'
+          'mini-boot.2.0.0-0518-b860d10.signed.bin'
         );
         params.binary = binary;
       }
