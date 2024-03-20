@@ -313,7 +313,7 @@ export default function Firmware() {
               />
             </div>
           </div>
-          {['touch'].includes(getDeviceType(device?.features)) && (
+          {['touch', 'pro'].includes(getDeviceType(device?.features)) && (
             <ConfirmDialog
               okCancel
               cancelText={intl.formatMessage({ id: 'TR_CLOSE' })}
