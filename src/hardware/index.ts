@@ -214,6 +214,7 @@ class ServiceHardware {
 
     const deviceMap = {
       classic: data.classic,
+      classic1s: data.classic1s,
       mini: data.mini,
       touch: data.touch,
       pro: data.pro,
@@ -252,7 +253,11 @@ class ServiceHardware {
       return true;
     }
 
-    if (device?.deviceType !== 'classic' && device.deviceType !== 'mini') {
+    if (
+      device?.deviceType !== 'classic' &&
+      device?.deviceType !== 'classic1s' &&
+      device.deviceType !== 'mini'
+    ) {
       return true;
     }
 

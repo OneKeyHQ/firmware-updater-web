@@ -235,6 +235,9 @@ export default function Firmware() {
       case 'classic':
         typeFlag = 'OneKey Classic';
         break;
+      case 'classic1s':
+        typeFlag = 'OneKey Classic 1S';
+        break;
       case 'mini':
         typeFlag = 'OneKey Mini';
         break;
@@ -310,7 +313,7 @@ export default function Firmware() {
               />
             </div>
           </div>
-          {['touch'].includes(getDeviceType(device?.features)) && (
+          {['touch', 'pro'].includes(getDeviceType(device?.features)) && (
             <ConfirmDialog
               okCancel
               cancelText={intl.formatMessage({ id: 'TR_CLOSE' })}
@@ -327,13 +330,16 @@ export default function Firmware() {
               {!isBootLoader && isGreaterThan340 ? <ResourceButton /> : null}
             </ConfirmDialog>
           )}
-          {['touch'].includes(getDeviceType(device?.features)) && (
+          {['touch', 'pro'].includes(getDeviceType(device?.features)) && (
             <div className="my-2">
               <Alert
                 contentClassName="items-center"
-                title={intl.formatMessage({
-                  id: 'TR_RES_REPAIR',
-                })}
+                title={intl.formatMessage(
+                  {
+                    id: 'TR_RES_REPAIR',
+                  },
+                  { '0': deviceType }
+                )}
                 type="warning"
                 action={
                   <Link
