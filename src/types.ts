@@ -30,14 +30,14 @@ export type IBLEFirmwareReleaseInfo = {
   };
 };
 
-export type IFirmwareField = 'firmware' | 'ble' | 'firmware-v2' | 'firmware-v4';
+export type IFirmwareField = 'firmware' | 'ble' | 'firmware-v2' | 'firmware-v5';
 
 export type DeviceTypeMap = {
   [k in IDeviceType]: {
     firmware: IFirmwareReleaseInfo[];
     ble: IBLEFirmwareReleaseInfo[];
     'firmware-v2'?: IFirmwareReleaseInfo[];
-    'firmware-v4'?: IFirmwareReleaseInfo[];
+    'firmware-v5'?: IFirmwareReleaseInfo[];
   };
 };
 
