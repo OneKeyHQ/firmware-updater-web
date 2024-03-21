@@ -1,6 +1,6 @@
 {
   "TR_CLOSE": "close",
-  "TR_RES_REPAIR": "For OneKey Touch device, if there are problems such as picture display, you can click the fix button to restore the resources",
+  "TR_RES_REPAIR": "For {0} device, if there are problems such as picture display, you can click the fix button to restore the resources",
   "TR_CLICK_TO_REPAIR": "click to fix",
   "TR_FIRMWARE_UPDATE_1": "Please first upgrade your OneKey Touch firmware to {version} or above",
   "TR_FIRMWARE_UPDATE_2": "current version",
