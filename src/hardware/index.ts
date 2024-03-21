@@ -334,7 +334,7 @@ class ServiceHardware {
         params.binary = fw;
       } else if (firmwareField) {
         const version =
-          releaseMap[device.deviceType][firmwareField]?.[0].version;
+          releaseMap[device.deviceType][firmwareField]?.[0]?.version;
         params.version = version;
       }
       params.updateType = state.runtime.selectedUploadType;

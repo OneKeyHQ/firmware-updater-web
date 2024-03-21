@@ -117,7 +117,7 @@ const ConfirmUpdate: FC = () => {
       const firmwareField = selectedReleaseInfo?.firmwareField;
       if (firmwareField) {
         const version =
-          releaseMap[device.deviceType][firmwareField]?.[0].version;
+          releaseMap[device.deviceType]?.[firmwareField]?.[0]?.version;
         const checkBridgeRelease = await serviceHardware.checkBridgeRelease(
           version?.join('.') ?? ''
         );

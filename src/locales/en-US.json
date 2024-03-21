@@ -1,6 +1,6 @@
 {
   "TR_CLOSE": "close",
-  "TR_RES_REPAIR": "For OneKey Touch device, if there are problems such as picture display, you can click the fix button to restore the resources",
+  "TR_RES_REPAIR": "For {0} device, if there are problems such as picture display, you can click the fix button to restore the resources",
   "TR_CLICK_TO_REPAIR": "click to fix",
   "TR_FIRMWARE_UPDATE_1": "Please first upgrade your OneKey Touch firmware to {version} or above",
   "TR_FIRMWARE_UPDATE_2": "current version",
@@ -230,5 +230,6 @@
 	"TR_ERASE_SUCCESS": "Erase device successfully",
   "TR_USE_DESKTOP_CLIENT_TO_INSTALL": "Please use the OneKey desktop client to update",
   "TR_REQUIRES_UPDATING_OF_ONEKEY_BRIDGE": "Requires updating of OneKey Bridge",
-  "TR_ONEKEY_BRIDGE_STR_IS_NOW_AVAILABLE_DO_YOU_WANT_TO_DOWNLOAD": "OneKey Bridge {0} is now available, Do you want to download?"
+  "TR_ONEKEY_BRIDGE_STR_IS_NOW_AVAILABLE_DO_YOU_WANT_TO_DOWNLOAD": "OneKey Bridge {0} is now available, Do you want to download?",
+  "TR_NO_FIRMWARE_AVAILABLE": "No firmware available"
 }

@@ -51,18 +51,25 @@ const Table: FC<{ tabType: TabType }> = ({ tabType }) => {
       device?.features ?? ({} as Features),
       tabType
     );
-    const releaseData = firmwareFields.map((firmwareField) => {
-      const item = releaseInfo[firmwareField];
-      const data = {
-        version:
-          Array.isArray(item?.[0].version) && item?.[0].version.join('.'),
-        changelog: item?.[0].changelog[locale],
-        data: item,
-        firmwareField,
-      };
-      return data;
-    });
-    setDataSource(releaseData as DataSource[]);
+    const releaseData = firmwareFields
+      .map((firmwareField) => {
+        const item = releaseInfo?.[firmwareField];
+        const firmwarePackage = item?.[0];
+
+        if (!firmwarePackage) return undefined;
+
+        const data = {
+          version:
+            Array.isArray(firmwarePackage.version) &&
+            firmwarePackage.version?.join('.'),
+          changelog: firmwarePackage.changelog?.[locale],
+          data: item,
+          firmwareField,
+        };
+        return data;
+      })
+      .filter((item) => item !== undefined) as DataSource[];
+    setDataSource(releaseData);
   }, [getReleaseInfo, tabType, locale, device]);
 
   return (
@@ -142,6 +149,16 @@ const Table: FC<{ tabType: TabType }> = ({ tabType }) => {
                       </td>
                     </tr>
                   ))}
+                  {dataSource.length === 0 && (
+                    <tr>
+                      <td
+                        colSpan={2}
+                        className="py-4 pl-4 pr-3 text-sm font-normal text-gray-700 sm:pl-6"
+                      >
+                        {intl.formatMessage({ id: 'TR_NO_FIRMWARE_AVAILABLE' })}
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>

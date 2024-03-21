@@ -7,7 +7,7 @@ export const downloadLegacyTouchFirmware = async (
 ) => {
   const state = store.getState();
   const releaseMap = state.runtime.releaseMap;
-  const url = releaseMap.touch[firmwareField]?.[0].url;
+  const url = releaseMap.touch[firmwareField]?.[0]?.url;
   const response = await axios.request({
     url,
     withCredentials: false,
