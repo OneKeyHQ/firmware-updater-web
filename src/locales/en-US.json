@@ -230,5 +230,6 @@
 	"TR_ERASE_SUCCESS": "Erase device successfully",
   "TR_USE_DESKTOP_CLIENT_TO_INSTALL": "Please use the OneKey desktop client to update",
   "TR_REQUIRES_UPDATING_OF_ONEKEY_BRIDGE": "Requires updating of OneKey Bridge",
-  "TR_ONEKEY_BRIDGE_STR_IS_NOW_AVAILABLE_DO_YOU_WANT_TO_DOWNLOAD": "OneKey Bridge {0} is now available, Do you want to download?"
+  "TR_ONEKEY_BRIDGE_STR_IS_NOW_AVAILABLE_DO_YOU_WANT_TO_DOWNLOAD": "OneKey Bridge {0} is now available, Do you want to download?",
+  "TR_NO_FIRMWARE_AVAILABLE": "No firmware available"
 }
