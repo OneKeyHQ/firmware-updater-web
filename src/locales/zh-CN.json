@@ -2,6 +2,7 @@
   "TR_CLOSE": "关闭",
   "TR_RES_REPAIR": "{0} 设备，如果出现图片、图标显示不完全等问题，可以点击后方按钮进行资源修复后恢复",
   "TR_CLICK_TO_REPAIR": "点击修复",
+  "TR_CLICK_TO_BOARD": "点击进入 Board 模式",
   "TR_FIRMWARE_UPDATE_1": "请首先将您的 OneKey Touch 固件升级到 {version} 或以上",
   "TR_FIRMWARE_UPDATE_2": "当前版本",
   "TR_LIST_TIP_1": "请解锁设备并保持在设备首页后，点击开始按钮进行操作，过程中切勿操作设备",

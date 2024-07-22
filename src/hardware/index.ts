@@ -414,6 +414,12 @@ class ServiceHardware {
         return response.payload;
       });
   }
+
+  async rebootToBoard() {
+    const hardwareSDK = await this.getSDKInstance();
+    const response = await hardwareSDK.deviceRebootToBoardloader('');
+    return !!response.success;
+  }
 }
 
 export default ServiceHardware;

@@ -2,6 +2,7 @@
   "TR_CLOSE": "close",
   "TR_RES_REPAIR": "For {0} device, if there are problems such as picture display, you can click the fix button to restore the resources",
   "TR_CLICK_TO_REPAIR": "click to fix",
+  "TR_CLICK_TO_BOARD": "Click to enter the board mode",
   "TR_FIRMWARE_UPDATE_1": "Please first upgrade your OneKey Touch firmware to {version} or above",
   "TR_FIRMWARE_UPDATE_2": "current version",
   "TR_LIST_TIP_1": "Please unlock the device and keep it on the home page of the device, click the start button to operate, do not operate the device during the process",
