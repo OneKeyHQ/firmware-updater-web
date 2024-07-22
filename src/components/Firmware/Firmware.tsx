@@ -93,6 +93,7 @@ const RebootToBoard: FC = () => {
   const intl = useIntl();
   const device = useSelector((state: RootState) => state.runtime.device);
   const [loading, setLoading] = useState(false);
+  const isBootLoader = device?.features?.bootloader_mode;
 
   const onRebootToBoard = useCallback(async () => {
     setLoading(true);
@@ -100,10 +101,18 @@ const RebootToBoard: FC = () => {
     setLoading(false);
   }, []);
 
-  if (['touch', 'pro'].includes(getDeviceType(device?.features))) {
+  if (
+    !isBootLoader &&
+    ['touch', 'pro'].includes(getDeviceType(device?.features))
+  ) {
     return (
-      <div className="flex items-center justify-between text-sm text-gray-800 py-1">
-        <Button loading={loading} className="w-full" onClick={onRebootToBoard}>
+      <div className="flex items-center justify-end py-1">
+        <Button
+          className="sm:w-[50%] w-full"
+          size="sm"
+          loading={loading}
+          onClick={onRebootToBoard}
+        >
           {intl.formatMessage({ id: 'TR_CLICK_TO_BOARD' })}
         </Button>
       </div>
