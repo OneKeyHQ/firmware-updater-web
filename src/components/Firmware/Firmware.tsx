@@ -89,6 +89,30 @@ const Description: FC<{ text: string; value: any }> = ({ text, value }) => (
   </div>
 );
 
+const RebootToBoard: FC = () => {
+  const intl = useIntl();
+  const device = useSelector((state: RootState) => state.runtime.device);
+  const [loading, setLoading] = useState(false);
+
+  const onRebootToBoard = useCallback(async () => {
+    setLoading(true);
+    await serviceHardware.rebootToBoard();
+    setLoading(false);
+  }, []);
+
+  if (['touch', 'pro'].includes(getDeviceType(device?.features))) {
+    return (
+      <div className="flex items-center justify-between text-sm text-gray-800 py-1">
+        <Button loading={loading} className="w-full" onClick={onRebootToBoard}>
+          {intl.formatMessage({ id: 'TR_CLICK_TO_BOARD' })}
+        </Button>
+      </div>
+    );
+  }
+
+  return null;
+};
+
 const ConfirmUpdate: FC = () => {
   const intl = useIntl();
   const device = useSelector((state: RootState) => state.runtime.device);
@@ -311,6 +335,7 @@ export default function Firmware() {
                 })}
                 value={device?.uuid ?? '-'}
               />
+              <RebootToBoard />
             </div>
           </div>
           {['touch', 'pro'].includes(getDeviceType(device?.features)) && (
