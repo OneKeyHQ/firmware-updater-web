@@ -280,7 +280,12 @@ export default function Firmware() {
       case 'pro':
         typeFlag = 'OneKey Pro';
         break;
+      case 'unknown':
+        typeFlag = 'Unknown';
+        break;
       default:
+        // eslint-disable-next-line no-case-declarations, no-unused-vars, @typescript-eslint/no-unused-vars
+        const checkType: never = originType;
         break;
     }
     setDeviceType(typeFlag);
