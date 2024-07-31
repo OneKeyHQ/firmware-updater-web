@@ -218,6 +218,7 @@ class ServiceHardware {
       mini: data.mini,
       touch: data.touch,
       pro: data.pro,
+      unknown: data.unknown,
     };
     store.dispatch(setReleaseMap(deviceMap));
 
