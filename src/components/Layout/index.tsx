@@ -4,7 +4,7 @@ import Footer from '../Footer';
 
 export default function Layout({ children }: { children: React.ReactElement }) {
   return (
-    <div className="bg-gray-100">
+    <div className="bg-gray-100 min-h-screen">
       <Header />
       <main>
         <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">

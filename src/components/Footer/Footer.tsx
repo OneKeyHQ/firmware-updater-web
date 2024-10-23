@@ -9,6 +9,8 @@ const LOCALE_MAPPING: {
   'zh-CN': '/zh_CN',
 };
 
+const BASE_URL = 'https://onekey.so';
+
 export const Footer: FunctionComponent = () => {
   const intl = useIntl();
 
@@ -16,9 +18,7 @@ export const Footer: FunctionComponent = () => {
 
   useEffect(() => {
     fetch(
-      `https://onekey.so${
-        LOCALE_MAPPING[intl.locale as ILocale]
-      }/internal/footer/`
+      `${BASE_URL}${LOCALE_MAPPING[intl.locale as ILocale]}/internal/footer/`
     )
       .then((response) => response.text())
       .then((data) => {
