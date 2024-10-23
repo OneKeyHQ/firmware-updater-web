@@ -1,5 +1,6 @@
 import React from 'react';
 import Header from '../Header';
+import Footer from '../Footer';
 
 export default function Layout({ children }: { children: React.ReactElement }) {
   return (
@@ -14,6 +15,7 @@ export default function Layout({ children }: { children: React.ReactElement }) {
           </div>
         </div>
       </main>
+      <Footer />
     </div>
   );
 }
