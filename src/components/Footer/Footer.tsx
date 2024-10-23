@@ -16,7 +16,7 @@ export const Footer: FunctionComponent = () => {
 
   useEffect(() => {
     fetch(
-      `https://portal-git-feat-page-footer-for-ex-a3e45d-yggdrasilqhs-projects.vercel.app${
+      `https://onekey.so${
         LOCALE_MAPPING[intl.locale as ILocale]
       }/internal/footer/`
     )
