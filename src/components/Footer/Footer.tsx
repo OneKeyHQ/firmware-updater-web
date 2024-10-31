@@ -5,11 +5,9 @@ import { ILocale } from '../../types';
 const LOCALE_MAPPING: {
   [TKey in ILocale]: string;
 } = {
-  'en-US': '',
-  'zh-CN': '/zh_CN',
+  'en-US': 'en',
+  'zh-CN': 'zh',
 };
-
-const BASE_URL = 'https://onekey.so';
 
 export const Footer: FunctionComponent = () => {
   const intl = useIntl();
@@ -17,9 +15,7 @@ export const Footer: FunctionComponent = () => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetch(
-      `${BASE_URL}${LOCALE_MAPPING[intl.locale as ILocale]}/internal/footer/`
-    )
+    fetch(`/footer/${LOCALE_MAPPING[intl.locale as ILocale]}.html`)
       .then((response) => response.text())
       .then((data) => {
         const element = containerRef.current;
