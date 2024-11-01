@@ -104,7 +104,7 @@ export default function Dashboard() {
 
   if (pageStatus === 'initialize') {
     return (
-      <div className="flex items-center justify-center text-gray-800 text-sm text-center py-2 min-h-[440px]">
+      <div className="flex items-center justify-center text-gray-800 text-sm text-center py-2">
         {intl.formatMessage({ id: 'TR_INIT' })}
       </div>
     );

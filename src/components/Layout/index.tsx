@@ -9,7 +9,7 @@ export default function Layout({ children }: { children: React.ReactElement }) {
       <main>
         <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
           <div className="px-4 py-8 sm:px-0">
-            <div className="h-auto min-h-96 rounded-sm  bg-white px-[10%]">
+            <div className="h-auto min-h-[80vh] rounded-sm bg-white px-[10%] flex flex-col justify-center">
               {children}
             </div>
           </div>
