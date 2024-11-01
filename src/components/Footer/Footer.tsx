@@ -15,11 +15,15 @@ export const Footer: FunctionComponent = () => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetch(
-      `${process?.env?.PUBLIC_URL ?? ''}/footer/${
-        LOCALE_MAPPING[intl.locale as ILocale]
-      }.html`
-    )
+    let publicURL = '';
+
+    try {
+      publicURL = process.env.PUBLIC_URL;
+    } catch {
+      console.info('PUBLIC_URL is not defined, fallback to empty string');
+    }
+
+    fetch(`${publicURL}/footer/${LOCALE_MAPPING[intl.locale as ILocale]}.html`)
       .then((response) => response.text())
       .then((data) => {
         const element = containerRef.current;
