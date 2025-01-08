@@ -26,9 +26,16 @@ import {
   setShowErrorAlert,
   setProgress,
 } from '@/store/reducers/firmware';
-import type { BridgeReleaseMap, RemoteConfigResponse } from '@/types';
+import type {
+  BridgeReleaseMap,
+  IFirmwareField,
+  RemoteConfigResponse,
+} from '@/types';
 import { arrayBufferToBuffer, wait, getFirmwareUpdateField } from '@/utils';
-import { downloadLegacyTouchFirmware } from '@/utils/touchFirmware';
+import {
+  downloadBootloaderFirmware,
+  downloadLegacyTouchFirmware,
+} from '@/utils/touchFirmware';
 import { formatMessage } from '@/locales';
 import { getHardwareSDKInstance } from './instance';
 
@@ -298,6 +305,62 @@ class ServiceHardware {
       return true;
     } catch (e) {
       console.log(e);
+    }
+  }
+
+  async bootloaderUpdate() {
+    const state = store.getState();
+    const hardwareSDK = await this.getSDKInstance();
+    const { device, selectedUploadType, selectedReleaseInfo } = state.runtime;
+    if (device?.deviceType === 'pro' || device?.deviceType === 'touch') {
+      try {
+        store.dispatch(setInstallType('bootloader'));
+        store.dispatch(setShowProgressBar(true));
+        const firmwareField = selectedReleaseInfo?.firmwareField;
+        let resource;
+        if (selectedUploadType === 'binary') {
+          resource = await this.getFileBuffer();
+        } else {
+          resource = await downloadBootloaderFirmware(
+            device?.deviceType,
+            firmwareField as Exclude<IFirmwareField, 'ble'>
+          );
+        }
+        const response = await hardwareSDK.deviceUpdateBootloader('', {
+          binary: resource,
+        });
+        if (!response.success) {
+          const message =
+            response.payload.code === 413
+              ? formatMessage({ id: 'TR_USE_DESKTOP_CLIENT_TO_INSTALL' }) ?? ''
+              : response.payload.error;
+          store.dispatch(setShowErrorAlert({ type: 'error', message }));
+          return;
+        }
+        store.dispatch(
+          setShowErrorAlert({
+            type: 'success',
+            message:
+              formatMessage({ id: 'TR_BOOTLOADER_INSTALLED_SUCCESS' }) ?? '',
+          })
+        );
+      } catch (e) {
+        console.log(e);
+        store.dispatch(
+          setShowErrorAlert({
+            type: 'error',
+            message:
+              formatMessage({ id: 'TR_BOOTLOADER_INSTALLED_FAILED' }) ?? '',
+          })
+        );
+      }
+    } else {
+      store.dispatch(
+        setShowErrorAlert({
+          type: 'error',
+          message: '设备不支持更新bootloader',
+        })
+      );
     }
   }
 

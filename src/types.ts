@@ -13,6 +13,12 @@ export type IFirmwareReleaseInfo = {
   changelog: {
     [k in ILocale]: string;
   };
+  bootloaderResource?: string;
+  bootloaderChangelog?: {
+    [k in ILocale]: string;
+  };
+  bootloaderVersion?: IVersionArray;
+  displayBootloaderVersion?: IVersionArray;
 };
 
 /** BLE firmware config */

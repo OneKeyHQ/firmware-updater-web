@@ -8,7 +8,7 @@ import { Alert } from '@onekeyfe/ui-components';
 import Table from './Table';
 import UploadFirmware from './UploadFirmware';
 
-export type TabType = 'firmware' | 'ble';
+export type TabType = 'firmware' | 'ble' | 'bootloader';
 
 export default function ReleaseInfo() {
   const intl = useIntl();
@@ -25,6 +25,18 @@ export default function ReleaseInfo() {
     if (device?.deviceType === 'mini') {
       setTabs([
         { name: intl.formatMessage({ id: 'TR_FIRMWARE' }), key: 'firmware' },
+      ]);
+    } else if (device?.deviceType === 'pro' || device?.deviceType === 'touch') {
+      setTabs([
+        { name: intl.formatMessage({ id: 'TR_FIRMWARE' }), key: 'firmware' },
+        {
+          name: intl.formatMessage({ id: 'TR_BLUETOOTH_FIRMWARE' }),
+          key: 'ble',
+        },
+        {
+          name: intl.formatMessage({ id: 'TR_BOOTLOADER' }),
+          key: 'bootloader',
+        },
       ]);
     } else {
       setTabs([
