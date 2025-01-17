@@ -21,6 +21,9 @@ type DataSource = {
   changelog: string;
   data?: IFirmwareReleaseInfo[] | IBLEFirmwareReleaseInfo[];
   firmwareField: IFirmwareField;
+  displayBootloaderVersion: string;
+  bootloaderChangelog: string;
+  bootloaderResource: string;
 };
 
 const Table: FC<{ tabType: TabType }> = ({ tabType }) => {
@@ -65,6 +68,17 @@ const Table: FC<{ tabType: TabType }> = ({ tabType }) => {
           changelog: firmwarePackage.changelog?.[locale],
           data: item,
           firmwareField,
+          displayBootloaderVersion: Array.isArray(
+            (firmwarePackage as IFirmwareReleaseInfo).displayBootloaderVersion
+          )
+            ? (
+                firmwarePackage as IFirmwareReleaseInfo
+              ).displayBootloaderVersion?.join('.')
+            : '',
+          bootloaderChangelog: (firmwarePackage as IFirmwareReleaseInfo)
+            .bootloaderChangelog?.[locale],
+          bootloaderResource: (firmwarePackage as IFirmwareReleaseInfo)
+            .bootloaderResource,
         };
         return data;
       })
@@ -98,12 +112,21 @@ const Table: FC<{ tabType: TabType }> = ({ tabType }) => {
                 <tbody className="divide-y divide-gray-200 bg-white">
                   {dataSource.map((item) => (
                     <tr
-                      key={item.version}
+                      key={
+                        tabType === 'bootloader'
+                          ? item.displayBootloaderVersion
+                          : item.version
+                      }
                       style={{
                         backgroundColor:
                           tabType === selectedUploadType &&
-                          selectedReleaseInfo?.version.join('.') ===
-                            item.version
+                          (selectedUploadType === 'bootloader'
+                            ? (
+                                selectedReleaseInfo as IFirmwareReleaseInfo
+                              )?.displayBootloaderVersion?.join('.') ===
+                              item.displayBootloaderVersion
+                            : selectedReleaseInfo?.version.join('.') ===
+                              item.version)
                             ? '#dff7e6'
                             : 'white',
                       }}
@@ -115,8 +138,13 @@ const Table: FC<{ tabType: TabType }> = ({ tabType }) => {
                           className="h-4 w-4 border-gray-300 text-brand-600 focus:ring-brand-500"
                           checked={
                             tabType === selectedUploadType &&
-                            selectedReleaseInfo?.version.join('.') ===
-                              item.version
+                            (selectedUploadType === 'bootloader'
+                              ? (
+                                  selectedReleaseInfo as IFirmwareReleaseInfo
+                                )?.displayBootloaderVersion?.join('.') ===
+                                item.displayBootloaderVersion
+                              : selectedReleaseInfo?.version.join('.') ===
+                                item.version)
                           }
                           onChange={() => {
                             dispatch(setSelectedUploadType(tabType));
@@ -133,17 +161,26 @@ const Table: FC<{ tabType: TabType }> = ({ tabType }) => {
                           }}
                         />
                         <label
-                          htmlFor={item?.version}
+                          htmlFor={
+                            tabType === 'bootloader'
+                              ? item.displayBootloaderVersion
+                              : item.version
+                          }
                           className="ml-3 block text-sm font-normal text-gray-700"
                         >
-                          {item?.version}
+                          {tabType === 'bootloader'
+                            ? item.displayBootloaderVersion
+                            : item.version}
                         </label>
                       </td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800">
                         <p
                           // eslint-disable-next-line react/no-danger
                           dangerouslySetInnerHTML={{
-                            __html: marked.parse(item?.changelog ?? ''),
+                            __html:
+                              tabType === 'bootloader'
+                                ? marked.parse(item?.bootloaderChangelog ?? '')
+                                : marked.parse(item?.changelog ?? ''),
                           }}
                         />
                       </td>

@@ -134,6 +134,7 @@ const ConfirmUpdate: FC = () => {
   const selectedUploadType = useSelector(
     (state: RootState) => state.runtime.selectedUploadType
   );
+  const tabType = useSelector((state: RootState) => state.runtime.currentTab);
   const [confirmProtocol, setConfirmProtocol] = useState(false);
   const [bridgeReleaseModalVisible, setBridgeReleaseModalVisible] =
     useState(false);
@@ -162,8 +163,12 @@ const ConfirmUpdate: FC = () => {
       }
     }
 
-    serviceHardware.firmwareUpdate();
-  }, [device, selectedUploadType, selectedReleaseInfo, releaseMap]);
+    if (tabType === 'bootloader') {
+      serviceHardware.bootloaderUpdate();
+    } else {
+      serviceHardware.firmwareUpdate();
+    }
+  }, [device, selectedUploadType, selectedReleaseInfo, releaseMap, tabType]);
 
   return (
     <div className="flex justify-center items-center flex-col">

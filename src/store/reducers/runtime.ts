@@ -21,9 +21,9 @@ type InitialState = {
   bridgeVersion: string;
   releaseMap: DeviceTypeMap;
   bridgeReleaseMap: BridgeReleaseMap;
-  selectedUploadType: 'firmware' | 'ble' | 'binary' | null;
+  selectedUploadType: 'firmware' | 'ble' | 'binary' | 'bootloader' | null;
   locale: 'zh-CN' | 'en-US';
-  currentTab: 'firmware' | 'ble';
+  currentTab: 'firmware' | 'ble' | 'bootloader';
   installType: 'firmware' | 'bootloader';
   selectedReleaseInfo:
     | (IFirmwareReleaseInfo & { firmwareField: IFirmwareField })
