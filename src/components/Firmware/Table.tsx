@@ -110,33 +110,21 @@ const Table: FC<{ tabType: TabType }> = ({ tabType }) => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 bg-white">
-                  {dataSource.map((item) => (
-                    <tr
-                      key={
-                        tabType === 'bootloader'
-                          ? item.displayBootloaderVersion
-                          : item.version
-                      }
-                      style={{
-                        backgroundColor:
-                          tabType === selectedUploadType &&
-                          (selectedUploadType === 'bootloader'
-                            ? (
-                                selectedReleaseInfo as IFirmwareReleaseInfo
-                              )?.displayBootloaderVersion?.join('.') ===
-                              item.displayBootloaderVersion
-                            : selectedReleaseInfo?.version.join('.') ===
-                              item.version)
-                            ? '#dff7e6'
-                            : 'white',
-                      }}
-                    >
-                      <td className="flex flex-row items-center whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
-                        <input
-                          name="notification-method"
-                          type="radio"
-                          className="h-4 w-4 border-gray-300 text-brand-600 focus:ring-brand-500"
-                          checked={
+                  {dataSource.map((item) => {
+                    const shouldDisplay =
+                      (tabType === 'bootloader' &&
+                        item.displayBootloaderVersion) ||
+                      tabType !== 'bootloader';
+
+                    return shouldDisplay ? (
+                      <tr
+                        key={
+                          tabType === 'bootloader'
+                            ? item.displayBootloaderVersion
+                            : item.version
+                        }
+                        style={{
+                          backgroundColor:
                             tabType === selectedUploadType &&
                             (selectedUploadType === 'bootloader'
                               ? (
@@ -145,47 +133,68 @@ const Table: FC<{ tabType: TabType }> = ({ tabType }) => {
                                 item.displayBootloaderVersion
                               : selectedReleaseInfo?.version.join('.') ===
                                 item.version)
-                          }
-                          onChange={() => {
-                            dispatch(setSelectedUploadType(tabType));
-                            if (item.data?.[0]) {
-                              dispatch(
-                                setSelectedReleaseInfo({
-                                  ...item.data?.[0],
-                                  firmwareField: item.firmwareField,
-                                })
-                              );
-                            } else {
-                              dispatch(setSelectedReleaseInfo(null));
+                              ? '#dff7e6'
+                              : 'white',
+                        }}
+                      >
+                        <td className="flex flex-row items-center whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
+                          <input
+                            name="notification-method"
+                            type="radio"
+                            className="h-4 w-4 border-gray-300 text-brand-600 focus:ring-brand-500"
+                            checked={
+                              tabType === selectedUploadType &&
+                              (selectedUploadType === 'bootloader'
+                                ? (
+                                    selectedReleaseInfo as IFirmwareReleaseInfo
+                                  )?.displayBootloaderVersion?.join('.') ===
+                                  item.displayBootloaderVersion
+                                : selectedReleaseInfo?.version.join('.') ===
+                                  item.version)
                             }
-                          }}
-                        />
-                        <label
-                          htmlFor={
-                            tabType === 'bootloader'
-                              ? item.displayBootloaderVersion
-                              : item.version
-                          }
-                          className="ml-3 block text-sm font-normal text-gray-700"
-                        >
-                          {tabType === 'bootloader'
-                            ? item.displayBootloaderVersion
-                            : item.version}
-                        </label>
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800">
-                        <p
-                          // eslint-disable-next-line react/no-danger
-                          dangerouslySetInnerHTML={{
-                            __html:
+                            onChange={() => {
+                              dispatch(setSelectedUploadType(tabType));
+                              if (item.data?.[0]) {
+                                dispatch(
+                                  setSelectedReleaseInfo({
+                                    ...item.data?.[0],
+                                    firmwareField: item.firmwareField,
+                                  })
+                                );
+                              } else {
+                                dispatch(setSelectedReleaseInfo(null));
+                              }
+                            }}
+                          />
+                          <label
+                            htmlFor={
                               tabType === 'bootloader'
-                                ? marked.parse(item?.bootloaderChangelog ?? '')
-                                : marked.parse(item?.changelog ?? ''),
-                          }}
-                        />
-                      </td>
-                    </tr>
-                  ))}
+                                ? item.displayBootloaderVersion
+                                : item.version
+                            }
+                            className="ml-3 block text-sm font-normal text-gray-700"
+                          >
+                            {tabType === 'bootloader'
+                              ? item.displayBootloaderVersion
+                              : item.version}
+                          </label>
+                        </td>
+                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800">
+                          <p
+                            // eslint-disable-next-line react/no-danger
+                            dangerouslySetInnerHTML={{
+                              __html:
+                                tabType === 'bootloader'
+                                  ? marked.parse(
+                                      item?.bootloaderChangelog ?? ''
+                                    )
+                                  : marked.parse(item?.changelog ?? ''),
+                            }}
+                          />
+                        </td>
+                      </tr>
+                    ) : null;
+                  })}
                   {dataSource.length === 0 && (
                     <tr>
                       <td
