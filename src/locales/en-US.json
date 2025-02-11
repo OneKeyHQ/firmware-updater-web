@@ -1,4 +1,6 @@
 {
+  "META_TITLE": "OneKey Update & Recovery Tool",
+  "META_DESCRIPTION": "Firmware update & recovery tool for OneKey hardware wallets.",
   "TR_CLOSE": "close",
   "TR_RES_REPAIR": "For {0} device, if there are problems such as picture display, you can click the fix button to restore the resources",
   "TR_CLICK_TO_REPAIR": "click to fix",
