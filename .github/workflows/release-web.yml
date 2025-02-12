@@ -44,7 +44,7 @@ jobs:
           destination_dir: ${{ env.HOST_PATH }}
 
       - name: Upload Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: firmware-updater-${{ github.sha }}
           path: |
