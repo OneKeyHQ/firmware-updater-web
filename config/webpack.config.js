@@ -576,6 +576,13 @@ module.exports = function (webpackEnv) {
       new HtmlWebpackPlugin({
         inject: true,
         template: paths.appHtml,
+        templateParameters: {
+          REACT_APP_META_TITLE:
+            process.env.REACT_APP_META_TITLE || 'OneKey 升级及恢复工具',
+          REACT_APP_META_DESCRIPTION:
+            process.env.REACT_APP_META_DESCRIPTION ||
+            'OneKey 硬件钱包固件升级及恢复工具',
+        },
         ...(isEnvProduction
           ? {
               minify: {
