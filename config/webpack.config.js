@@ -105,6 +105,17 @@ module.exports = function (webpackEnv) {
 
   const shouldUseReactRefresh = env.raw.FAST_REFRESH;
 
+  // Add this after env initialization
+  const htmlPluginOptions = {
+    inject: true,
+    template: paths.appHtml,
+    // Ensure these meta tags are replaced
+    templateParameters: {
+      'REACT_APP_META_TITLE': process.env.REACT_APP_META_TITLE || 'OneKey Update & Recovery Tool',
+      'REACT_APP_META_DESCRIPTION': process.env.REACT_APP_META_DESCRIPTION || 'Firmware update & recovery tool for OneKey hardware wallets.',
+    }
+  };
+
   // common function to get style loaders
   const getStyleLoaders = (cssOptions, preProcessor) => {
     const loaders = [
@@ -573,26 +584,26 @@ module.exports = function (webpackEnv) {
     ignoreWarnings: [/Failed to parse source map/],
     plugins: [
       // Generates an `index.html` file with the <script> injected.
-      new HtmlWebpackPlugin({
-        inject: true,
-        template: paths.appHtml,
-        ...(isEnvProduction
-          ? {
-              minify: {
-                removeComments: true,
-                collapseWhitespace: true,
-                removeRedundantAttributes: true,
-                useShortDoctype: true,
-                removeEmptyAttributes: true,
-                removeStyleLinkTypeAttributes: true,
-                keepClosingSlash: true,
-                minifyJS: true,
-                minifyCSS: true,
-                minifyURLs: true,
-              },
-            }
-          : undefined),
-      }),
+      new HtmlWebpackPlugin(
+        Object.assign(
+          {},
+          htmlPluginOptions,
+          {
+            minify: {
+              removeComments: true,
+              collapseWhitespace: true,
+              removeRedundantAttributes: true,
+              useShortDoctype: true,
+              removeEmptyAttributes: true,
+              removeStyleLinkTypeAttributes: true,
+              keepClosingSlash: true,
+              minifyJS: true,
+              minifyCSS: true,
+              minifyURLs: true,
+            },
+          }
+        )
+      ),
       // Inlines the webpack runtime script. This script is too small to warrant
       // a network request.
       // https://github.com/facebook/create-react-app/issues/5358
