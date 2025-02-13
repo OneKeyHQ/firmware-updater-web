@@ -105,7 +105,6 @@ module.exports = function (webpackEnv) {
 
   const shouldUseReactRefresh = env.raw.FAST_REFRESH;
 
-
   // common function to get style loaders
   const getStyleLoaders = (cssOptions, preProcessor) => {
     const loaders = [
@@ -578,8 +577,11 @@ module.exports = function (webpackEnv) {
         inject: true,
         template: paths.appHtml,
         templateParameters: {
-          'REACT_APP_META_TITLE': process.env.REACT_APP_META_TITLE || 'OneKey Update & Recovery Tool',
-          'REACT_APP_META_DESCRIPTION': process.env.REACT_APP_META_DESCRIPTION || 'Firmware update & recovery tool for OneKey hardware wallets.',
+          REACT_APP_META_TITLE:
+            process.env.REACT_APP_META_TITLE || 'OneKey 升级及恢复工具',
+          REACT_APP_META_DESCRIPTION:
+            process.env.REACT_APP_META_DESCRIPTION ||
+            'OneKey 硬件钱包固件升级及恢复工具',
         },
         ...(isEnvProduction
           ? {
