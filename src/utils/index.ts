@@ -72,7 +72,8 @@ export const getFirmwareUpdateFieldArray = (
   if (
     deviceType === 'classic' ||
     deviceType === 'classic1s' ||
-    deviceType === 'mini'
+    deviceType === 'mini' ||
+    deviceType === 'classicpure'
   ) {
     return ['firmware-v5'];
   }
