@@ -16,27 +16,21 @@
   <!-- Open Graph Meta Tags -->
   <meta name="og:title" content="<%= REACT_APP_META_TITLE %>">
   <meta property="og:description" content="<%= REACT_APP_META_DESCRIPTION %>">
-  <meta property="og:image"
-    content="https://asset.onekey-asset.com/portal/92fa2564973b6c63bc08a3b0aacbf1896814244b/og/og4.jpg">
+  <meta property="og:image" content="%PUBLIC_URL%/static/og.jpg">
 
   <!-- Twitter Meta Tags -->
   <meta name="twitter:title" content="<%= REACT_APP_META_TITLE %>">
   <meta property="twitter:description" content="<%= REACT_APP_META_DESCRIPTION %>">
-  <meta name="twitter:image"
-    content="https://asset.onekey-asset.com/portal/92fa2564973b6c63bc08a3b0aacbf1896814244b/og/og4.jpg">
+  <meta name="twitter:image" content="%PUBLIC_URL%/static/og.jpg">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:creator" content="@OneKeyHQ">
   <meta name="twitter:site" content="@OneKeyHQ">
 
   <!-- Favicon and App Icons -->
   <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
-  <link rel="icon"
-    href="https://asset.onekey-asset.com/portal/92fa2564973b6c63bc08a3b0aacbf1896814244b/favicon-32x32.png?v=d5bfede322de37acb768e4cc259716f3"
-    type="image/png">
-  <link rel="apple-touch-icon" sizes="192x192"
-    href="https://asset.onekey-asset.com/portal/92fa2564973b6c63bc08a3b0aacbf1896814244b/icon/android-chrome-192x192.png?v=d5bfede322de37acb768e4cc259716f3">
-  <link rel="apple-touch-icon" sizes="512x512"
-    href="https://asset.onekey-asset.com/portal/92fa2564973b6c63bc08a3b0aacbf1896814244b/icon/android-chrome-512x512.png?v=d5bfede322de37acb768e4cc259716f3">
+  <link rel="icon" href="%PUBLIC_URL%/static/favicon-32x32.png" type="image/png">
+  <link rel="apple-touch-icon" sizes="192x192" href="%PUBLIC_URL%/static/android-chrome-192x192.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="%PUBLIC_URL%/static/android-chrome-512x512.png">
 
   <!--
       Notice the use of %PUBLIC_URL% in the tags above.
@@ -47,7 +41,9 @@
       work correctly both with client-side routing and a non-root public URL.
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
-  <title>%REACT_APP_META_TITLE%</title>
+  <title>
+    <%= REACT_APP_META_TITLE %>
+  </title>
 </head>
 
 <body>

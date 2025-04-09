@@ -216,7 +216,7 @@ class ServiceHardware {
 
   async getReleaseInfo() {
     const { data } = await axios.get<RemoteConfigResponse>(
-      `https://data.onekey.so/config.json?noCache=${new Date().getTime()}`
+      `https://data.onekey.so/pre-config.json?noCache=${new Date().getTime()}`
     );
 
     const deviceMap = {
@@ -226,6 +226,7 @@ class ServiceHardware {
       touch: data.touch,
       pro: data.pro,
       unknown: data.unknown,
+      classicpure: data.classicpure,
     };
     store.dispatch(setReleaseMap(deviceMap));
 
