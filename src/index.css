@@ -1,3 +1,25 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* 日志内容样式 */
+.changelog-content ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+}
+
+.changelog-content li {
+  margin-bottom: 0.25rem;
+}
+
+.changelog-content p {
+  margin-bottom: 0.5rem;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  line-clamp: 3;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

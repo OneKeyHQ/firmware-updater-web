@@ -51,7 +51,7 @@ export const getFirmwareUpdateField = (
     deviceType === 'classic1s' ||
     deviceType === 'mini'
   ) {
-    return 'firmware-v5';
+    return 'firmware-v6';
   }
 
   if (deviceType === 'touch') {
@@ -63,7 +63,7 @@ export const getFirmwareUpdateField = (
 export const getFirmwareUpdateFieldArray = (
   features: Features,
   updateType: 'firmware' | 'ble' | 'bootloader'
-): ('firmware' | 'ble' | 'firmware-v2' | 'firmware-v5')[] => {
+): ('firmware' | 'ble' | 'firmware-v2' | 'firmware-v6')[] => {
   const deviceType = getDeviceType(features);
   if (updateType === 'ble') {
     return ['ble'];
@@ -75,25 +75,25 @@ export const getFirmwareUpdateFieldArray = (
     deviceType === 'mini' ||
     deviceType === 'classicpure'
   ) {
-    return ['firmware-v5'];
+    return ['firmware-v6'];
   }
 
   if (deviceType === 'touch') {
     const currentVersion = getDeviceFirmwareVersion(features).join('.');
     if (semver.gt(currentVersion, '4.0.0')) {
-      return ['firmware-v5', 'firmware'];
+      return ['firmware-v6', 'firmware'];
     }
     if (semver.gte(currentVersion, '4.0.0')) {
       return ['firmware-v2', 'firmware'];
     }
     if (!currentVersion || semver.lt(currentVersion, '3.0.0')) {
-      return ['firmware-v5', 'firmware-v2', 'firmware'];
+      return ['firmware-v6', 'firmware-v2', 'firmware'];
     }
     return ['firmware'];
   }
 
   if (deviceType === 'pro') {
-    return ['firmware-v5'];
+    return ['firmware-v6'];
   }
 
   return ['firmware'];

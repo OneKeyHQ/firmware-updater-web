@@ -93,7 +93,7 @@ export default function ReleaseInfo() {
           </nav>
         </div>
       </div>
-      <Table tabType={currentTab} />
+      <Table tabType={currentTab as TabType} />
       <UploadFirmware />
       {selectedUploadType && (
         <div className="mb-4">
