@@ -123,6 +123,7 @@
   "TR_HOME": "官网",
   "TR_INIT": "初始化中，请稍候（请确保设备已退出休眠模式）",
   "TR_INSTALL": "安装固件",
+  "TR_TRANSFER_DATA": "传输数据中...",
   "TR_INSTALLING": "安装中",
   "TR_INSTALL_ERROR_OCCURRED": "固件安装过程中发生错误：{error}",
   "TR_INSTRUCTION_TO_SKIP_OR_WIPE": "您可能会跳过设置过程，继续钱包或擦除设备，以重新进行启动过程。",

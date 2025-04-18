@@ -123,6 +123,7 @@
   "TR_HOME": "Home",
   "TR_INIT": "Initializing, please wait (please make sure the device has exited sleep mode)",
   "TR_INSTALL": "Install",
+  "TR_TRANSFER_DATA": "Transferring data...",
   "TR_INSTALLING": "Installing...",
   "TR_INSTALL_ERROR_OCCURRED": "Error occurred during firmware install: {error}",
   "TR_INSTRUCTION_TO_SKIP_OR_WIPE": "You might skip setup and continue to wallet or wipe your device to be able to go through the onboarding process again.",

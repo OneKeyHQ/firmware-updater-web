@@ -37,6 +37,9 @@ export const wait = (ms: number) =>
     setTimeout(resolve, ms);
   });
 
+/**
+ * @deprecated
+ */
 export const getFirmwareUpdateField = (
   features: Features,
   updateType: 'firmware' | 'ble'

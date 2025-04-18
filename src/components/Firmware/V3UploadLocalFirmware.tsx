@@ -1,22 +1,20 @@
 import React, { useCallback, useRef } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
 import { Button } from '@onekeyfe/ui-components';
 import {
-  setV3UpdateSelections,
-  setSelectedV3Component,
-} from '@/store/reducers/runtime';
-import { RootState } from '@/store';
+  useV3Components,
+  V3ComponentType,
+  getAllV3ComponentTypes,
+} from '@/utils/v3FirmwareUtils';
 
-export default function V3UploadFirmware() {
+const V3UploadLocalFirmware: React.FC = () => {
   const intl = useIntl();
-  const dispatch = useDispatch();
-  const v3UpdateSelections = useSelector(
-    (state: RootState) => state.runtime.v3UpdateSelections
-  );
-  const selectedV3Components = useSelector(
-    (state: RootState) => state.runtime.selectedV3Components
-  );
+  const {
+    v3UpdateSelections,
+    selectedV3Components,
+    toggleComponentSelection,
+    getComponentTypeText,
+  } = useV3Components();
 
   // Create individual refs for input elements
   const fwRef = useRef<HTMLInputElement>(null);
@@ -44,7 +42,7 @@ export default function V3UploadFirmware() {
   }>({});
 
   const handleLocalFileSelect = useCallback(
-    (componentType: 'fw' | 'ble' | 'boot' | 'resource') => {
+    (componentType: V3ComponentType) => {
       // Use the ref to trigger the file input click
       if (fileInputRefs[componentType]?.current) {
         fileInputRefs[componentType]?.current?.click();
@@ -54,22 +52,15 @@ export default function V3UploadFirmware() {
   );
 
   const handleSourceSelect = useCallback(
-    (
-      componentType: 'fw' | 'ble' | 'boot' | 'resource',
-      source: 'remote' | 'local',
-      file?: File
-    ) => {
-      // Get current selection state to preserve information
-      const currentSelection = v3UpdateSelections[componentType] || {};
-
-      if (source === 'local' && file) {
+    (componentType: V3ComponentType, file?: File) => {
+      if (file) {
         console.log(`handleSourceSelect for ${componentType} with file:`, {
           name: file.name,
           size: file.size,
           type: file.type,
         });
 
-        // Store file information and file object
+        // Store file information
         const fileInfo = {
           name: file.name,
           size: file.size,
@@ -80,24 +71,11 @@ export default function V3UploadFirmware() {
         // Store actual file object in the ref
         fileObjectsRef.current[componentType] = file;
 
-        dispatch(
-          setV3UpdateSelections({
-            [componentType]: {
-              ...currentSelection,
-              source,
-              fileInfo,
-              // Don't store file in Redux state
-            },
-          })
-        );
-
-        // Select the component
-        dispatch(
-          setSelectedV3Component({ component: componentType, selected: true })
-        );
+        // Update Redux state with file info (but not the actual file)
+        toggleComponentSelection(componentType, 'local', undefined, fileInfo);
       }
     },
-    [dispatch, v3UpdateSelections]
+    [toggleComponentSelection]
   );
 
   // Expose the file objects for other components to access
@@ -107,9 +85,7 @@ export default function V3UploadFirmware() {
   }, []);
 
   // Generate button labels for each component type
-  const getButtonLabel = (
-    componentType: 'fw' | 'ble' | 'boot' | 'resource'
-  ) => {
+  const getButtonLabel = (componentType: V3ComponentType) => {
     switch (componentType) {
       case 'fw':
         return (
@@ -138,26 +114,6 @@ export default function V3UploadFirmware() {
     }
   };
 
-  // Get component type display text
-  const getComponentTypeText = (
-    componentType: 'fw' | 'ble' | 'boot' | 'resource'
-  ) => {
-    switch (componentType) {
-      case 'fw':
-        return intl.formatMessage({ id: 'TR_FIRMWARE' }) || '固件';
-      case 'ble':
-        return (
-          intl.formatMessage({ id: 'TR_BLUETOOTH_FIRMWARE' }) || '蓝牙固件'
-        );
-      case 'boot':
-        return intl.formatMessage({ id: 'TR_BOOTLOADER' }) || 'Bootloader';
-      case 'resource':
-        return intl.formatMessage({ id: 'TR_RESOURCE' }) || '资源文件';
-      default:
-        return componentType;
-    }
-  };
-
   // Render Button using React.createElement to avoid JSX type errors
   const renderButton = (onClick: () => void, children: React.ReactNode) =>
     React.createElement(Button, { onClick }, children);
@@ -174,7 +130,7 @@ export default function V3UploadFirmware() {
       </p>
 
       <div className="mt-5 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-2">
-        {(['fw', 'ble', 'boot', 'resource'] as const).map((componentType) => {
+        {getAllV3ComponentTypes().map((componentType) => {
           const selection = v3UpdateSelections[componentType] || {};
           const isSelected = selectedV3Components.includes(componentType);
 
@@ -208,7 +164,7 @@ export default function V3UploadFirmware() {
                           size: file.size,
                           type: file.type,
                         });
-                        handleSourceSelect(componentType, 'local', file);
+                        handleSourceSelect(componentType, file);
                       }
                     }}
                   />
@@ -224,24 +180,12 @@ export default function V3UploadFirmware() {
                         className="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
                         checked={isSelected && selection.source === 'local'}
                         onChange={() => {
-                          // Toggle selection state on checkbox click
-                          if (isSelected && selection.source === 'local') {
-                            // If already selected, deselect
-                            dispatch(
-                              setSelectedV3Component({
-                                component: componentType,
-                                selected: false,
-                              })
-                            );
-                          } else if (fileObjectsRef.current[componentType]) {
-                            // If has file, select
-                            dispatch(
-                              setSelectedV3Component({
-                                component: componentType,
-                                selected: true,
-                              })
-                            );
-                          }
+                          toggleComponentSelection(
+                            componentType,
+                            'local',
+                            undefined,
+                            selection.fileInfo
+                          );
                         }}
                       />
                       <label
@@ -260,4 +204,6 @@ export default function V3UploadFirmware() {
       </div>
     </div>
   );
-}
+};
+
+export default V3UploadLocalFirmware;

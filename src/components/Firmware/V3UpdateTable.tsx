@@ -1,18 +1,15 @@
 import React, { useMemo, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
 import semver from 'semver';
 import { RootState } from '@/store';
-import {
-  setV3UpdateSelections,
-  setSelectedV3Component,
-} from '@/store/reducers/runtime';
 import { getDeviceType, getDeviceBootloaderVersion } from '@onekeyfe/hd-core';
 import type { IFirmwareReleaseInfo, IBLEFirmwareReleaseInfo } from '@/types';
 import { marked } from 'marked';
+import { useV3Components, V3ComponentType } from '@/utils/v3FirmwareUtils';
 
 interface ComponentItem {
-  type: 'fw' | 'ble' | 'boot';
+  type: V3ComponentType;
   title: string;
   description: string;
   latestVersion: string;
@@ -24,18 +21,18 @@ interface ComponentItem {
   downloadUrl?: string;
 }
 
-const V3UpdateTable = () => {
+const V3UpdateTable: React.FC = () => {
   const intl = useIntl();
-  const dispatch = useDispatch();
-  const device = useSelector((state: RootState) => state.runtime.device);
+  const {
+    device,
+    v3UpdateSelections,
+    selectedV3Components,
+    toggleComponentSelection,
+    getComponentTypeText,
+  } = useV3Components();
+
   const releaseMap = useSelector(
     (state: RootState) => state.runtime.releaseMap
-  );
-  const v3UpdateSelections = useSelector(
-    (state: RootState) => state.runtime.v3UpdateSelections
-  );
-  const selectedV3Components = useSelector(
-    (state: RootState) => state.runtime.selectedV3Components
   );
   const locale = useSelector((state: RootState) => state.runtime.locale);
 
@@ -202,7 +199,7 @@ const V3UpdateTable = () => {
     }
 
     return {
-      type: 'resource' as const,
+      type: 'resource' as V3ComponentType,
       title: intl.formatMessage({ id: 'TR_RESOURCE' }) || '资源',
       description: '资源文件',
       latestVersion: resourceVersion,
@@ -210,6 +207,108 @@ const V3UpdateTable = () => {
       downloadUrl: resourceUrl,
     };
   }, [device, releaseMap, isV3Supported, intl]);
+
+  // Render component row with its changelog row if expanded
+  const renderComponentRow = (component: ComponentItem) => {
+    const selection = v3UpdateSelections[component.type] || {};
+    const isSelected = selectedV3Components.includes(component.type);
+    const isExpanded = expandedChangelogs[component.type];
+
+    return [
+      <tr
+        key={`component-${component.type}`}
+        style={{
+          backgroundColor:
+            isSelected && selection.source === 'remote' ? '#dff7e6' : 'white',
+        }}
+      >
+        <td className="px-3 py-4 text-sm text-gray-800 w-28">
+          {getComponentTypeText(component.type)}
+        </td>
+        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
+          <div className="flex flex-col">
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id={`v3-component-${component.type}`}
+                className="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+                checked={isSelected && selection.source === 'remote'}
+                onChange={() => {
+                  toggleComponentSelection(
+                    component.type,
+                    'remote',
+                    component.latestVersion
+                  );
+                }}
+              />
+              <label
+                htmlFor={`v3-component-${component.type}`}
+                className="ml-3 block text-sm font-medium text-gray-900"
+              >
+                {component.latestVersion}
+              </label>
+            </div>
+          </div>
+        </td>
+        <td className="px-3 py-4 text-sm text-gray-800">
+          {component.changelog &&
+            (component.changelog.length < 100 ? (
+              <div
+                className="changelog-content"
+                // eslint-disable-next-line react/no-danger
+                dangerouslySetInnerHTML={{
+                  __html: marked.parse(component.changelog),
+                }}
+              />
+            ) : (
+              <button
+                type="button"
+                className="flex items-center text-sm text-brand-600 hover:text-brand-500 focus:outline-none"
+                onClick={() => toggleChangelog(component.type)}
+              >
+                <svg
+                  className={`h-5 w-5 mr-1 transform ${
+                    isExpanded ? 'rotate-90' : ''
+                  } transition-transform duration-200`}
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                {isExpanded
+                  ? intl.formatMessage({
+                      id: 'TR_HIDE_CHANGELOG',
+                    }) || '收起日志'
+                  : intl.formatMessage({
+                      id: 'TR_SHOW_CHANGELOG',
+                    }) || '展开日志'}
+              </button>
+            ))}
+        </td>
+      </tr>,
+      isExpanded && component.changelog && (
+        <tr key={`changelog-${component.type}`}>
+          <td
+            colSpan={3}
+            className="whitespace-nowrap px-3 py-4 text-sm text-gray-800"
+          >
+            <div
+              className="changelog-content"
+              // eslint-disable-next-line react/no-danger
+              dangerouslySetInnerHTML={{
+                __html: marked.parse(component.changelog),
+              }}
+            />
+          </td>
+        </tr>
+      ),
+    ].filter(Boolean);
+  };
 
   return (
     <div className="px-4 sm:px-6 lg:px-8">
@@ -242,165 +341,8 @@ const V3UpdateTable = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 bg-white">
-                  {availableComponents.map((component) => {
-                    const selection = v3UpdateSelections[component.type] || {};
-                    const isSelected = selectedV3Components.includes(
-                      component.type
-                    );
-                    const isExpanded = expandedChangelogs[component.type];
+                  {availableComponents.flatMap(renderComponentRow)}
 
-                    // 获取组件类型显示文本
-                    let componentTypeText = '';
-                    switch (component.type) {
-                      case 'fw':
-                        componentTypeText = intl.formatMessage({
-                          id: 'TR_FIRMWARE',
-                        });
-                        break;
-                      case 'ble':
-                        componentTypeText = intl.formatMessage({
-                          id: 'TR_BLUETOOTH_FIRMWARE',
-                        });
-                        break;
-                      case 'boot':
-                        componentTypeText = intl.formatMessage({
-                          id: 'TR_BOOTLOADER',
-                        });
-                        break;
-                      default:
-                        componentTypeText = component.type;
-                    }
-
-                    return (
-                      <>
-                        <tr
-                          style={{
-                            backgroundColor:
-                              isSelected && selection.source === 'remote'
-                                ? '#dff7e6'
-                                : 'white',
-                          }}
-                        >
-                          <td className="px-3 py-4 text-sm text-gray-800 w-28">
-                            {componentTypeText}
-                          </td>
-                          <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
-                            <div className="flex flex-col">
-                              <div className="flex items-center">
-                                <input
-                                  type="checkbox"
-                                  id={`v3-component-${component.type}`}
-                                  className="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
-                                  checked={
-                                    isSelected && selection.source === 'remote'
-                                  }
-                                  onChange={() => {
-                                    // 可以取消勾选，二次点击就是取消
-                                    const currentSelection =
-                                      v3UpdateSelections[component.type] || {};
-
-                                    // 如果当前已选中且来源是远程，则取消选择
-                                    if (
-                                      isSelected &&
-                                      selection.source === 'remote'
-                                    ) {
-                                      dispatch(
-                                        setSelectedV3Component({
-                                          component: component.type,
-                                          selected: false,
-                                        })
-                                      );
-                                    } else {
-                                      // 否则选中并设置为远程源
-                                      dispatch(
-                                        setV3UpdateSelections({
-                                          [component.type]: {
-                                            ...currentSelection,
-                                            source: 'remote',
-                                            version: component.latestVersion,
-                                          },
-                                        })
-                                      );
-                                      dispatch(
-                                        setSelectedV3Component({
-                                          component: component.type,
-                                          selected: true,
-                                        })
-                                      );
-                                    }
-                                  }}
-                                />
-                                <label
-                                  htmlFor={`v3-component-${component.type}`}
-                                  className="ml-3 block text-sm font-medium text-gray-900"
-                                >
-                                  {component.latestVersion}
-                                </label>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-3 py-4 text-sm text-gray-800">
-                            {component.changelog &&
-                              (component.changelog.length < 100 ? (
-                                <div
-                                  className="changelog-content"
-                                  // eslint-disable-next-line react/no-danger
-                                  dangerouslySetInnerHTML={{
-                                    __html: marked.parse(component.changelog),
-                                  }}
-                                />
-                              ) : (
-                                <button
-                                  type="button"
-                                  className="flex items-center text-sm text-brand-600 hover:text-brand-500 focus:outline-none"
-                                  onClick={() =>
-                                    toggleChangelog(component.type)
-                                  }
-                                >
-                                  <svg
-                                    className={`h-5 w-5 mr-1 transform ${
-                                      isExpanded ? 'rotate-90' : ''
-                                    } transition-transform duration-200`}
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    viewBox="0 0 20 20"
-                                    fill="currentColor"
-                                  >
-                                    <path
-                                      fillRule="evenodd"
-                                      d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                                      clipRule="evenodd"
-                                    />
-                                  </svg>
-                                  {isExpanded
-                                    ? intl.formatMessage({
-                                        id: 'TR_HIDE_CHANGELOG',
-                                      }) || '收起日志'
-                                    : intl.formatMessage({
-                                        id: 'TR_SHOW_CHANGELOG',
-                                      }) || '展开日志'}
-                                </button>
-                              ))}
-                          </td>
-                        </tr>
-                        {isExpanded && component.changelog && (
-                          <tr>
-                            <td
-                              colSpan={3}
-                              className="whitespace-nowrap px-3 py-4 text-sm text-gray-800"
-                            >
-                              <div
-                                className="changelog-content"
-                                // eslint-disable-next-line react/no-danger
-                                dangerouslySetInnerHTML={{
-                                  __html: marked.parse(component.changelog),
-                                }}
-                              />
-                            </td>
-                          </tr>
-                        )}
-                      </>
-                    );
-                  })}
                   {/* Resource row */}
                   {resourceItem && (
                     <tr
@@ -427,36 +369,11 @@ const V3UpdateTable = () => {
                               v3UpdateSelections.resource?.source === 'remote'
                             }
                             onChange={() => {
-                              const currentSelection =
-                                v3UpdateSelections.resource || {};
-
-                              if (
-                                selectedV3Components.includes('resource') &&
-                                v3UpdateSelections.resource?.source === 'remote'
-                              ) {
-                                dispatch(
-                                  setSelectedV3Component({
-                                    component: 'resource',
-                                    selected: false,
-                                  })
-                                );
-                              } else {
-                                dispatch(
-                                  setV3UpdateSelections({
-                                    resource: {
-                                      ...currentSelection,
-                                      source: 'remote',
-                                      version: resourceItem.latestVersion,
-                                    },
-                                  })
-                                );
-                                dispatch(
-                                  setSelectedV3Component({
-                                    component: 'resource',
-                                    selected: true,
-                                  })
-                                );
-                              }
+                              toggleComponentSelection(
+                                'resource',
+                                'remote',
+                                resourceItem.latestVersion
+                              );
                             }}
                           />
                           <label

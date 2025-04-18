@@ -1,25 +1,23 @@
 import React, { FC, useState, useCallback } from 'react';
-import { useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
-import { RootState, store } from '@/store';
+import { store } from '@/store';
 import { serviceHardware } from '@/hardware';
 import { setShowErrorAlert } from '@/store/reducers/firmware';
 import { Button } from '@onekeyfe/ui-components';
+import { useV3Components } from '@/utils/v3FirmwareUtils';
 
 interface V3FirmwareConfirmUpdateProps {
   clearTimer?: () => void;
 }
 
-const V3FirmwareConfirmUpdate: FC<V3FirmwareConfirmUpdateProps> = ({ clearTimer }) => {
+/**
+ * Component for confirming firmware updates using the V3 update protocol
+ */
+const V3FirmwareConfirmUpdate: FC<V3FirmwareConfirmUpdateProps> = ({
+  clearTimer,
+}) => {
   const intl = useIntl();
-  const device = useSelector((state: RootState) => state.runtime.device);
-  const tabType = useSelector((state: RootState) => state.runtime.currentTab);
-  const selectedV3Components = useSelector(
-    (state: RootState) => state.runtime.selectedV3Components
-  );
-  const v3UpdateSelections = useSelector(
-    (state: RootState) => state.runtime.v3UpdateSelections
-  );
+  const { device, currentTabComponents } = useV3Components();
   const [confirmProtocol, setConfirmProtocol] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
 
@@ -33,18 +31,8 @@ const V3FirmwareConfirmUpdate: FC<V3FirmwareConfirmUpdateProps> = ({ clearTimer 
     }
 
     try {
-      const currentTabComponents = selectedV3Components.filter((component) => {
-        const isV3Tab = tabType === 'v3-remote' || tabType === 'v3-local';
-        if (!isV3Tab) return false;
-
-        return tabType === 'v3-remote'
-          ? v3UpdateSelections[component]?.source === 'remote'
-          : v3UpdateSelections[component]?.source === 'local';
-      });
-
       console.log('Processing components for current tab', {
         currentTabComponents,
-        tabType,
       });
 
       await serviceHardware.firmwareUpdateV3();
@@ -62,23 +50,10 @@ const V3FirmwareConfirmUpdate: FC<V3FirmwareConfirmUpdateProps> = ({ clearTimer 
     } finally {
       setIsUpdating(false);
     }
-  }, [
-    clearTimer,
-    selectedV3Components,
-    v3UpdateSelections,
-    tabType,
-    isUpdating,
-  ]);
+  }, [clearTimer, currentTabComponents, isUpdating]);
 
   const isDisabled = () => {
-    const currentTabComponents = selectedV3Components.filter((component) =>
-      tabType === 'v3-remote'
-        ? v3UpdateSelections[component]?.source === 'remote'
-        : v3UpdateSelections[component]?.source === 'local'
-    );
-
     const hasComponentsSelectedInCurrentTab = currentTabComponents.length > 0;
-
     return (
       !device ||
       !hasComponentsSelectedInCurrentTab ||

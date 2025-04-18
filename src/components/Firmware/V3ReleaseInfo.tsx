@@ -1,25 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { useIntl } from 'react-intl';
 import { Alert } from '@onekeyfe/ui-components';
-import { RootState } from '@/store';
 import { setSelectedUploadType, setCurrentTab } from '@/store/reducers/runtime';
+import { useV3Components } from '@/utils/v3FirmwareUtils';
 
 import V3UpdateTable from './V3UpdateTable';
 import V3UploadLocalFirmware from './V3UploadLocalFirmware';
 
 export type V3TabType = 'v3-remote' | 'v3-local';
 
-const V3ReleaseInfo = () => {
+const V3ReleaseInfo: React.FC = () => {
   const intl = useIntl();
-  const currentTab = useSelector(
-    (state: RootState) => state.runtime.currentTab
-  ) as V3TabType;
+  const { device, currentTabComponents, tabType } = useV3Components();
   const dispatch = useDispatch();
-  const selectedV3Components = useSelector(
-    (state: RootState) => state.runtime.selectedV3Components
-  );
-  const device = useSelector((state: RootState) => state.runtime.device);
 
   const [tabs] = useState<{ name: string; key: V3TabType }[]>([
     {
@@ -34,6 +28,7 @@ const V3ReleaseInfo = () => {
 
   // Check if we have a connected device
   const isDeviceConnected = !!device?.features;
+
   // Handle tab changes
   const handleTabChange = (tabKey: V3TabType) => {
     console.log('Switching to tab:', tabKey);
@@ -42,7 +37,7 @@ const V3ReleaseInfo = () => {
   };
 
   // Helper to check if the current tab is valid
-  const isValidTab = currentTab === 'v3-remote' || currentTab === 'v3-local';
+  const isValidTab = tabType === 'v3-remote' || tabType === 'v3-local';
 
   // Set default tab if current tab is not valid
   useEffect(() => {
@@ -57,6 +52,17 @@ const V3ReleaseInfo = () => {
     type: 'error' | 'success' | 'info' | 'warning'
   ) => React.createElement(Alert, { title, type });
 
+  // Render the appropriate content based on tab type
+  const renderTabContent = () => {
+    if (tabType === 'v3-remote') {
+      return <V3UpdateTable />;
+    }
+    if (tabType === 'v3-local') {
+      return <V3UploadLocalFirmware />;
+    }
+    return null;
+  };
+
   return (
     <div>
       <div className="hidden sm:block">
@@ -67,11 +73,11 @@ const V3ReleaseInfo = () => {
                 key={tab.name}
                 type="button"
                 className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${
-                  currentTab === tab.key
+                  tabType === tab.key
                     ? 'border-brand-500 text-brand-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
-                aria-current={tab.key === currentTab ? 'page' : undefined}
+                aria-current={tab.key === tabType ? 'page' : undefined}
                 onClick={() => handleTabChange(tab.key)}
               >
                 {tab.name}
@@ -91,12 +97,9 @@ const V3ReleaseInfo = () => {
         </div>
       )}
 
-      <div className="mt-4">
-        {currentTab === 'v3-remote' && <V3UpdateTable />}
-        {currentTab === 'v3-local' && <V3UploadLocalFirmware />}
-      </div>
+      <div className="mt-4">{renderTabContent()}</div>
 
-      {selectedV3Components.length > 0 && (
+      {currentTabComponents.length > 0 && (
         <div className="mb-4">
           {renderAlert(
             intl.formatMessage({ id: 'TR_WARNING_BEFORE_INSTALL' }),
