@@ -2,7 +2,11 @@ import React, { useState, useEffect, useCallback, FC } from 'react';
 import { marked } from 'marked';
 import { useSelector, useDispatch } from 'react-redux';
 import { useIntl } from 'react-intl';
-import { IDeviceType, Features } from '@onekeyfe/hd-core';
+import {
+  IDeviceType,
+  Features,
+  getFirmwareUpdateFieldArray,
+} from '@onekeyfe/hd-core';
 import { RootState } from '@/store';
 import {
   setSelectedReleaseInfo,
@@ -14,7 +18,6 @@ import {
   IFirmwareField,
 } from '@/types';
 import type { TabType } from './ReleaseInfo';
-import { getFirmwareUpdateFieldArray } from '../../utils';
 
 type DataSource = {
   version: string;
@@ -180,7 +183,8 @@ const Table: FC<{ tabType: TabType }> = ({ tabType }) => {
                           </label>
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-800">
-                          <p
+                          <div
+                            className="changelog-content"
                             // eslint-disable-next-line react/no-danger
                             dangerouslySetInnerHTML={{
                               __html:

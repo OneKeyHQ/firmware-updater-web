@@ -9,6 +9,19 @@ import {
 } from '@/types';
 import { getDefaultLocale } from '@/utils';
 
+interface FileInfo {
+  name: string;
+  size: number;
+  lastModified: number;
+  type: string;
+}
+
+interface ProV3ComponentSelection {
+  source: 'remote' | 'local';
+  fileInfo?: FileInfo;
+  version?: string;
+}
+
 type InitialState = {
   device: KnownDevice | null;
   pageStatus:
@@ -23,12 +36,20 @@ type InitialState = {
   bridgeReleaseMap: BridgeReleaseMap;
   selectedUploadType: 'firmware' | 'ble' | 'binary' | 'bootloader' | null;
   locale: 'zh-CN' | 'en-US';
-  currentTab: 'firmware' | 'ble' | 'bootloader';
+  currentTab: 'firmware' | 'ble' | 'bootloader' | 'v3-remote' | 'v3-local';
   installType: 'firmware' | 'bootloader';
   selectedReleaseInfo:
     | (IFirmwareReleaseInfo & { firmwareField: IFirmwareField })
     | (IBLEFirmwareReleaseInfo & { firmwareField: IFirmwareField })
     | null;
+  // V3 firmware update state
+  v3UpdateSelections: {
+    fw: ProV3ComponentSelection;
+    ble: ProV3ComponentSelection;
+    boot: ProV3ComponentSelection;
+    resource: ProV3ComponentSelection;
+  };
+  selectedV3Components: ('fw' | 'ble' | 'boot' | 'resource')[];
 };
 
 const initialState: InitialState = {
@@ -42,6 +63,13 @@ const initialState: InitialState = {
   currentTab: 'firmware',
   installType: 'firmware',
   selectedReleaseInfo: null,
+  v3UpdateSelections: {
+    fw: { source: 'remote' },
+    ble: { source: 'remote' },
+    boot: { source: 'remote' },
+    resource: { source: 'remote' },
+  },
+  selectedV3Components: [],
 };
 
 export const runtimeSlice = createSlice({
@@ -93,6 +121,31 @@ export const runtimeSlice = createSlice({
     ) {
       state.selectedReleaseInfo = action.payload;
     },
+    setV3UpdateSelections(
+      state,
+      action: PayloadAction<Partial<InitialState['v3UpdateSelections']>>
+    ) {
+      state.v3UpdateSelections = {
+        ...state.v3UpdateSelections,
+        ...action.payload,
+      };
+    },
+    setSelectedV3Component(
+      state,
+      action: PayloadAction<{
+        component: 'fw' | 'ble' | 'boot' | 'resource';
+        selected: boolean;
+      }>
+    ) {
+      const { component, selected } = action.payload;
+      if (selected && !state.selectedV3Components.includes(component)) {
+        state.selectedV3Components.push(component);
+      } else if (!selected) {
+        state.selectedV3Components = state.selectedV3Components.filter(
+          (c) => c !== component
+        );
+      }
+    },
   },
 });
 
@@ -107,6 +160,8 @@ export const {
   setCurrentTab,
   setInstallType,
   setSelectedReleaseInfo,
+  setV3UpdateSelections,
+  setSelectedV3Component,
 } = runtimeSlice.actions;
 
 export default runtimeSlice.reducer;

@@ -8,12 +8,12 @@ import {
   UI_EVENT,
   UI_REQUEST,
   UI_RESPONSE,
+  FirmwareUpdateV3Params,
 } from '@onekeyfe/hd-core';
 import { createDeferred, Deferred } from '@onekeyfe/hd-shared';
 import { store } from '@/store';
 import {
   setBridgeReleaseMap,
-  setBridgeVersion,
   setReleaseMap,
   setInstallType,
 } from '@/store/reducers/runtime';
@@ -30,8 +30,9 @@ import type {
   BridgeReleaseMap,
   IFirmwareField,
   RemoteConfigResponse,
+  IFirmwareReleaseInfo,
 } from '@/types';
-import { arrayBufferToBuffer, wait, getFirmwareUpdateField } from '@/utils';
+import { arrayBufferToBuffer, wait } from '@/utils';
 import {
   downloadBootloaderFirmware,
   downloadLegacyTouchFirmware,
@@ -40,6 +41,7 @@ import { formatMessage } from '@/locales';
 import { getHardwareSDKInstance } from './instance';
 
 let searchPromise: Deferred<void> | null = null;
+
 class ServiceHardware {
   scanMap: Record<string, boolean> = {};
 
@@ -121,24 +123,42 @@ class ServiceHardware {
                 break;
             }
           } else if (type === UI_REQUEST.FIRMWARE_PROGRESS) {
-            const progress = store.getState().firmware.progress;
-            if (
+            const { progress } = store.getState().firmware;
+            const { progress: payloadProgress, progressType } = payload;
+            // 'transferData' || 'installingFirmware'
+            if (progressType && progressType === 'transferData') {
+              store.dispatch(setMaxProgress(80));
+              if (
+                progress < 80 &&
+                payloadProgress >= 0 &&
+                payloadProgress < 100
+              ) {
+                // 80
+                store.dispatch(
+                  setUpdateTip(formatMessage({ id: 'TR_TRANSFER_DATA' }) ?? '')
+                );
+              } else if (payloadProgress === 100) {
+                // 80
+                store.dispatch(setUpdateTip(''));
+              }
+            } else if (
               progress < 99 &&
-              payload.progress >= 0 &&
-              payload.progress < 100
+              payloadProgress >= 0 &&
+              payloadProgress < 100
             ) {
               // 99
               store.dispatch(setMaxProgress(99));
               store.dispatch(
                 setUpdateTip(formatMessage({ id: 'TR_INSTALLING' }) ?? '')
               );
-            } else if (payload.progress === 100) {
+            } else if (payloadProgress === 100) {
               // 100
               store.dispatch(setMaxProgress(100));
               store.dispatch(setUpdateTip(''));
             }
           }
         });
+        this.registeredEvents = true;
       }
 
       return instance;
@@ -436,6 +456,247 @@ class ServiceHardware {
         setShowErrorAlert({
           type: 'error',
           message: formatMessage({ id: 'TR_FIRMWARE_INSTALLED_FAILED' }) ?? '',
+        })
+      );
+    }
+  }
+
+  /**
+   * Performs firmware update using the V3 update protocol
+   * This method handles components from the firmware-v6 configuration including:
+   * - Main firmware
+   * - BLE firmware
+   * - Bootloader
+   * - Resource files
+   */
+  async firmwareUpdateV3() {
+    const state = store.getState();
+    const hardwareSDK = await this.getSDKInstance();
+    const { device, selectedV3Components, v3UpdateSelections, currentTab } =
+      state.runtime;
+
+    // Basic validation
+    if (
+      !device?.deviceType ||
+      !['v3-remote', 'v3-local'].includes(currentTab)
+    ) {
+      store.dispatch(
+        setShowErrorAlert({
+          type: 'error',
+          message: '无效的设备或更新类型',
+        })
+      );
+      return;
+    }
+
+    // Determine which components are selected in the current tab
+    const filteredComponents = selectedV3Components.filter((component) =>
+      currentTab === 'v3-remote'
+        ? v3UpdateSelections[component]?.source === 'remote'
+        : v3UpdateSelections[component]?.source === 'local'
+    );
+
+    if (filteredComponents.length === 0) {
+      store.dispatch(
+        setShowErrorAlert({
+          type: 'error',
+          message:
+            formatMessage({ id: 'TR_NO_COMPONENTS_SELECTED' }) ||
+            '未选择任何组件',
+        })
+      );
+      return;
+    }
+
+    // Prepare update parameters
+    const updateParams: FirmwareUpdateV3Params = { platform: 'web' };
+
+    try {
+      // 处理远程固件更新
+      if (currentTab === 'v3-remote') {
+        const deviceType = device.deviceType;
+        const releaseInfo = state.runtime.releaseMap[deviceType];
+
+        // 获取固件字段配置键
+        const firmwareField = 'firmware-v6';
+
+        // 处理每个选中的组件
+        for (const component of filteredComponents) {
+          const selection = v3UpdateSelections[component];
+          if (!selection?.version && component !== 'resource') {
+            // 如果没有版本信息且不是资源组件，跳过此组件
+            break;
+          }
+
+          // 根据组件类型选择不同的处理方式
+          switch (component) {
+            case 'fw': {
+              // 固件处理
+              const fwReleaseInfo = releaseInfo[
+                firmwareField as keyof typeof releaseInfo
+              ] as IFirmwareReleaseInfo[] | undefined;
+              if (fwReleaseInfo && fwReleaseInfo.length > 0) {
+                updateParams.firmwareVersion = fwReleaseInfo[0].version;
+              }
+              break;
+            }
+            case 'ble': {
+              // BLE固件处理
+              const bleReleaseInfo = releaseInfo.ble;
+              if (bleReleaseInfo && bleReleaseInfo.length > 0) {
+                updateParams.bleVersion = bleReleaseInfo[0].version;
+              }
+              break;
+            }
+            case 'boot': {
+              // Bootloader处理
+              const fwReleaseInfo = releaseInfo[
+                firmwareField as keyof typeof releaseInfo
+              ] as IFirmwareReleaseInfo[] | undefined;
+              if (
+                fwReleaseInfo &&
+                fwReleaseInfo.length > 0 &&
+                fwReleaseInfo[0].bootloaderVersion
+              ) {
+                updateParams.bootloaderVersion =
+                  fwReleaseInfo[0].bootloaderVersion;
+              }
+              break;
+            }
+            case 'resource': {
+              // 资源文件处理
+              const fwReleaseInfo = releaseInfo[
+                firmwareField as keyof typeof releaseInfo
+              ] as IFirmwareReleaseInfo[] | undefined;
+              if (
+                fwReleaseInfo &&
+                fwReleaseInfo.length > 0 &&
+                fwReleaseInfo[0].resource
+              ) {
+                try {
+                  const resourceResponse = await fetch(
+                    fwReleaseInfo[0].resource
+                  );
+                  if (resourceResponse.ok) {
+                    updateParams.resourceBinary = arrayBufferToBuffer(
+                      await resourceResponse.arrayBuffer()
+                    );
+                  }
+                } catch (error) {
+                  console.error('下载资源文件失败:', error);
+                }
+              }
+              break;
+            }
+            default:
+              // skip
+              break;
+          }
+        }
+      }
+      // 处理本地文件更新
+      else if (currentTab === 'v3-local') {
+        const v3FileObjects = (window as any).v3FileObjects || {};
+
+        // 帮助函数：处理文件并返回 Buffer
+        const processFile = async (file: File) => {
+          if (!file) return null;
+
+          try {
+            const arrayBuffer = await new Promise<ArrayBuffer>(
+              (resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () =>
+                  reader.result
+                    ? resolve(reader.result as ArrayBuffer)
+                    : reject(new Error('Empty file'));
+                reader.onerror = () => reject(reader.error);
+                reader.readAsArrayBuffer(file);
+              }
+            );
+
+            return arrayBufferToBuffer(arrayBuffer);
+          } catch (error) {
+            console.error('处理文件失败:', error);
+            return null;
+          }
+        };
+
+        // 处理每个选中的组件
+        for (const component of filteredComponents) {
+          const file = v3FileObjects[component];
+          if (file) {
+            const buffer = await processFile(file);
+            if (buffer) {
+              // 根据组件类型设置不同的更新参数
+              switch (component) {
+                case 'fw':
+                  updateParams.firmwareBinary = buffer;
+                  break;
+                case 'ble':
+                  updateParams.bleBinary = buffer;
+                  break;
+                case 'boot':
+                  updateParams.bootloaderBinary = buffer;
+                  break;
+                case 'resource':
+                  updateParams.resourceBinary = buffer;
+                  break;
+                default:
+                  // 默认情况不做任何处理
+                  break;
+              }
+            }
+          }
+        }
+      }
+
+      // Verify there is something to update
+      if (!Object.keys(updateParams).some((k) => k !== 'platform')) {
+        throw new Error(
+          formatMessage({ id: 'TR_NO_FIRMWARE_TO_UPDATE' }) ||
+            '没有可更新的固件'
+        );
+      }
+
+      // Start update process
+      store.dispatch(setInstallType('firmware'));
+      store.dispatch(setProgress(0));
+      store.dispatch(setMaxProgress(0));
+      store.dispatch(setShowProgressBar(true));
+
+      console.log('=====> firmwareUpdateV3 updateParams', updateParams);
+
+      const response = await hardwareSDK.firmwareUpdateV3(
+        undefined,
+        updateParams
+      );
+
+      if (!response.success) {
+        throw new Error(
+          response.payload.code === 413
+            ? formatMessage({ id: 'TR_USE_DESKTOP_CLIENT_TO_INSTALL' }) || ''
+            : response.payload.error
+        );
+      }
+
+      store.dispatch(
+        setShowErrorAlert({
+          type: 'success',
+          message:
+            formatMessage({ id: 'TR_FIRMWARE_INSTALLED_SUCCESS' }) ||
+            '固件更新成功',
+        })
+      );
+    } catch (error) {
+      console.error('Firmware update error:', error);
+      store.dispatch(
+        setShowErrorAlert({
+          type: 'error',
+          message:
+            error instanceof Error
+              ? error.message
+              : formatMessage({ id: 'TR_FIRMWARE_INSTALLED_FAILED' }) || '',
         })
       );
     }
