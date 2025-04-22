@@ -556,7 +556,7 @@ class ServiceHardware {
         const deviceType = device.deviceType;
         const releaseInfo = state.runtime.releaseMap[deviceType];
 
-        // 获取固件字段配置键
+        // pro固件字段配置键
         const firmwareField = 'firmware-v6';
 
         // 处理每个选中的组件
@@ -577,6 +577,7 @@ class ServiceHardware {
               if (fwReleaseInfo && fwReleaseInfo.length > 0) {
                 updateParams.firmwareVersion = fwReleaseInfo[0].version;
               }
+              updateParams.forcedUpdateRes = true;
               break;
             }
             case 'ble': {
@@ -600,32 +601,6 @@ class ServiceHardware {
                 updateParams.bootloaderVersion =
                   fwReleaseInfo[0].bootloaderVersion;
               }
-              break;
-            }
-            case 'resource': {
-              updateParams.forcedUpdateRes = true;
-              // // 资源文件下载，应该交给SDK处理即可
-              // const fwReleaseInfo = releaseInfo[
-              //   firmwareField as keyof typeof releaseInfo
-              // ] as IFirmwareReleaseInfo[] | undefined;
-              // if (
-              //   fwReleaseInfo &&
-              //   fwReleaseInfo.length > 0 &&
-              //   fwReleaseInfo[0].resource
-              // ) {
-              //   try {
-              //     const resourceResponse = await fetch(
-              //       fwReleaseInfo[0].resource
-              //     );
-              //     if (resourceResponse.ok) {
-              //       updateParams.resourceBinary = arrayBufferToBuffer(
-              //         await resourceResponse.arrayBuffer()
-              //       );
-              //     }
-              //   } catch (error) {
-              //     console.error('下载资源文件失败:', error);
-              //   }
-              // }
               break;
             }
             default:

@@ -146,68 +146,6 @@ const V3UpdateTable: React.FC = () => {
     return components;
   }, [device, releaseMap, isV3Supported, locale, intl]);
 
-  // Get resource item if available
-  const resourceItem = useMemo(() => {
-    if (!device?.features || !isV3Supported) return null;
-
-    const deviceType = getDeviceType(device.features);
-
-    // 检查releaseMap中是否有资源信息
-    let resourceUrl = '';
-    let resourceVersion = '';
-
-    // 从firmware-v6数组的第一个元素中获取资源URL
-    if (releaseMap && deviceType) {
-      const firmwareV5 = releaseMap[deviceType]?.['firmware-v6'];
-      if (
-        firmwareV5 &&
-        Array.isArray(firmwareV5) &&
-        firmwareV5.length > 0 &&
-        firmwareV5[0]?.resource
-      ) {
-        resourceUrl = firmwareV5[0].resource;
-        // 从URL中提取版本信息
-        if (resourceUrl) {
-          const versionMatch = resourceUrl.match(
-            /res-([0-9]+(?:\.[0-9]+)*(?:-[0-9]+(?:\.[0-9]+)*))/i
-          );
-          if (versionMatch && versionMatch[1]) {
-            resourceVersion = versionMatch[1];
-            console.log(
-              'Extracted resource version from URL:',
-              resourceVersion
-            );
-          } else if (firmwareV5[0]?.version) {
-            // 如果无法从URL中提取版本，使用固件版本作为备选
-            const version = firmwareV5[0].version;
-            if (Array.isArray(version)) {
-              resourceVersion = version.join('.');
-              console.log(
-                'Using firmware version as resource version:',
-                resourceVersion
-              );
-            }
-          }
-        }
-      }
-    }
-
-    // 如果没有找到资源URL，则不提供资源选项
-    if (!resourceUrl) {
-      console.log('No resource URL found in firmware-v6');
-      return null;
-    }
-
-    return {
-      type: 'resource' as V3ComponentType,
-      title: intl.formatMessage({ id: 'TR_RESOURCE' }) || '资源',
-      description: '资源文件',
-      latestVersion: resourceVersion,
-      changelog: '',
-      downloadUrl: resourceUrl,
-    };
-  }, [device, releaseMap, isV3Supported, intl]);
-
   // Render component row with its changelog row if expanded
   const renderComponentRow = (component: ComponentItem) => {
     const selection = v3UpdateSelections[component.type] || {};
@@ -343,55 +281,6 @@ const V3UpdateTable: React.FC = () => {
                 <tbody className="divide-y divide-gray-200 bg-white">
                   {availableComponents.flatMap(renderComponentRow)}
 
-                  {/* Resource row */}
-                  {resourceItem && (
-                    <tr
-                      key="resource"
-                      style={{
-                        backgroundColor:
-                          selectedV3Components.includes('resource') &&
-                          v3UpdateSelections.resource?.source === 'remote'
-                            ? '#dff7e6'
-                            : 'white',
-                      }}
-                    >
-                      <td className="px-3 py-4 text-sm text-gray-800 w-28">
-                        {intl.formatMessage({ id: 'TR_RESOURCE' }) || '资源'}
-                      </td>
-                      <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
-                        <div className="flex items-center">
-                          <input
-                            type="checkbox"
-                            id="v3-component-resource"
-                            className="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
-                            checked={
-                              selectedV3Components.includes('resource') &&
-                              v3UpdateSelections.resource?.source === 'remote'
-                            }
-                            onChange={() => {
-                              toggleComponentSelection(
-                                'resource',
-                                'remote',
-                                resourceItem.latestVersion
-                              );
-                            }}
-                          />
-                          <label
-                            htmlFor="v3-component-resource"
-                            className="ml-3 block text-sm font-medium text-gray-900"
-                          >
-                            {resourceItem.latestVersion || ''}
-                          </label>
-                        </div>
-                      </td>
-                      <td className="px-3 py-4 text-sm text-gray-800">
-                        <div
-                          className="changelog-content"
-                          // eslint-disable-next-line react/no-danger
-                        />
-                      </td>
-                    </tr>
-                  )}
                   {availableComponents.length === 0 && (
                     <tr>
                       <td
