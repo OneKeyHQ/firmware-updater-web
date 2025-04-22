@@ -124,6 +124,10 @@ class ServiceHardware {
             }
           } else if (type === UI_REQUEST.FIRMWARE_PROGRESS) {
             const { progress } = store.getState().firmware;
+            const { showButtonAlert } = store.getState().firmware;
+            if (showButtonAlert) {
+              store.dispatch(setShowButtonAlert(false));
+            }
             const { progress: payloadProgress, progressType } = payload;
 
             // Define progress configuration based on progressType
