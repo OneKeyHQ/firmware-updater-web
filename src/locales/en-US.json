@@ -97,6 +97,7 @@
   "TR_FIRMWARE_BOOTLOADER_VERSION": "bootloader version",
   "TR_FIRMWARE_DELETE_FILE": "delete", 
   "TR_FIRMWARE_FROM_LOCALE_FILE": "select from local file",
+  "TR_SELECT_AT_LEAST_ONE_COMPONENT": "Please select at least one component (firmware, bluetooth firmware or bootloader) for installation",
   "TR_FIRMWARE_HEADING": "Install Firmware",
   "TR_BOOTLOADER_HEADING": "Install Bootloader",
   "TR_FIRMWARE_INSTALLED": "Perfect. The newest firmware is installed. Time to continue",

@@ -98,6 +98,7 @@
   "TR_FIRMWARE_DELETE_FILE": "删除文件",
   "TR_FIRMWARE_FROM_LOCALE_FILE": "选择本地文件",
   "TR_FIRMWARE_HEADING": "安装固件",
+  "TR_SELECT_AT_LEAST_ONE_COMPONENT": "请至少选择一个固件组件（固件、蓝牙固件或Bootloader）进行安装",
   "TR_BOOTLOADER_HEADING": "安装固件引导程序",
   "TR_FIRMWARE_INSTALLED": "完美！您的设备已经安装了最新的固件。可以继续操作。",
   "TR_FIRMWARE_INSTALLED_TEXT": "固件版本： {version}",

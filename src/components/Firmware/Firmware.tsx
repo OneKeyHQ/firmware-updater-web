@@ -3,7 +3,7 @@ import { FC, useState, useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import semver from 'semver';
 import { useIntl } from 'react-intl';
-import { RootState, store } from '@/store';
+import { RootState } from '@/store';
 import { Button, Alert, Link } from '@onekeyfe/ui-components';
 import {
   getDeviceType,

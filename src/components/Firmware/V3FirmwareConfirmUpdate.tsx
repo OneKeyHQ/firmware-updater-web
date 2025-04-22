@@ -53,7 +53,9 @@ const V3FirmwareConfirmUpdate: FC<V3FirmwareConfirmUpdateProps> = ({
   }, [clearTimer, currentTabComponents, isUpdating]);
 
   const isDisabled = () => {
-    const hasComponentsSelectedInCurrentTab = currentTabComponents.length > 0;
+    const hasComponentsSelectedInCurrentTab = currentTabComponents.some(
+      (component) => ['ble', 'fw', 'boot'].includes(component)
+    );
     return (
       !device ||
       !hasComponentsSelectedInCurrentTab ||

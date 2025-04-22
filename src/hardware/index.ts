@@ -125,36 +125,75 @@ class ServiceHardware {
           } else if (type === UI_REQUEST.FIRMWARE_PROGRESS) {
             const { progress } = store.getState().firmware;
             const { progress: payloadProgress, progressType } = payload;
-            // 'transferData' || 'installingFirmware'
-            if (progressType && progressType === 'transferData') {
-              store.dispatch(setMaxProgress(80));
-              if (
-                progress < 80 &&
-                payloadProgress >= 0 &&
-                payloadProgress < 100
-              ) {
-                // 80
-                store.dispatch(
-                  setUpdateTip(formatMessage({ id: 'TR_TRANSFER_DATA' }) ?? '')
-                );
-              } else if (payloadProgress === 100) {
-                // 80
+
+            // Define progress configuration based on progressType
+            const progressConfig: Record<
+              string,
+              { maxProgress: number; tipId: string }
+            > = {
+              transferData: {
+                maxProgress: 50,
+                tipId: 'TR_TRANSFER_DATA',
+              },
+              installingFirmware: {
+                maxProgress: 99,
+                tipId: 'TR_INSTALLING',
+              },
+              default: {
+                maxProgress: 99,
+                tipId: 'TR_INSTALLING',
+              },
+            };
+
+            // Select the right configuration
+            const config = progressType
+              ? progressConfig[progressType]
+              : progressConfig.default;
+
+            // Set max progress value
+            store.dispatch(setMaxProgress(config.maxProgress));
+
+            // Update progress and tip based on current stage
+            if (
+              progress < config.maxProgress &&
+              payloadProgress >= 0 &&
+              payloadProgress <= 100
+            ) {
+              // For V3 update with specific progressType, calculate the actual progress
+              if (progressType) {
+                let actualProgress = 0;
+
+                if (progressType === 'transferData') {
+                  // transferData stage: 0-50%
+                  actualProgress = Math.floor(payloadProgress * 0.5);
+                } else if (progressType === 'installingFirmware') {
+                  // installingFirmware stage: 50-99%
+                  actualProgress = 50 + Math.floor(payloadProgress * 0.49);
+                }
+
+                // Set the calculated progress
+                store.dispatch(setProgress(actualProgress));
+
+                // Update tip if needed
+                if (payloadProgress < 100) {
+                  store.dispatch(
+                    setUpdateTip(formatMessage({ id: config.tipId }) ?? '')
+                  );
+                } else {
+                  store.dispatch(setUpdateTip(''));
+                }
+              } else {
+                // For non-V3 updates, use the old behavior
+                if (payloadProgress < 100) {
+                  store.dispatch(
+                    setUpdateTip(formatMessage({ id: config.tipId }) ?? '')
+                  );
+                  return;
+                }
+                // For 100% progress, set maxProgress to 100
+                store.dispatch(setMaxProgress(100));
                 store.dispatch(setUpdateTip(''));
               }
-            } else if (
-              progress < 99 &&
-              payloadProgress >= 0 &&
-              payloadProgress < 100
-            ) {
-              // 99
-              store.dispatch(setMaxProgress(99));
-              store.dispatch(
-                setUpdateTip(formatMessage({ id: 'TR_INSTALLING' }) ?? '')
-              );
-            } else if (payloadProgress === 100) {
-              // 100
-              store.dispatch(setMaxProgress(100));
-              store.dispatch(setUpdateTip(''));
             }
           }
         });
@@ -564,28 +603,29 @@ class ServiceHardware {
               break;
             }
             case 'resource': {
-              // 资源文件处理
-              const fwReleaseInfo = releaseInfo[
-                firmwareField as keyof typeof releaseInfo
-              ] as IFirmwareReleaseInfo[] | undefined;
-              if (
-                fwReleaseInfo &&
-                fwReleaseInfo.length > 0 &&
-                fwReleaseInfo[0].resource
-              ) {
-                try {
-                  const resourceResponse = await fetch(
-                    fwReleaseInfo[0].resource
-                  );
-                  if (resourceResponse.ok) {
-                    updateParams.resourceBinary = arrayBufferToBuffer(
-                      await resourceResponse.arrayBuffer()
-                    );
-                  }
-                } catch (error) {
-                  console.error('下载资源文件失败:', error);
-                }
-              }
+              updateParams.forcedUpdateRes = true;
+              // // 资源文件下载，应该交给SDK处理即可
+              // const fwReleaseInfo = releaseInfo[
+              //   firmwareField as keyof typeof releaseInfo
+              // ] as IFirmwareReleaseInfo[] | undefined;
+              // if (
+              //   fwReleaseInfo &&
+              //   fwReleaseInfo.length > 0 &&
+              //   fwReleaseInfo[0].resource
+              // ) {
+              //   try {
+              //     const resourceResponse = await fetch(
+              //       fwReleaseInfo[0].resource
+              //     );
+              //     if (resourceResponse.ok) {
+              //       updateParams.resourceBinary = arrayBufferToBuffer(
+              //         await resourceResponse.arrayBuffer()
+              //       );
+              //     }
+              //   } catch (error) {
+              //     console.error('下载资源文件失败:', error);
+              //   }
+              // }
               break;
             }
             default:
@@ -666,7 +706,8 @@ class ServiceHardware {
       store.dispatch(setShowProgressBar(true));
 
       console.log('=====> firmwareUpdateV3 updateParams', updateParams);
-
+      // Scroll to the top of the page for better user experience
+      window.scrollTo({ top: 0, behavior: 'auto' });
       const response = await hardwareSDK.firmwareUpdateV3(
         undefined,
         updateParams

@@ -102,7 +102,13 @@ const V3ReleaseInfo: React.FC = () => {
       {currentTabComponents.length > 0 && (
         <div className="mb-4">
           {renderAlert(
-            intl.formatMessage({ id: 'TR_WARNING_BEFORE_INSTALL' }),
+            intl.formatMessage({
+              id:
+                currentTabComponents.length === 1 &&
+                currentTabComponents[0] === 'resource'
+                  ? 'TR_SELECT_AT_LEAST_ONE_COMPONENT' // Show this only if 'resource' is the *only* selected item
+                  : 'TR_WARNING_BEFORE_INSTALL', // Show this for any other selection(s)
+            }),
             'warning'
           )}
         </div>
