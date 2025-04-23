@@ -72,7 +72,14 @@ const V3UploadLocalFirmware: React.FC = () => {
         fileObjectsRef.current[componentType] = file;
 
         // Update Redux state with file info (but not the actual file)
-        toggleComponentSelection(componentType, 'local', undefined, fileInfo);
+        // Always force update when selecting a new local file
+        toggleComponentSelection(
+          componentType,
+          'local',
+          undefined,
+          fileInfo,
+          true
+        );
       }
     },
     [toggleComponentSelection]

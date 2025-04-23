@@ -73,74 +73,59 @@ const V3UpdateTable: React.FC = () => {
     const deviceType = getDeviceType(device.features);
     const components: ComponentItem[] = [];
 
+    const fieldInfo = releaseMap[deviceType]?.['firmware-v6']?.[0];
+    const bleFieldInfo = releaseMap[deviceType]?.ble?.[0];
+    // Bootloader (boot)
+    if (fieldInfo) {
+      components.push({
+        type: 'boot',
+        title: intl.formatMessage({ id: 'TR_BOOTLOADER' }),
+        description: 'Bootloader',
+        latestVersion: fieldInfo.displayBootloaderVersion?.join('.') || '',
+        changelog: fieldInfo.bootloaderChangelog?.[locale] || '',
+        versions: [
+          {
+            version: fieldInfo.displayBootloaderVersion?.join('.') || '',
+            info: fieldInfo,
+          },
+        ],
+        downloadUrl: fieldInfo.bootloaderResource || '',
+      });
+    }
     // Firmware (fw)
-    if (releaseMap[deviceType] && releaseMap[deviceType]['firmware-v6']) {
-      const fwVersions =
-        releaseMap[deviceType]?.['firmware-v6']?.map(
-          (info: IFirmwareReleaseInfo) => ({
-            version: info.version.join('.'),
-            info,
-          })
-        ) || [];
-
-      if (fwVersions.length > 0) {
-        const latestInfo = fwVersions[0].info;
-        components.push({
-          type: 'fw',
-          title: intl.formatMessage({ id: 'TR_FIRMWARE' }),
-          description: 'Firmware',
-          latestVersion: fwVersions[0].version,
-          changelog: latestInfo.changelog?.[locale] || '',
-          versions: fwVersions,
-          downloadUrl: latestInfo.url || '',
-        });
-      }
+    if (fieldInfo) {
+      components.push({
+        type: 'fw',
+        title: intl.formatMessage({ id: 'TR_FIRMWARE' }),
+        description: 'Firmware',
+        latestVersion: fieldInfo.version.join('.'),
+        changelog: fieldInfo.changelog?.[locale] || '',
+        versions: [
+          {
+            version: fieldInfo.version.join('.'),
+            info: fieldInfo,
+          },
+        ],
+        downloadUrl: fieldInfo.url || '',
+      });
     }
 
     // BLE
-    if (releaseMap[deviceType] && releaseMap[deviceType].ble) {
-      const bleVersions =
-        releaseMap[deviceType]?.ble?.map((info: IBLEFirmwareReleaseInfo) => ({
-          version: info.version.join('.'),
-          info,
-        })) || [];
-
-      if (bleVersions.length > 0) {
-        const latestInfo = bleVersions[0].info;
-        components.push({
-          type: 'ble',
-          title: intl.formatMessage({ id: 'TR_BLUETOOTH_FIRMWARE' }),
-          description: 'Bluetooth Firmware',
-          latestVersion: bleVersions[0].version,
-          changelog: latestInfo.changelog?.[locale] || '',
-          versions: bleVersions,
-          downloadUrl: latestInfo.url || '',
-        });
-      }
-    }
-
-    // Bootloader (boot)
-    if (releaseMap[deviceType] && releaseMap[deviceType]['firmware-v6']) {
-      const bootVersions =
-        releaseMap[deviceType]?.['firmware-v6']
-          ?.filter((info: IFirmwareReleaseInfo) => info.bootloaderVersion)
-          .map((info: IFirmwareReleaseInfo) => ({
-            version: info.bootloaderVersion?.join('.') || '',
-            info,
-          })) || [];
-
-      if (bootVersions.length > 0) {
-        const latestInfo = bootVersions[0].info;
-        components.push({
-          type: 'boot',
-          title: intl.formatMessage({ id: 'TR_BOOTLOADER' }),
-          description: 'Bootloader',
-          latestVersion: bootVersions[0].version,
-          changelog: latestInfo.bootloaderChangelog?.[locale] || '',
-          versions: bootVersions,
-          downloadUrl: latestInfo.bootloaderResource || '',
-        });
-      }
+    if (bleFieldInfo) {
+      components.push({
+        type: 'ble',
+        title: intl.formatMessage({ id: 'TR_BLUETOOTH_FIRMWARE' }),
+        description: 'Bluetooth Firmware',
+        latestVersion: bleFieldInfo.version.join('.'),
+        changelog: bleFieldInfo.changelog?.[locale] || '',
+        versions: [
+          {
+            version: bleFieldInfo.version.join('.'),
+            info: bleFieldInfo,
+          },
+        ],
+        downloadUrl: bleFieldInfo.url || '',
+      });
     }
 
     return components;

@@ -35,15 +35,16 @@ export const useV3Components = () => {
     component: V3ComponentType,
     source: V3SourceType,
     version?: string,
-    fileInfo?: any
+    fileInfo?: any,
+    forceUpdate?: boolean
   ) => {
     const currentSelection = v3UpdateSelections[component] || {};
     const isSelected =
       selectedV3Components.includes(component) &&
       currentSelection.source === source;
 
-    if (isSelected) {
-      // Deselect if already selected
+    if (isSelected && !forceUpdate) {
+      // Deselect if already selected and not forcing an update
       dispatch(
         setSelectedV3Component({
           component,
@@ -62,12 +63,15 @@ export const useV3Components = () => {
           },
         })
       );
-      dispatch(
-        setSelectedV3Component({
-          component,
-          selected: true,
-        })
-      );
+      // Only dispatch selection change if not already selected
+      if (!isSelected) {
+        dispatch(
+          setSelectedV3Component({
+            component,
+            selected: true,
+          })
+        );
+      }
     }
   };
 
