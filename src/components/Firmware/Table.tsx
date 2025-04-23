@@ -7,16 +7,13 @@ import {
   Features,
   getFirmwareUpdateFieldArray,
 } from '@onekeyfe/hd-core';
+import type { IFirmwareField } from '@onekeyfe/hd-core';
 import { RootState } from '@/store';
 import {
   setSelectedReleaseInfo,
   setSelectedUploadType,
 } from '@/store/reducers/runtime';
-import {
-  IFirmwareReleaseInfo,
-  IBLEFirmwareReleaseInfo,
-  IFirmwareField,
-} from '@/types';
+import { IFirmwareReleaseInfo, IBLEFirmwareReleaseInfo } from '@/types';
 import type { TabType } from './ReleaseInfo';
 
 type DataSource = {

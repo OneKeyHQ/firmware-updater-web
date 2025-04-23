@@ -1,7 +1,6 @@
 import { store } from '@/store';
-import { IFirmwareField } from '@/types';
 import axios from 'axios';
-
+import type { IFirmwareField } from '@onekeyfe/hd-core';
 // download 3.4 firmware
 export const downloadLegacyTouchFirmware = async (
   firmwareField: 'firmware' | 'ble' | 'firmware-v2'

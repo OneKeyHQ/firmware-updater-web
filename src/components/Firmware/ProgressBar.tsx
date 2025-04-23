@@ -20,18 +20,10 @@ export default function ProgressBar() {
   const updateTip = useSelector((state: RootState) => state.firmware.updateTip);
 
   const getIntervalTime = useCallback(() => {
-    const bootloaderVersion = getDeviceBootloaderVersion(device?.features).join(
-      '.'
-    );
     const deviceType = getDeviceType(device?.features);
     const isBle = uploadType === 'ble';
-    const isV3Update =
-      semver.gte(bootloaderVersion, '2.8.0') && deviceType === EDeviceType.Pro;
-
     let time = 100;
-    if (isV3Update) {
-      time = 1500;
-    } else if (deviceType === 'classic' || deviceType === 'classic1s') {
+    if (deviceType === 'classic' || deviceType === 'classic1s') {
       time = isBle ? 100 : 300;
     } else if (deviceType === 'mini') {
       time = 500;

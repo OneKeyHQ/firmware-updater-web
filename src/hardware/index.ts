@@ -10,6 +10,7 @@ import {
   UI_RESPONSE,
   FirmwareUpdateV3Params,
 } from '@onekeyfe/hd-core';
+import type { IFirmwareField } from '@onekeyfe/hd-core';
 import { createDeferred, Deferred } from '@onekeyfe/hd-shared';
 import { store } from '@/store';
 import {
@@ -28,7 +29,6 @@ import {
 } from '@/store/reducers/firmware';
 import type {
   BridgeReleaseMap,
-  IFirmwareField,
   RemoteConfigResponse,
   IFirmwareReleaseInfo,
 } from '@/types';

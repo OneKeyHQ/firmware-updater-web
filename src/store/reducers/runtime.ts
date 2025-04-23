@@ -1,11 +1,10 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import type { KnownDevice } from '@onekeyfe/hd-core';
+import type { KnownDevice, IFirmwareField } from '@onekeyfe/hd-core';
 import {
   BridgeReleaseMap,
   DeviceTypeMap,
   IFirmwareReleaseInfo,
   IBLEFirmwareReleaseInfo,
-  IFirmwareField,
 } from '@/types';
 import { getDefaultLocale } from '@/utils';
 
