@@ -4,7 +4,7 @@ import { useIntl } from 'react-intl';
 import semver from 'semver';
 import { RootState } from '@/store';
 import { getDeviceType, getDeviceBootloaderVersion } from '@onekeyfe/hd-core';
-import type { IFirmwareReleaseInfo, IBLEFirmwareReleaseInfo } from '@/types';
+// import type { IFirmwareReleaseInfo, IBLEFirmwareReleaseInfo } from '@/types';
 import { marked } from 'marked';
 import { useV3Components, V3ComponentType } from '@/utils/v3FirmwareUtils';
 
@@ -12,13 +12,9 @@ interface ComponentItem {
   type: V3ComponentType;
   title: string;
   description: string;
-  latestVersion: string;
   changelog: string;
-  versions: Array<{
-    version: string;
-    info: IFirmwareReleaseInfo | IBLEFirmwareReleaseInfo;
-  }>;
-  downloadUrl?: string;
+  downloadUrl: string;
+  version: string;
 }
 
 const V3UpdateTable: React.FC = () => {
@@ -81,14 +77,8 @@ const V3UpdateTable: React.FC = () => {
         type: 'boot',
         title: intl.formatMessage({ id: 'TR_BOOTLOADER' }),
         description: 'Bootloader',
-        latestVersion: fieldInfo.displayBootloaderVersion?.join('.') || '',
         changelog: fieldInfo.bootloaderChangelog?.[locale] || '',
-        versions: [
-          {
-            version: fieldInfo.displayBootloaderVersion?.join('.') || '',
-            info: fieldInfo,
-          },
-        ],
+        version: fieldInfo.displayBootloaderVersion?.join('.') || '',
         downloadUrl: fieldInfo.bootloaderResource || '',
       });
     }
@@ -98,14 +88,8 @@ const V3UpdateTable: React.FC = () => {
         type: 'fw',
         title: intl.formatMessage({ id: 'TR_FIRMWARE' }),
         description: 'Firmware',
-        latestVersion: fieldInfo.version.join('.'),
         changelog: fieldInfo.changelog?.[locale] || '',
-        versions: [
-          {
-            version: fieldInfo.version.join('.'),
-            info: fieldInfo,
-          },
-        ],
+        version: fieldInfo.version.join('.'),
         downloadUrl: fieldInfo.url || '',
       });
     }
@@ -116,14 +100,8 @@ const V3UpdateTable: React.FC = () => {
         type: 'ble',
         title: intl.formatMessage({ id: 'TR_BLUETOOTH_FIRMWARE' }),
         description: 'Bluetooth Firmware',
-        latestVersion: bleFieldInfo.version.join('.'),
+        version: bleFieldInfo.version.join('.'),
         changelog: bleFieldInfo.changelog?.[locale] || '',
-        versions: [
-          {
-            version: bleFieldInfo.version.join('.'),
-            info: bleFieldInfo,
-          },
-        ],
         downloadUrl: bleFieldInfo.url || '',
       });
     }
@@ -160,7 +138,7 @@ const V3UpdateTable: React.FC = () => {
                   toggleComponentSelection(
                     component.type,
                     'remote',
-                    component.latestVersion
+                    component.version
                   );
                 }}
               />
@@ -168,7 +146,7 @@ const V3UpdateTable: React.FC = () => {
                 htmlFor={`v3-component-${component.type}`}
                 className="ml-3 block text-sm font-medium text-gray-900"
               >
-                {component.latestVersion}
+                {component.version}
               </label>
             </div>
           </div>
