@@ -17,7 +17,7 @@ export const getHardwareSDKInstance = memoizee(
       }
       const settings: Partial<ConnectSettings> = {
         debug: true,
-        connectSrc: 'https://jssdk.onekey.so/1.0.24/',
+        connectSrc: 'https://jssdk.onekey.so/1.0.25/',
         preRelease: true,
         fetchConfig: true,
       };

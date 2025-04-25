@@ -5,7 +5,11 @@ import semver from 'semver';
 import { useIntl } from 'react-intl';
 import { RootState } from '@/store';
 import { Button, Alert, Link } from '@onekeyfe/ui-components';
-import { getDeviceType, KnownDevice } from '@onekeyfe/hd-core';
+import {
+  getDeviceType,
+  KnownDevice,
+  getDeviceBootloaderVersion,
+} from '@onekeyfe/hd-core';
 import { serviceHardware } from '@/hardware';
 import { setDevice } from '@/store/reducers/runtime';
 import { RestartToHomeTip, ListTips, EmptyTips } from './TouchResource/Tips';
@@ -16,6 +20,8 @@ import ReleaseInfo from './ReleaseInfo';
 import BootloaderTips from './BootloaderTips';
 import ProgressBar from './ProgressBar';
 import BridgeReleaseDialog from './BridgeReleaseDialog';
+import V3FirmwareConfirmUpdate from './V3FirmwareConfirmUpdate';
+import V3ReleaseInfo from './V3ReleaseInfo';
 
 let timer: ReturnType<typeof setInterval>;
 let isPollingUpdateDevice = false;
@@ -139,36 +145,51 @@ const ConfirmUpdate: FC = () => {
   const [bridgeReleaseModalVisible, setBridgeReleaseModalVisible] =
     useState(false);
   const [bridgeReleaseVersion, setBridgeReleaseVersion] = useState('');
-
+  const [isUpdating, setIsUpdating] = useState(false);
   const onHandleInstall = useCallback(async () => {
+    if (isUpdating) return;
     if (timer) {
       clearInterval(timer);
     }
-    if (
-      device?.deviceType &&
-      (selectedUploadType === 'firmware' || selectedUploadType === 'ble')
-    ) {
-      const firmwareField = selectedReleaseInfo?.firmwareField;
-      if (firmwareField) {
-        const version =
-          releaseMap[device.deviceType]?.[firmwareField]?.[0]?.version;
-        const checkBridgeRelease = await serviceHardware.checkBridgeRelease(
-          version?.join('.') ?? ''
-        );
-        if (checkBridgeRelease?.shouldUpdate) {
-          setBridgeReleaseVersion(checkBridgeRelease.releaseVersion);
-          setBridgeReleaseModalVisible(true);
-          return;
+    setIsUpdating(true);
+    try {
+      if (
+        device?.deviceType &&
+        (selectedUploadType === 'firmware' || selectedUploadType === 'ble')
+      ) {
+        const firmwareField = selectedReleaseInfo?.firmwareField;
+        if (firmwareField) {
+          const version =
+            releaseMap[device.deviceType]?.[firmwareField]?.[0]?.version;
+          const checkBridgeRelease = await serviceHardware.checkBridgeRelease(
+            version?.join('.') ?? ''
+          );
+          if (checkBridgeRelease?.shouldUpdate) {
+            setBridgeReleaseVersion(checkBridgeRelease.releaseVersion);
+            setBridgeReleaseModalVisible(true);
+            return;
+          }
         }
       }
-    }
 
-    if (tabType === 'bootloader') {
-      serviceHardware.bootloaderUpdate();
-    } else {
-      serviceHardware.firmwareUpdate();
+      if (tabType === 'bootloader') {
+        await serviceHardware.bootloaderUpdate();
+      } else {
+        await serviceHardware.firmwareUpdate();
+      }
+    } catch (error) {
+      console.error('Error during firmware update:', error);
+    } finally {
+      setIsUpdating(false);
     }
-  }, [device, selectedUploadType, selectedReleaseInfo, releaseMap, tabType]);
+  }, [
+    device,
+    selectedUploadType,
+    selectedReleaseInfo,
+    releaseMap,
+    tabType,
+    isUpdating,
+  ]);
 
   return (
     <div className="flex justify-center items-center flex-col">
@@ -227,6 +248,7 @@ export default function Firmware() {
   );
   const installType = useSelector((s: RootState) => s.runtime.installType);
   const [deviceType, setDeviceType] = useState('');
+  const tabType = useSelector((state: RootState) => state.runtime.currentTab);
 
   const [isMiniAndNotInBootloader, setIsMiniAndNotInBootloader] =
     useState(false);
@@ -304,6 +326,24 @@ export default function Firmware() {
     device?.features?.onekey_version ?? '0.0.0',
     '3.4.0'
   );
+
+  const clearTimer = () => {
+    if (timer) {
+      clearInterval(timer);
+    }
+  };
+
+  // Check if we're in V3 mode
+  const isV3Update = tabType === 'v3-remote' || tabType === 'v3-local';
+
+  const isV3Compatible = () => {
+    if (!device?.features) return false;
+    const currDeviceType = getDeviceType(device.features);
+    const bootloaderVersion = getDeviceBootloaderVersion(device.features).join(
+      '.'
+    );
+    return currDeviceType === 'pro' && semver.gte(bootloaderVersion, '2.8.0');
+  };
 
   return (
     <div className="content">
@@ -391,9 +431,11 @@ export default function Firmware() {
                 action={
                   <Link
                     className="cursor-pointer"
-                    type="plain"
+                    type="pointer"
                     onClick={() => {
-                      setModalStatus(true);
+                      window.open(
+                        'https://help.onekey.so/hc/articles/10159281900687-%E7%A1%AC%E4%BB%B6%E9%92%B1%E5%8C%85%E5%B1%8F%E5%B9%95%E5%AD%97%E7%AC%A6%E5%8F%98%E6%88%90%E6%96%B9%E5%9D%97%E7%9A%84%E4%BF%AE%E5%A4%8D%E5%8A%9E%E6%B3%95-Pro-%E5%92%8C-Touch'
+                      );
                     }}
                   >
                     {intl.formatMessage({ id: 'TR_CLICK_TO_REPAIR' })}
@@ -402,8 +444,18 @@ export default function Firmware() {
               />
             </div>
           )}
-          <ReleaseInfo />
-          {isMiniAndNotInBootloader ? <BootloaderTips /> : <ConfirmUpdate />}
+          {isV3Compatible() ? <V3ReleaseInfo /> : <ReleaseInfo />}
+          {(() => {
+            if (isMiniAndNotInBootloader) {
+              return <BootloaderTips />;
+            }
+
+            if (isV3Update && isV3Compatible()) {
+              return <V3FirmwareConfirmUpdate clearTimer={clearTimer} />;
+            }
+
+            return <ConfirmUpdate />;
+          })()}
         </>
       ) : (
         <>

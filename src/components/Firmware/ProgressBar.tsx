@@ -1,9 +1,11 @@
 import { useCallback, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { getDeviceType } from '@onekeyfe/hd-core';
+import { getDeviceType, getDeviceBootloaderVersion } from '@onekeyfe/hd-core';
 import { Progress } from '@onekeyfe/ui-components';
 import { RootState } from '@/store';
 import { setProgress } from '@/store/reducers/firmware';
+import semver from 'semver';
+import { EDeviceType } from '@onekeyfe/hd-shared';
 
 export default function ProgressBar() {
   const dispatch = useDispatch();
@@ -31,7 +33,22 @@ export default function ProgressBar() {
     return time;
   }, [device, uploadType]);
 
+  const shouldUseActualProgress = useCallback(() => {
+    if (!device?.features) return false;
+
+    const bootloaderVersion = getDeviceBootloaderVersion(device.features).join(
+      '.'
+    );
+    const deviceType = getDeviceType(device.features);
+
+    return (
+      semver.gte(bootloaderVersion, '2.8.0') && deviceType === EDeviceType.Pro
+    );
+  }, [device]);
+
   useEffect(() => {
+    if (shouldUseActualProgress()) return;
+
     const intervalTime = getIntervalTime();
     const timer = setInterval(() => {
       if (progress < maxProgress) {
@@ -41,7 +58,13 @@ export default function ProgressBar() {
     return () => {
       clearInterval(timer);
     };
-  }, [maxProgress, progress, dispatch, getIntervalTime]);
+  }, [
+    maxProgress,
+    progress,
+    dispatch,
+    getIntervalTime,
+    shouldUseActualProgress,
+  ]);
 
   return (
     <div className="flex items-center justify-center p-10">

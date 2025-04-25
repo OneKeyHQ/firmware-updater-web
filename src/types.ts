@@ -19,6 +19,7 @@ export type IFirmwareReleaseInfo = {
   };
   bootloaderVersion?: IVersionArray;
   displayBootloaderVersion?: IVersionArray;
+  resource: string;
 };
 
 /** BLE firmware config */
@@ -36,14 +37,12 @@ export type IBLEFirmwareReleaseInfo = {
   };
 };
 
-export type IFirmwareField = 'firmware' | 'ble' | 'firmware-v2' | 'firmware-v5';
-
 export type DeviceTypeMap = {
   [k in IDeviceType]: {
     firmware: IFirmwareReleaseInfo[];
     ble: IBLEFirmwareReleaseInfo[];
     'firmware-v2'?: IFirmwareReleaseInfo[];
-    'firmware-v5'?: IFirmwareReleaseInfo[];
+    'firmware-v6'?: IFirmwareReleaseInfo[];
   };
 };
 
