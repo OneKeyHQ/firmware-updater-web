@@ -1,4 +1,4 @@
-name: release-web
+name: test
 
 on:
   workflow_dispatch:
@@ -43,9 +43,9 @@ jobs:
       #       source_dir: "./build"
       #       destination_dir: ${{ env.HOST_PATH }}
 
-    #   - name: Upload Artifacts
-    #     uses: actions/upload-artifact@v4
-    #     with:
-    #       name: firmware-updater-${{ github.sha }}
-    #       path: |
-    #         ./build/
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-updater-${{ github.sha }}
+          path: |
+            ./build/
