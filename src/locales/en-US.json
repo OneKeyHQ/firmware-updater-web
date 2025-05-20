@@ -106,7 +106,7 @@
   "TR_FIRMWARE_INSTALL_TIPS_TITLE": "Please follow the steps below to start the firmware installation",
   "TR_FIRMWARE_STATUS": "status",
   "TR_FIRMWARE_SUBHEADING": "Your OneKey is shipped without firmware installed to ensure that you can get started with the latest features right away. The authenticity of the installed firmware is always checked during device start. If the firmware is not correctly signed by SatoshiLabs, your OneKey will display a warning.",
-  "TR_FIRMWARE_USER_ENSURE": "I understand that I am installing the firmware at my own risk.",
+  "TR_FIRMWARE_USER_ENSURE": "I confirm that the device is empty or I already have a recovery seed.",
   "TR_FIRMWARE_VERSION": "firmware version",
   "TR_FIRST_PIN_ENTERED": "Good. You entered a new pin. But to make sure you did not make mistake, please enter it again. Look at your device now, numbers are now different.",
   "TR_FOUND_OK_DEVICE": "Found an empty device, yay! You can continue now.",
