@@ -7,7 +7,7 @@ jobs:
   byte-web:
     runs-on: ubuntu-latest
     env:
-      PUBLIC_URL: "https://firmware.onekey.so.com/${{ github.sha }}/"
+      PUBLIC_URL: "https://firmware.onekey.so/${{ github.sha }}/"
       NODE_ENV: "production"
       CI: false
     steps:
