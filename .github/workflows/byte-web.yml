@@ -1,0 +1,42 @@
+name: byte-web
+
+on:
+  workflow_dispatch:
+
+jobs:
+  byte-web:
+    runs-on: ubuntu-latest
+    env:
+      PUBLIC_URL: "https://firmware.onekey.so.com/${{ github.sha }}/"
+      NODE_ENV: "production"
+      CI: false
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Environment
+        uses: actions/setup-node@v3
+        with:
+          registry-url: "https://npm.pkg.github.com"
+          always-auth: true
+          scope: "@onekeyhq"
+          node-version: "16.x"
+
+      - name: Install Dependency
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          yarn
+
+      - name: Build Target
+        env:
+          PUBLIC_URL: ${{ env.PUBLIC_URL }}
+          NODE_OPTIONS: "--max_old_space_size=4096"
+          CI: false
+        run: |
+          yarn build
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-updater-${{ github.sha }}
+          path: |
+            ./build/
