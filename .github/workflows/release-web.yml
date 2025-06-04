@@ -1,10 +1,10 @@
-name: byte-web
+name: release-web
 
 on:
   workflow_dispatch:
 
 jobs:
-  byte-web:
+  release-web:
     runs-on: ubuntu-latest
     env:
       PUBLIC_URL: "https://firmware.onekey.so/${{ github.sha }}/"
