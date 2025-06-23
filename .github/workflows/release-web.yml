@@ -7,8 +7,8 @@ jobs:
   test-web:
     runs-on: ubuntu-latest
     env:
-      TEST_ENDPOINT: firmware-test.onekeytest.so
-      PUBLIC_URL: "https://firmware-test.onekeytest.so/"
+      TEST_ENDPOINT: firmware-test.onekey.so
+      PUBLIC_URL: "https://firmware-test.onekey.so/"
       NODE_ENV: "production"
       CI: false
     if: ${{ !github.event.workflow_run || (github.event.workflow_run && github.event.workflow_run.conclusion == 'success') }}
