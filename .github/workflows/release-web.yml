@@ -4,6 +4,48 @@ on:
   workflow_dispatch:
 
 jobs:
+  test-web:
+    runs-on: ubuntu-latest
+    env:
+      TEST_ENDPOINT: firmware-test.onekeytest.so
+      PUBLIC_URL: "https://firmware-test.onekeytest.so/"
+      NODE_ENV: "production"
+      CI: false
+    if: ${{ !github.event.workflow_run || (github.event.workflow_run && github.event.workflow_run.conclusion == 'success') }}
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v3
+        with:
+          lfs: true
+      - name: Setup Environment
+        uses: actions/setup-node@v3
+        with:
+          registry-url: "https://npm.pkg.github.com"
+          always-auth: true
+          scope: "@onekeyhq"
+          node-version: "16.x"
+
+      - name: Install Dependency
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          yarn
+
+      - name: Build Target
+        env:
+          PUBLIC_URL: ${{ env.PUBLIC_URL }}
+          NODE_OPTIONS: "--max_old_space_size=4096"
+        run: |
+          yarn build
+
+      - name: Deploy Github Pages
+        uses: OneKeyHQ/actions/gh-pages@main
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build
+          cname: ${{ env.TEST_ENDPOINT }}
+          force_orphan: true
+
   release-web:
     runs-on: ubuntu-latest
     env:
