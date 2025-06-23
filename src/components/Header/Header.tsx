@@ -97,13 +97,13 @@ export default function Header() {
                   <div className="flex flex-shrink-0 items-center">
                     <img
                       className="block h-8 w-auto lg:hidden"
-                      src="https://help.onekey.so/hc/article_attachments/4578205272847/OneKey__1_.png"
-                      alt="Your Company"
+                      src="/static/onekey.png"
+                      alt="OneKey"
                     />
                     <img
                       className="hidden h-8 w-auto lg:block"
-                      src="https://help.onekey.so/hc/article_attachments/4578205272847/OneKey__1_.png"
-                      alt="Your Company"
+                      src="/static/onekey.png"
+                      alt="OneKey"
                     />
                   </div>
                   <div className="hidden sm:-my-px sm:ml-6 sm:flex sm:space-x-4">
