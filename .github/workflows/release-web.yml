@@ -7,19 +7,18 @@ jobs:
   release-web:
     runs-on: ubuntu-latest
     env:
-      HOST_PATH: '${{ github.event.repository.name }}/${{ github.sha }}/'
-      PUBLIC_URL: 'https://asset.onekey-asset.com/${{ github.event.repository.name }}/${{ github.sha }}/'
-      NODE_ENV: 'production'
+      PUBLIC_URL: "https://firmware.onekey.so/${{ github.sha }}/"
+      NODE_ENV: "production"
       CI: false
     steps:
       - uses: actions/checkout@v3
       - name: Setup Environment
         uses: actions/setup-node@v3
         with:
-          registry-url: 'https://npm.pkg.github.com'
+          registry-url: "https://npm.pkg.github.com"
           always-auth: true
-          scope: '@onekeyhq'
-          node-version: '16.x'
+          scope: "@onekeyhq"
+          node-version: "16.x"
 
       - name: Install Dependency
         env:
@@ -30,18 +29,9 @@ jobs:
       - name: Build Target
         env:
           PUBLIC_URL: ${{ env.PUBLIC_URL }}
-          NODE_OPTIONS: '--max_old_space_size=4096'
+          NODE_OPTIONS: "--max_old_space_size=4096"
         run: |
           yarn build
-
-      - name: Deploy to CDN
-        uses: OneKeyHQ/actions/s3-upload@main
-        with:
-          aws_key_id: ${{ secrets.AWS_KEY_ID }}
-          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws_bucket: ${{ secrets.AWS_BUCKET }}
-          source_dir: './build'
-          destination_dir: ${{ env.HOST_PATH }}
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
