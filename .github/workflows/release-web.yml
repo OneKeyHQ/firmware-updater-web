@@ -35,8 +35,31 @@ jobs:
         env:
           PUBLIC_URL: ${{ env.PUBLIC_URL }}
           NODE_OPTIONS: "--max_old_space_size=4096"
+          CI: false
         run: |
+          echo "Starting build process..."
+          echo "PUBLIC_URL: $PUBLIC_URL"
+          echo "NODE_ENV: $NODE_ENV"
+          echo "CI: $CI"
           yarn build
+          echo "Build process completed"
+
+      - name: Verify Build Output
+        run: |
+          echo "Checking build directory..."
+          ls -la ./
+          if [ -d "./build" ]; then
+            echo "✅ Build directory exists"
+            echo "Build directory contents:"
+            ls -la ./build/
+            echo "Build directory size:"
+            du -sh ./build/
+          else
+            echo "❌ Build directory does not exist!"
+            echo "Current directory contents:"
+            ls -la ./
+            exit 1
+          fi
 
       - name: Deploy Github Pages
         uses: OneKeyHQ/actions/gh-pages@main
