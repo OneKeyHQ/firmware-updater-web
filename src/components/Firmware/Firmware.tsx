@@ -434,7 +434,7 @@ export default function Firmware() {
                     type="pointer"
                     onClick={() => {
                       window.open(
-                        'https://help.onekey.so/hc/articles/10159281900687-%E7%A1%AC%E4%BB%B6%E9%92%B1%E5%8C%85%E5%B1%8F%E5%B9%95%E5%AD%97%E7%AC%A6%E5%8F%98%E6%88%90%E6%96%B9%E5%9D%97%E7%9A%84%E4%BF%AE%E5%A4%8D%E5%8A%9E%E6%B3%95-Pro-%E5%92%8C-Touch'
+                        'https://help.onekey.so/articles/11587177-onekey-pro-%E5%BC%80%E6%9C%BA%E6%97%B6%E5%8D%A1%E5%9C%A8%E8%BF%9B%E5%BA%A6%E6%9D%A1%E7%9A%84%E4%BF%AE%E5%A4%8D%E6%96%B9%E6%B3%95'
                       );
                     }}
                   >
