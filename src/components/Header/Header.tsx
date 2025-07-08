@@ -97,12 +97,12 @@ export default function Header() {
                   <div className="flex flex-shrink-0 items-center">
                     <img
                       className="block h-8 w-auto lg:hidden"
-                      src="/static/onekey.png"
+                      src={`${process.env.PUBLIC_URL}/static/onekey.png`}
                       alt="OneKey"
                     />
                     <img
                       className="hidden h-8 w-auto lg:block"
-                      src="/static/onekey.png"
+                      src={`${process.env.PUBLIC_URL}/static/onekey.png`}
                       alt="OneKey"
                     />
                   </div>
