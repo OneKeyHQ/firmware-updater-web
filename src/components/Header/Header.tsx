@@ -82,7 +82,7 @@ export default function Header() {
     { name: intl.formatMessage({ id: 'TR_HOME' }), href: 'https://onekey.so/' },
     {
       name: intl.formatMessage({ id: 'TR_SUPPORT' }),
-      href: 'https://help.onekey.so/hc/zh-cn',
+      href: 'https://help.onekey.so',
     },
   ];
 

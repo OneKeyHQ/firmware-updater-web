@@ -70,10 +70,7 @@ export default function SearchDevice() {
             </p>
             <p className="text-sm font-normal text-gray-500 py-1">
               • {intl.formatMessage({ id: 'TR_LAST_RESORT_INSTRUCTION' })}
-              <a
-                className="text-brand-500"
-                href="https://help.onekey.so/hc/zh-cn"
-              >
+              <a className="text-brand-500" href="https://help.onekey.so">
                 {intl.formatMessage({ id: 'TR_CONTACT_ONEKEY_SUPPORT_LINK' })}
               </a>
             </p>
