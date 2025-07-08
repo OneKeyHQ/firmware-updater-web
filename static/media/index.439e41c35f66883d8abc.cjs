@@ -1,0 +1,1 @@
+"use strict";"production"===process.env.NODE_ENV?module.exports=require("./headlessui.prod.cjs"):module.exports=require("./headlessui.dev.cjs");
