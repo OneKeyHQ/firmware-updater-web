@@ -69,7 +69,7 @@ const V3UpdateTable: React.FC = () => {
     const deviceType = getDeviceType(device.features);
     const components: ComponentItem[] = [];
 
-    const fieldInfo = releaseMap[deviceType]?.['firmware-v6']?.[0];
+    const fieldInfo = releaseMap[deviceType]?.['firmware-v7']?.[0];
     const bleFieldInfo = releaseMap[deviceType]?.ble?.[0];
     // Bootloader (boot)
     if (fieldInfo) {
