@@ -2222,7 +2222,7 @@
   resolved "https://registry.yarnpkg.com/@onekeyfe/cross-inpage-provider-types/-/cross-inpage-provider-types-0.0.17.tgz#0c88c1a2febac44ec1600e0e59da732579cbd045"
   integrity sha512-QqjIPXQHb3UG9w79ujjL5L5Qd6oCrymQ/x2J2rYICtr56G6shHTmUvRZxAvne0ZsLv8UBGqZWbepVdnPipehYQ==
 
-"@onekeyfe/hd-core@1.1.13", "@onekeyfe/hd-core@^1.1.13":
+"@onekeyfe/hd-core@1.1.13":
   version "1.1.13"
   resolved "https://registry.npmjs.org/@onekeyfe/hd-core/-/hd-core-1.1.13.tgz#bc1543ca89e0c28e772e039ea7b1954dc4128768"
   integrity sha512-HeF4CdMwj8/uoF8eKy56IhaM8HVjsbUBMCACTPTINLuoWTx8n7KcbHqFw+L+34bGjvVFZT7p9XQEvTeqZsy1bg==
@@ -2236,7 +2236,7 @@
     parse-uri "^1.0.7"
     semver "^7.3.7"
 
-"@onekeyfe/hd-shared@1.1.13", "@onekeyfe/hd-shared@^1.1.13":
+"@onekeyfe/hd-shared@1.1.13":
   version "1.1.13"
   resolved "https://registry.npmjs.org/@onekeyfe/hd-shared/-/hd-shared-1.1.13.tgz#6e955f9f0729e27b07316a90387c3046a23430f2"
   integrity sha512-vF6k5Z0pXJdZGf+Ht5XEh4kOudJAjDgMV4Oyksh4B7y48RcegsTPRdJLxUARfImCtj1YTHZ6nRIPR3pbMxHqbg==
@@ -2268,7 +2268,7 @@
     long "^4.0.0"
     protobufjs "^6.11.2"
 
-"@onekeyfe/hd-web-sdk@^1.1.13":
+"@onekeyfe/hd-web-sdk@1.1.13":
   version "1.1.13"
   resolved "https://registry.npmjs.org/@onekeyfe/hd-web-sdk/-/hd-web-sdk-1.1.13.tgz#dcd92a0bdc7dc6c6e14266961398366d40076dfe"
   integrity sha512-p65craCbpX7sScqMmBE+pD6uWdN9synNMDyeCr2qBkzghNqEGfPX6HK4WmNV0eqzOPcWma/WCreZRVHl3WW22w==
