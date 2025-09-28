@@ -1,0 +1,19 @@
+{
+  "files": {
+    "main.css": "https://firmware.onekeytest.com/static/css/main.b7eae1d1.css",
+    "main.js": "https://firmware.onekeytest.com/static/js/main.626b5a84.js",
+    "static/js/787.bec5df2d.chunk.js": "https://firmware.onekeytest.com/static/js/787.bec5df2d.chunk.js",
+    "static/media/disconnect-device.svg": "https://firmware.onekeytest.com/static/media/disconnect-device.3b674934850d388759e17391347437e3.svg",
+    "static/media/connect-device.svg": "https://firmware.onekeytest.com/static/media/connect-device.0d2fab5e80d2362d1a510ccb8cac5e76.svg",
+    "static/media/axios.cjs": "https://firmware.onekeytest.com/static/media/axios.41cbb8268a341c3bfce8.cjs",
+    "index.html": "https://firmware.onekeytest.com/index.html",
+    "static/media/index.cjs": "https://firmware.onekeytest.com/static/media/index.439e41c35f66883d8abc.cjs",
+    "main.b7eae1d1.css.map": "https://firmware.onekeytest.com/static/css/main.b7eae1d1.css.map",
+    "main.626b5a84.js.map": "https://firmware.onekeytest.com/static/js/main.626b5a84.js.map",
+    "787.bec5df2d.chunk.js.map": "https://firmware.onekeytest.com/static/js/787.bec5df2d.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.b7eae1d1.css",
+    "static/js/main.626b5a84.js"
+  ]
+}
