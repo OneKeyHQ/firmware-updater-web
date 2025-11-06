@@ -131,7 +131,6 @@ const V3UploadLocalFirmware: React.FC = () => {
         {intl.formatMessage({ id: 'TR_LOCAL_FIRMWARE_UPLOAD' }) ||
           '本地固件上传'}
       </h3>
-      
 
       <div className="mt-5 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-2">
         {getAllV3ComponentTypes().map((componentType) => {
