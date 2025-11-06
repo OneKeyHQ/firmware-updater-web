@@ -1,7 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import type { KnownDevice, IFirmwareField } from '@onekeyfe/hd-core';
 import {
-  BridgeReleaseMap,
   DeviceTypeMap,
   IFirmwareReleaseInfo,
   IBLEFirmwareReleaseInfo,
@@ -23,16 +22,8 @@ interface ProV3ComponentSelection {
 
 type InitialState = {
   device: KnownDevice | null;
-  pageStatus:
-    | 'initialize'
-    | 'uninstall-bridge'
-    | 'download-bridge'
-    | 'searching'
-    | 'search-timeout'
-    | 'connected';
-  bridgeVersion: string;
+  pageStatus: 'initialize' | 'searching' | 'search-timeout' | 'connected';
   releaseMap: DeviceTypeMap;
-  bridgeReleaseMap: BridgeReleaseMap;
   selectedUploadType: 'firmware' | 'ble' | 'binary' | 'bootloader' | null;
   locale: 'zh-CN' | 'en-US';
   currentTab: 'firmware' | 'ble' | 'bootloader' | 'v3-remote' | 'v3-local';
@@ -49,14 +40,16 @@ type InitialState = {
     resource: ProV3ComponentSelection;
   };
   selectedV3Components: ('fw' | 'ble' | 'boot' | 'resource')[];
+  // Firmware updating flag - prevents device disconnect handling during update
+  isUpdating: boolean;
+  // 是否需要用户授权 bootloader 设备
+  needsBootloaderPermission: boolean;
 };
 
 const initialState: InitialState = {
   device: null,
   pageStatus: 'initialize',
-  bridgeVersion: '',
   releaseMap: {} as DeviceTypeMap,
-  bridgeReleaseMap: {} as BridgeReleaseMap,
   selectedUploadType: null,
   locale: getDefaultLocale(),
   currentTab: 'firmware',
@@ -69,6 +62,8 @@ const initialState: InitialState = {
     resource: { source: 'remote' },
   },
   selectedV3Components: [],
+  isUpdating: false,
+  needsBootloaderPermission: false,
 };
 
 export const runtimeSlice = createSlice({
@@ -84,20 +79,8 @@ export const runtimeSlice = createSlice({
     setPageStatus(state, action: PayloadAction<InitialState['pageStatus']>) {
       state.pageStatus = action.payload;
     },
-    setBridgeVersion(
-      state,
-      action: PayloadAction<InitialState['bridgeVersion']>
-    ) {
-      state.bridgeVersion = action.payload;
-    },
     setReleaseMap(state, action: PayloadAction<InitialState['releaseMap']>) {
       state.releaseMap = action.payload;
-    },
-    setBridgeReleaseMap(
-      state,
-      action: PayloadAction<InitialState['bridgeReleaseMap']>
-    ) {
-      state.bridgeReleaseMap = action.payload;
     },
     setSelectedUploadType(
       state,
@@ -145,15 +128,19 @@ export const runtimeSlice = createSlice({
         );
       }
     },
+    setIsUpdating(state, action: PayloadAction<boolean>) {
+      state.isUpdating = action.payload;
+    },
+    setNeedsBootloaderPermission(state, action: PayloadAction<boolean>) {
+      state.needsBootloaderPermission = action.payload;
+    },
   },
 });
 
 export const {
   setDevice,
   setPageStatus,
-  setBridgeVersion,
   setReleaseMap,
-  setBridgeReleaseMap,
   setSelectedUploadType,
   setLocale,
   setCurrentTab,
@@ -161,6 +148,8 @@ export const {
   setSelectedReleaseInfo,
   setV3UpdateSelections,
   setSelectedV3Component,
+  setIsUpdating,
+  setNeedsBootloaderPermission,
 } = runtimeSlice.actions;
 
 export default runtimeSlice.reducer;

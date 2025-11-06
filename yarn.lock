@@ -2193,42 +2193,25 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@onekeyfe/cross-inpage-provider-core@^0.0.17":
-  version "0.0.17"
-  resolved "https://registry.yarnpkg.com/@onekeyfe/cross-inpage-provider-core/-/cross-inpage-provider-core-0.0.17.tgz#ca73217ca048e8991971ed6c06510b1efac1f30f"
-  integrity sha512-QJ9jFvpYIwS1av+JT0z9sO4KMjVGVCZVFT3lePgXBks6zuSLvX6zfBCGSu2X4b2QS3JkA55pGrReUup9o9yX7Q==
+"@onekeyfe/hd-common-connect-sdk@1.1.16":
+  version "1.1.16"
+  resolved "https://registry.npmjs.org/@onekeyfe/hd-common-connect-sdk/-/hd-common-connect-sdk-1.1.16.tgz#b9d63729b5b9fcc7d1aa670679ec0f6cbe263384"
+  integrity sha512-oROqlymzYyBcWvjXQ71pfwQL4jJb80iQVS0bhyGwHtomgwZqfr+zlWK+5PW14CxPzDyB/nPPI+9Lc0AQtvGTxQ==
   dependencies:
-    "@onekeyfe/cross-inpage-provider-errors" "^0.0.17"
-    "@onekeyfe/cross-inpage-provider-events" "^0.0.17"
-    "@onekeyfe/cross-inpage-provider-types" "^0.0.17"
-    events "^3.3.0"
-    lodash "^4.17.21"
-    ms "^2.1.3"
+    "@onekeyfe/hd-core" "1.1.16"
+    "@onekeyfe/hd-shared" "1.1.16"
+    "@onekeyfe/hd-transport-emulator" "1.1.16"
+    "@onekeyfe/hd-transport-http" "1.1.16"
+    "@onekeyfe/hd-transport-lowlevel" "1.1.16"
+    "@onekeyfe/hd-transport-web-device" "1.1.16"
 
-"@onekeyfe/cross-inpage-provider-errors@^0.0.17":
-  version "0.0.17"
-  resolved "https://registry.yarnpkg.com/@onekeyfe/cross-inpage-provider-errors/-/cross-inpage-provider-errors-0.0.17.tgz#1812c8993ca47e06f699db0c397c63a53c90b74d"
-  integrity sha512-J4b8j9TzaJWtJ1FjmxggsyDOQQobnXYjzyfosIp6b36dz+v7+H+N0o436T6qkbFxZJqXZzAF2zSMjXn/t+JNaw==
+"@onekeyfe/hd-core@1.1.16":
+  version "1.1.16"
+  resolved "https://registry.npmjs.org/@onekeyfe/hd-core/-/hd-core-1.1.16.tgz#31df132b7cc7e31275b39fdd0a08f001a7afa9a1"
+  integrity sha512-ViTzwUySTXWB81kVHvZuxaHScfcQUZ1+Tgk9We7UXz8zKwLRsU5GfIbqpS1qSZA65/OCCB/fJoMA0zto84FH0Q==
   dependencies:
-    fast-safe-stringify "^2.1.1"
-
-"@onekeyfe/cross-inpage-provider-events@^0.0.17":
-  version "0.0.17"
-  resolved "https://registry.yarnpkg.com/@onekeyfe/cross-inpage-provider-events/-/cross-inpage-provider-events-0.0.17.tgz#9412e8a164d55a157475d8aed19bedeb7c2df959"
-  integrity sha512-mRpLJkBAhaDEhVIKY6WI9+Zwdb6LhFJjM8E0HLHgxZlOmswKmNAhY4lgYr3Z8iF2yX2//Z46DqW0C5nWsDdVYA==
-
-"@onekeyfe/cross-inpage-provider-types@^0.0.17":
-  version "0.0.17"
-  resolved "https://registry.yarnpkg.com/@onekeyfe/cross-inpage-provider-types/-/cross-inpage-provider-types-0.0.17.tgz#0c88c1a2febac44ec1600e0e59da732579cbd045"
-  integrity sha512-QqjIPXQHb3UG9w79ujjL5L5Qd6oCrymQ/x2J2rYICtr56G6shHTmUvRZxAvne0ZsLv8UBGqZWbepVdnPipehYQ==
-
-"@onekeyfe/hd-core@1.1.15":
-  version "1.1.15"
-  resolved "https://registry.npmjs.org/@onekeyfe/hd-core/-/hd-core-1.1.15.tgz#e26752660fcf0be7fb55c5ae21e8be122d3f31a5"
-  integrity sha512-tZ3lFUS6FKQG28dSVEutIFdL0NBOIffdwtFBXDS2r9WQn4ANwQdmbcJVUOgzjM/LRtbs9mefLXrI0SC5fvVx0w==
-  dependencies:
-    "@onekeyfe/hd-shared" "1.1.15"
-    "@onekeyfe/hd-transport" "1.1.15"
+    "@onekeyfe/hd-shared" "1.1.16"
+    "@onekeyfe/hd-transport" "1.1.16"
     axios "1.12.2"
     bignumber.js "^9.0.2"
     bytebuffer "^5.0.1"
@@ -2236,48 +2219,55 @@
     parse-uri "^1.0.7"
     semver "^7.3.7"
 
-"@onekeyfe/hd-shared@1.1.15":
-  version "1.1.15"
-  resolved "https://registry.npmjs.org/@onekeyfe/hd-shared/-/hd-shared-1.1.15.tgz#cb9d43c0accbacfb8fc03926b647e9ba66487f10"
-  integrity sha512-zyeqX9ZUP9vg/dSbywgw99N24WqdXySqS+CEf3Z/GcSksbYqU0qkfd3TCe6hvnXh7SbWzc7V6D+nbKGuRFsDKg==
+"@onekeyfe/hd-shared@1.1.16":
+  version "1.1.16"
+  resolved "https://registry.npmjs.org/@onekeyfe/hd-shared/-/hd-shared-1.1.16.tgz#7fa2b8f1e52348c924a8fc0be18f7d2f0f1b9043"
+  integrity sha512-PLIK9yZyT8TpbfN+4EaBKzY4mFXSVNBvOLNKmIxH/GnIy5hDBdGyybbhtCTEXjGr55aFLwR0GBy1I+nYXQmoEw==
 
-"@onekeyfe/hd-transport-http@1.1.15":
-  version "1.1.15"
-  resolved "https://registry.npmjs.org/@onekeyfe/hd-transport-http/-/hd-transport-http-1.1.15.tgz#a5a0c9d93a9c19209bd53d9abebe5ea3eced5c44"
-  integrity sha512-MkfDV9rOkWKO+kZMop9toZObI2wVAAyISPbOTomo+Yoe7jYrjnpGbU0VzFa6e2sKQ04UGcL7DAV3dwB5+gvI9Q==
+"@onekeyfe/hd-transport-emulator@1.1.16":
+  version "1.1.16"
+  resolved "https://registry.npmjs.org/@onekeyfe/hd-transport-emulator/-/hd-transport-emulator-1.1.16.tgz#09461f4fac0cc41ce7f507b3a398c4b35c7edc9f"
+  integrity sha512-3XdN7xJkzt11EYJCm1fhbCp+Iw1dHSu2AdLPCAR1OLNS+3wjSJSI91V4T3+h+NBsWredlfut+eoI2PSeXvz+FQ==
   dependencies:
-    "@onekeyfe/hd-shared" "1.1.15"
-    "@onekeyfe/hd-transport" "1.1.15"
+    "@onekeyfe/hd-shared" "1.1.16"
+    "@onekeyfe/hd-transport" "1.1.16"
     axios "1.12.2"
     secure-json-parse "^4.0.0"
 
-"@onekeyfe/hd-transport-web-device@1.1.15":
-  version "1.1.15"
-  resolved "https://registry.npmjs.org/@onekeyfe/hd-transport-web-device/-/hd-transport-web-device-1.1.15.tgz#890dbaef27db86c2068c8910a3b01ca6a09b0d7c"
-  integrity sha512-aQWJuAjns5a1tc+BDP+QxYuKwpjqYNarWQHEYRf0iCr5pMKTZIrrjq4DFmWnw+6glGuXhSDkPGJ/7jHWZl/OYA==
+"@onekeyfe/hd-transport-http@1.1.16":
+  version "1.1.16"
+  resolved "https://registry.npmjs.org/@onekeyfe/hd-transport-http/-/hd-transport-http-1.1.16.tgz#436a477a7ce3330200ff1272db057ccf8c7bb871"
+  integrity sha512-ZNO6+dTJyZneS1BuYvjeFfrWfNoezyPJh5sWa8+XEOq1sXqRhqzvmdZyxf95LYhCOo6Ot8qPFLgHGGBKGcF1PQ==
   dependencies:
-    "@onekeyfe/hd-shared" "1.1.15"
-    "@onekeyfe/hd-transport" "1.1.15"
+    "@onekeyfe/hd-shared" "1.1.16"
+    "@onekeyfe/hd-transport" "1.1.16"
+    axios "1.12.2"
+    secure-json-parse "^4.0.0"
 
-"@onekeyfe/hd-transport@1.1.15":
-  version "1.1.15"
-  resolved "https://registry.npmjs.org/@onekeyfe/hd-transport/-/hd-transport-1.1.15.tgz#ea0fb55c8b47b7c91222012ee2998ed41ec90dc0"
-  integrity sha512-IV4acNU/7x84CC9s+RHhAMZBK/SePBwqSDRY1xZ9io6AmUHLaRH2w6OC6/msJQyXy+juzL2T9RYYA0DxNXjp1Q==
+"@onekeyfe/hd-transport-lowlevel@1.1.16":
+  version "1.1.16"
+  resolved "https://registry.npmjs.org/@onekeyfe/hd-transport-lowlevel/-/hd-transport-lowlevel-1.1.16.tgz#6d0b58307c7d1508cdf13c808ff111f6eed2fdcd"
+  integrity sha512-X4+kczMbCEzU2VnHGlO0eAso+AhVzTNjGbwwgcOSWyxGsIktvKF01uGEPEqNQMVsvqxiOF3eFjBPzLxbiedNMg==
+  dependencies:
+    "@onekeyfe/hd-shared" "1.1.16"
+    "@onekeyfe/hd-transport" "1.1.16"
+
+"@onekeyfe/hd-transport-web-device@1.1.16":
+  version "1.1.16"
+  resolved "https://registry.npmjs.org/@onekeyfe/hd-transport-web-device/-/hd-transport-web-device-1.1.16.tgz#6a87ef9307764d424bc102a57d34ddd33156ec05"
+  integrity sha512-eVj+JezFm3gFJsbQw3uSkOnCcGyRzM0v7U7On6YD8yZHf66vJ4t3pQiqvxVdU3uqQ+YvOz91Xq/UsqmBLhj8Pw==
+  dependencies:
+    "@onekeyfe/hd-shared" "1.1.16"
+    "@onekeyfe/hd-transport" "1.1.16"
+
+"@onekeyfe/hd-transport@1.1.16":
+  version "1.1.16"
+  resolved "https://registry.npmjs.org/@onekeyfe/hd-transport/-/hd-transport-1.1.16.tgz#3ec4ee1f786df1a630e79113dc561b33c5d57bd9"
+  integrity sha512-z+HKqYkGz+Ub1GV+REFqJqTG+tpZt7296O3qIlwmsURWdWXX4TcpXmCQDcXMt7vru8m9A4MUMkpGr+23MFBluw==
   dependencies:
     bytebuffer "^5.0.1"
     long "^4.0.0"
     protobufjs "^6.11.2"
-
-"@onekeyfe/hd-web-sdk@1.1.15":
-  version "1.1.15"
-  resolved "https://registry.npmjs.org/@onekeyfe/hd-web-sdk/-/hd-web-sdk-1.1.15.tgz#4788baf671ec9ca514d514e56e35813a624f4263"
-  integrity sha512-FKpjiaPxrpUFyunm5soq09fpEgUbZxUYZ2B7gOYQvdgwxgChmuHxp3L87oHyxaGbFVHnMZWOF/Nf8gNl2qXUxQ==
-  dependencies:
-    "@onekeyfe/cross-inpage-provider-core" "^0.0.17"
-    "@onekeyfe/hd-core" "1.1.15"
-    "@onekeyfe/hd-shared" "1.1.15"
-    "@onekeyfe/hd-transport-http" "1.1.15"
-    "@onekeyfe/hd-transport-web-device" "1.1.15"
 
 "@onekeyfe/ui-components@^1.0.0":
   version "1.0.0"
@@ -5413,7 +5403,7 @@ eventemitter3@^4.0.0:
   resolved "https://registry.yarnpkg.com/eventemitter3/-/eventemitter3-4.0.7.tgz#2de9b68f6528d5644ef5c59526a1b4a07306169f"
   integrity sha512-8guHBZCwKnFhYdHr2ysuRWErTwhoN2X8XELRlrRwpmfeY2jjuUN4taQMsULKUVo1K4DvZl+0pgfyoysHxvmvEw==
 
-events@^3.2.0, events@^3.3.0:
+events@^3.2.0:
   version "3.3.0"
   resolved "https://registry.yarnpkg.com/events/-/events-3.3.0.tgz#31a95ad0a924e2d2c419a813aeb2c4e878ea7400"
   integrity sha512-mQw+2fkQbALzQ7V0MY0IqdnXNOeTtP4r0lN9z7AAawCXgqea7bDii20AYrIBrFd/Hx0M2Ocz6S111CaFkUcb0Q==
@@ -5533,11 +5523,6 @@ fast-levenshtein@^2.0.6, fast-levenshtein@~2.0.6:
   version "2.0.6"
   resolved "https://registry.yarnpkg.com/fast-levenshtein/-/fast-levenshtein-2.0.6.tgz#3d8a5c66883a16a30ca8643e851f19baa7797917"
   integrity sha512-DCXu6Ifhqcks7TZKY3Hxp3y6qphY5SJZmrWMDrKcERSOXWQdMhU9Ig/PYrzyw/ul9jOIyh0N4M0tbC5hodg8dw==
-
-fast-safe-stringify@^2.1.1:
-  version "2.1.1"
-  resolved "https://registry.yarnpkg.com/fast-safe-stringify/-/fast-safe-stringify-2.1.1.tgz#c406a83b6e70d9e35ce3b30a81141df30aeba884"
-  integrity sha512-W+KJc2dmILlPplD/H4K9l9LcAHAfPtP6BY84uVLXQ6Evcz9Lcg33Y2z1IVblT6xdY54PXYVHEv+0Wpq8Io6zkA==
 
 fastq@^1.6.0:
   version "1.13.0"
@@ -9479,9 +9464,9 @@ schema-utils@^4.0.0:
     ajv-keywords "^5.0.0"
 
 secure-json-parse@^4.0.0:
-  version "4.0.0"
-  resolved "https://registry.npmjs.org/secure-json-parse/-/secure-json-parse-4.0.0.tgz#2ee1b7581be38ab348bab5a3e49280ba80a89c85"
-  integrity sha512-dxtLJO6sc35jWidmLxo7ij+Eg48PM/kleBsxpC8QJE0qJICe+KawkDQmvCMZUr9u7WKVHgMW6vy3fQ7zMiFZMA==
+  version "4.1.0"
+  resolved "https://registry.npmjs.org/secure-json-parse/-/secure-json-parse-4.1.0.tgz#4f1ab41c67a13497ea1b9131bb4183a22865477c"
+  integrity sha512-l4KnYfEyqYJxDwlNVyRfO2E4NTHfMKAWdUuA8J0yve2Dz/E/PdBepY03RvyJpssIpRFwJoCD55wA+mEDs6ByWA==
 
 select-hose@^2.0.0:
   version "2.0.0"

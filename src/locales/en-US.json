@@ -62,6 +62,7 @@
   "TR_DEVICE_INITIALIZED": "Your device has been initialized",
   "TR_DEVICE_IN_BOOTLOADER_MODE": "Device in bootloader mode",
   "TR_DEVICE_IN_BOOTLOADER_MODE_INSTRUCTIONS": "Device is connected in bootloader mode. Plug out the USB cable and connect device again.",
+  "TR_DEVICE_READY_FOR_UPDATE": "Your device is ready for firmware update. You can proceed with the update process.",
   "TR_DEVICE_IS_INITIALIZED": "Device is initialized",
   "TR_DEVICE_IS_USED_IN_OTHER_WINDOW_BUTTON": "Continue",
   "TR_DEVICE_IS_USED_IN_OTHER_WINDOW_HEADING": "Device is used in other window",
@@ -253,6 +254,11 @@
   "TR_REMOTE_FIRMWARE": "Firmware Update",
   "TR_LOCAL_FIRMWARE": "Local Firmware",
   "TR_LOCAL_FIRMWARE_UPLOAD": "Local Firmware Upload",
-  "TR_LOCAL_FIRMWARE_DESCRIPTION": "Select local firmware files for update. Ensure files are from a trusted source.",
-  "TR_NO_COMPONENTS_SELECTED": "Please select firmware"
+  "TR_NO_COMPONENTS_SELECTED": "Please select firmware",
+  "TR_CONNECT_DEVICE": "Connect Device",
+  "TR_CONNECTING": "Connecting...",
+  "TR_RECONNECT_DEVICE": "Reconnect Device",
+  "TR_BOOTLOADER_PERMISSION_REQUIRED": "Authorize bootloader device",
+  "TR_BOOTLOADER_PERMISSION_REQUIRED_DESC": "Bootloader mode detected. Authorize the new USB device to continue.",
+  "TR_REAUTHORIZE_DEVICE": "Authorize device"
 }

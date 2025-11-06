@@ -11,7 +11,7 @@ import {
   getDeviceBootloaderVersion,
 } from '@onekeyfe/hd-core';
 import { serviceHardware } from '@/hardware';
-import { setDevice } from '@/store/reducers/runtime';
+import { setDevice, setPageStatus } from '@/store/reducers/runtime';
 import { RestartToHomeTip, ListTips, EmptyTips } from './TouchResource/Tips';
 import ResourceButton from './TouchResource/Button';
 
@@ -19,7 +19,6 @@ import ConfirmDialog from '../Modal';
 import ReleaseInfo from './ReleaseInfo';
 import BootloaderTips from './BootloaderTips';
 import ProgressBar from './ProgressBar';
-import BridgeReleaseDialog from './BridgeReleaseDialog';
 import V3FirmwareConfirmUpdate from './V3FirmwareConfirmUpdate';
 import V3ReleaseInfo from './V3ReleaseInfo';
 
@@ -28,12 +27,20 @@ let isPollingUpdateDevice = false;
 
 const DeviceEventAlert: FC = () => {
   const intl = useIntl();
+  const needsPermission = useSelector(
+    (state: RootState) => state.runtime.needsBootloaderPermission
+  );
   const showPinAlert = useSelector(
     (state: RootState) => state.firmware.showPinAlert
   );
   const showButtonAlert = useSelector(
     (state: RootState) => state.firmware.showButtonAlert
   );
+
+  if (needsPermission) {
+    return null;
+  }
+
   return (
     <>
       {showPinAlert && (
@@ -95,6 +102,76 @@ const Description: FC<{ text: string; value: any }> = ({ text, value }) => (
   </div>
 );
 
+const BootloaderStatusAlert: FC = () => {
+  const intl = useIntl();
+  const device = useSelector((state: RootState) => state.runtime.device);
+  const isBootLoader = device?.features?.bootloader_mode;
+
+  if (!isBootLoader) {
+    return null;
+  }
+
+  // Bootloader mode - 提示用户当前处于可更新状态
+  return (
+    <div className="my-2">
+      <Alert
+        type="info"
+        title={intl.formatMessage({ id: 'TR_DEVICE_IN_BOOTLOADER_MODE' })}
+        content={intl.formatMessage({ id: 'TR_DEVICE_READY_FOR_UPDATE' })}
+      />
+    </div>
+  );
+};
+
+const BootloaderPermissionPrompt: FC = () => {
+  const intl = useIntl();
+  const needsPermission = useSelector(
+    (state: RootState) => state.runtime.needsBootloaderPermission
+  );
+  const [authorizing, setAuthorizing] = useState(false);
+
+  if (!needsPermission) {
+    return null;
+  }
+
+  const handleAuthorize = async () => {
+    if (authorizing) {
+      return;
+    }
+    setAuthorizing(true);
+    try {
+      const success = await serviceHardware.promptBootloaderDeviceAccess();
+      if (!success) {
+        console.warn('Bootloader 设备重新授权未完成，可提示用户再次尝试。');
+      }
+    } finally {
+      setAuthorizing(false);
+    }
+  };
+
+  return (
+    <div className="my-2">
+      <Alert
+        type="warning"
+        title={intl.formatMessage({ id: 'TR_BOOTLOADER_PERMISSION_REQUIRED' })}
+        content={intl.formatMessage({
+          id: 'TR_BOOTLOADER_PERMISSION_REQUIRED_DESC',
+        })}
+        action={
+          <Button
+            type="primary"
+            size="sm"
+            onClick={handleAuthorize}
+            loading={authorizing}
+          >
+            {intl.formatMessage({ id: 'TR_REAUTHORIZE_DEVICE' })}
+          </Button>
+        }
+      />
+    </div>
+  );
+};
+
 const RebootToBoard: FC = () => {
   const intl = useIntl();
   const device = useSelector((state: RootState) => state.runtime.device);
@@ -128,23 +205,39 @@ const RebootToBoard: FC = () => {
   return null;
 };
 
+const ReconnectDevice: FC = () => {
+  const intl = useIntl();
+  const dispatch = useDispatch();
+  const device = useSelector((state: RootState) => state.runtime.device);
+
+  const handleReconnect = useCallback(() => {
+    // Clear current device and return to search page
+    dispatch(setDevice(null));
+    dispatch(setPageStatus('searching'));
+  }, [dispatch]);
+
+  // Show reconnect button when no device is connected
+  if (!device) {
+    return (
+      <div className="flex items-center justify-center py-4">
+        <Button type="primary" size="lg" onClick={handleReconnect}>
+          {intl.formatMessage({ id: 'TR_RECONNECT_DEVICE' })}
+        </Button>
+      </div>
+    );
+  }
+
+  return null;
+};
+
 const ConfirmUpdate: FC = () => {
   const intl = useIntl();
   const device = useSelector((state: RootState) => state.runtime.device);
-  const releaseMap = useSelector(
-    (state: RootState) => state.runtime.releaseMap
-  );
-  const selectedReleaseInfo = useSelector(
-    (state: RootState) => state.runtime.selectedReleaseInfo
-  );
   const selectedUploadType = useSelector(
     (state: RootState) => state.runtime.selectedUploadType
   );
   const tabType = useSelector((state: RootState) => state.runtime.currentTab);
   const [confirmProtocol, setConfirmProtocol] = useState(false);
-  const [bridgeReleaseModalVisible, setBridgeReleaseModalVisible] =
-    useState(false);
-  const [bridgeReleaseVersion, setBridgeReleaseVersion] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
   const onHandleInstall = useCallback(async () => {
     if (isUpdating) return;
@@ -153,25 +246,6 @@ const ConfirmUpdate: FC = () => {
     }
     setIsUpdating(true);
     try {
-      if (
-        device?.deviceType &&
-        (selectedUploadType === 'firmware' || selectedUploadType === 'ble')
-      ) {
-        const firmwareField = selectedReleaseInfo?.firmwareField;
-        if (firmwareField) {
-          const version =
-            releaseMap[device.deviceType]?.[firmwareField]?.[0]?.version;
-          const checkBridgeRelease = await serviceHardware.checkBridgeRelease(
-            version?.join('.') ?? ''
-          );
-          if (checkBridgeRelease?.shouldUpdate) {
-            setBridgeReleaseVersion(checkBridgeRelease.releaseVersion);
-            setBridgeReleaseModalVisible(true);
-            return;
-          }
-        }
-      }
-
       if (tabType === 'bootloader') {
         await serviceHardware.bootloaderUpdate();
       } else {
@@ -182,14 +256,7 @@ const ConfirmUpdate: FC = () => {
     } finally {
       setIsUpdating(false);
     }
-  }, [
-    device,
-    selectedUploadType,
-    selectedReleaseInfo,
-    releaseMap,
-    tabType,
-    isUpdating,
-  ]);
+  }, [tabType, isUpdating]);
 
   return (
     <div className="flex justify-center items-center flex-col">
@@ -226,11 +293,6 @@ const ConfirmUpdate: FC = () => {
           {intl.formatMessage({ id: 'TR_FIRMWARE_HEADING' })}
         </Button>
       </div>
-      <BridgeReleaseDialog
-        visible={bridgeReleaseModalVisible}
-        setVisible={setBridgeReleaseModalVisible}
-        version={bridgeReleaseVersion}
-      />
     </div>
   );
 };
@@ -355,8 +417,10 @@ export default function Firmware() {
               : 'TR_FIRMWARE_HEADING',
         })}
       </h1>
+      <BootloaderPermissionPrompt />
       {!showFirmwareUpdate ? (
         <>
+          <ReconnectDevice />
           <div className="flex flex-row-reverse">
             <div className="md:w-1/2 sm:w-full">
               <Description
@@ -400,6 +464,7 @@ export default function Firmware() {
               <RebootToBoard />
             </div>
           </div>
+          <BootloaderStatusAlert />
           {['touch', 'pro'].includes(getDeviceType(device?.features)) && (
             <ConfirmDialog
               okCancel
