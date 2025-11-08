@@ -14,9 +14,9 @@ import type { IFirmwareField } from '@onekeyfe/hd-core';
 import { createDeferred, Deferred } from '@onekeyfe/hd-shared';
 import { store } from '@/store';
 import {
-  setBridgeReleaseMap,
   setReleaseMap,
   setInstallType,
+  setNeedsBootloaderPermission,
 } from '@/store/reducers/runtime';
 import {
   setMaxProgress,
@@ -27,11 +27,7 @@ import {
   setShowErrorAlert,
   setProgress,
 } from '@/store/reducers/firmware';
-import type {
-  BridgeReleaseMap,
-  RemoteConfigResponse,
-  IFirmwareReleaseInfo,
-} from '@/types';
+import type { RemoteConfigResponse, IFirmwareReleaseInfo } from '@/types';
 import { arrayBufferToBuffer, wait } from '@/utils';
 import {
   downloadBootloaderFirmware,
@@ -122,6 +118,17 @@ class ServiceHardware {
               default:
                 break;
             }
+          } else if (
+            type === 'ui-request_select_device_in_bootloader_for_web_device'
+          ) {
+            // When device enters bootloader mode, it re-enumerates with different PID
+            // WebUSB requires user action to authorize this "new" device
+            console.log(
+              'Device entered bootloader mode, prompting for USB access...'
+            );
+            store.dispatch(setShowPinAlert(false));
+            store.dispatch(setShowButtonAlert(false));
+            store.dispatch(setNeedsBootloaderPermission(true));
           } else if (type === UI_REQUEST.FIRMWARE_PROGRESS) {
             const { progress } = store.getState().firmware;
             const { showButtonAlert } = store.getState().firmware;
@@ -269,14 +276,6 @@ class ServiceHardware {
     return (await this.getSDKInstance()).uiResponse(response);
   }
 
-  async checkBridgeStatus() {
-    return new Promise(async (resolve) => {
-      const hardwareSDK = await this.getSDKInstance();
-      const res = await hardwareSDK?.checkBridgeStatus();
-      resolve(res.success);
-    });
-  }
-
   async getReleaseInfo() {
     const { data } = await axios.get<RemoteConfigResponse>(
       `https://data.onekey.so/config.json?noCache=${new Date().getTime()}`
@@ -292,28 +291,6 @@ class ServiceHardware {
       classicpure: data.classicpure,
     };
     store.dispatch(setReleaseMap(deviceMap));
-
-    const bridgeMap: BridgeReleaseMap = {
-      linux64Deb: {
-        value: data.bridge.linux64Deb,
-        label: 'Linux 64-bit (deb)',
-      },
-      linux64Rpm: {
-        value: data.bridge.linux64Rpm,
-        label: 'Linux 64-bit (rpm)',
-      },
-      linux32Deb: {
-        value: data.bridge.linux32Deb,
-        label: 'Linux 32-bit (deb)',
-      },
-      linux32Rpm: {
-        value: data.bridge.linux32Rpm,
-        label: 'Linux 32-bit (rpm)',
-      },
-      mac: { value: data.bridge.mac, label: 'Mac OS X' },
-      win: { value: data.bridge.win, label: 'Window' },
-    };
-    store.dispatch(setBridgeReleaseMap(bridgeMap));
   }
 
   async checkUpdateBootloaderForClassicAndMini(version: number[]) {
@@ -747,24 +724,59 @@ class ServiceHardware {
     });
   }
 
-  async checkBridgeRelease(willUpdateFirmwareVersion: string) {
-    const hardwareSDK = await this.getSDKInstance();
-    return hardwareSDK
-      ?.checkBridgeRelease(undefined, {
-        willUpdateFirmwareVersion,
-      })
-      .then((response) => {
-        if (!response.success) {
-          return { shouldUpdate: false, status: 'valid', releaseVersion: '' };
-        }
-        return response.payload;
-      });
-  }
-
   async rebootToBoard() {
     const hardwareSDK = await this.getSDKInstance();
     const response = await hardwareSDK.deviceRebootToBoardloader('');
     return !!response.success;
+  }
+
+  /**
+   * Prompts user to grant USB access to bootloader device
+   * This is needed because when device enters bootloader mode, it re-enumerates
+   * with a different PID, and WebUSB requires user action to authorize it
+   */
+  async promptBootloaderDeviceAccess() {
+    let authorized = false;
+    try {
+      const hardwareSDK = await this.getSDKInstance();
+
+      // Prompt user to select the bootloader device
+      // This will show the browser's USB device selection dialog
+      const result = await hardwareSDK.promptWebDeviceAccess();
+
+      if (result.success && result.payload?.device) {
+        const device = result.payload.device;
+        // Use deviceId if available, fallback to uuid
+        const deviceId = device.deviceId ?? device.uuid;
+
+        console.log(
+          'Bootloader device authorized:',
+          deviceId,
+          'Sending response to SDK...'
+        );
+
+        // Send the device ID back to SDK so it can continue the update
+        await this.sendUiResponse({
+          type: UI_RESPONSE.SELECT_DEVICE_IN_BOOTLOADER_FOR_WEB_DEVICE,
+          payload: {
+            deviceId,
+          },
+        });
+
+        console.log('Device selection response sent successfully');
+        store.dispatch(setNeedsBootloaderPermission(false));
+        authorized = true;
+      } else if (!result.success) {
+        // Handle error case
+        console.error('Failed to get bootloader device:', result.payload.error);
+        // User cancelled or error occurred, but don't throw - just log it
+        // The SDK will timeout and show an appropriate error
+      }
+    } catch (error) {
+      console.error('Error prompting bootloader device access:', error);
+      // Don't throw - let the SDK handle timeout
+    }
+    return authorized;
   }
 }
 

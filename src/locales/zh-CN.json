@@ -62,6 +62,7 @@
   "TR_DEVICE_INITIALIZED": "您的设备已初始化",
   "TR_DEVICE_IN_BOOTLOADER_MODE": "设备处于 bootloader 模式",
   "TR_DEVICE_IN_BOOTLOADER_MODE_INSTRUCTIONS": "Device is connected in bootloader mode. Plug out the USB cable and connect device again.",
+  "TR_DEVICE_READY_FOR_UPDATE": "您的设备已准备好进行固件更新。您可以继续更新流程。",
   "TR_DEVICE_IS_INITIALIZED": "设备已初始化",
   "TR_DEVICE_IS_USED_IN_OTHER_WINDOW_BUTTON": "我确认已经关闭其他窗口，点击继续",
   "TR_DEVICE_IS_USED_IN_OTHER_WINDOW_HEADING": "设备在另一个浏览器窗口被占用",
@@ -254,5 +255,15 @@
   "TR_REMOTE_FIRMWARE": "固件更新",
   "TR_LOCAL_FIRMWARE": "本地固件",
   "TR_LOCAL_FIRMWARE_UPLOAD": "本地固件上传",
-  "TR_LOCAL_FIRMWARE_DESCRIPTION": "选择本地固件文件进行更新。上传前请确保文件来源可靠。"
+  "TR_LOCAL_FIRMWARE_DESCRIPTION": "选择本地固件文件进行更新。上传前请确保文件来源可靠。",
+  "TR_CONNECT_DEVICE": "连接设备",
+  "TR_CONNECTING": "连接中...",
+  "TR_RECONNECT_DEVICE": "重新连接设备",
+  "TR_WEBUSB_REQUIRES_USER_ACTION": "点击下方按钮连接您的 OneKey 设备。",
+  "TR_WEBUSB_WILL_PROMPT_PERMISSION": "浏览器将请求访问 USB 设备的权限，请允许以继续操作。",
+  "TR_USING_WEBUSB_MODE": "使用 WebUSB 直连模式",
+  "TR_ALLOW_WEBUSB_PERMISSION": "浏览器弹出提示时，请允许 WebUSB 权限",
+  "TR_BOOTLOADER_PERMISSION_REQUIRED": "需要重新授权 Bootloader 设备",
+  "TR_BOOTLOADER_PERMISSION_REQUIRED_DESC": "设备已进入 Bootloader，需授权新的 USB 设备以继续。",
+  "TR_REAUTHORIZE_DEVICE": "授权设备"
 }

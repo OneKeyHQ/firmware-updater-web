@@ -1,40 +1,23 @@
-/* eslint-disable no-nested-ternary */
-import { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { FC } from 'react';
 import { useIntl } from 'react-intl';
+import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { Button } from '@onekeyfe/ui-components';
 import ConnectImage from '@/images/connect-device.svg';
-import { getSystemKey } from '@/utils';
-import { setPageStatus } from '@/store/reducers/runtime';
-import Select from '../Select';
 
-type Option = { label: string; value: string };
+interface SearchDeviceProps {
+  onConnectDevice?: () => void;
+  isConnecting?: boolean;
+}
 
-export default function SearchDevice() {
+const SearchDevice: FC<SearchDeviceProps> = ({
+  onConnectDevice,
+  isConnecting,
+}) => {
   const intl = useIntl();
-  const dispatch = useDispatch();
   const pageStatus = useSelector(
     (state: RootState) => state.runtime.pageStatus
   );
-  const bridgeVersion = useSelector(
-    (state: RootState) => state.runtime.bridgeVersion
-  );
-  const bridgeReleaseMap = useSelector(
-    (state: RootState) => state.runtime.bridgeReleaseMap
-  );
-
-  const [options, setOptions] = useState<Option[]>([]);
-  const [currentTarget, setCurrentTarget] = useState<Option | null>(null);
-  useEffect(() => {
-    const system = getSystemKey();
-    setCurrentTarget(bridgeReleaseMap[system]);
-
-    const items = Object.values(bridgeReleaseMap)
-      .filter((item) => item.value && item.value.length)
-      .map((item) => item);
-    setOptions(items);
-  }, [bridgeReleaseMap]);
 
   return (
     <div className="flex flex-col justify-center items-center py-4">
@@ -42,81 +25,105 @@ export default function SearchDevice() {
         {intl.formatMessage({ id: 'TR_CONNECT_HEADING' })}
       </h1>
       <img src={ConnectImage} className="self-center h-60" alt="" />
-      <p className="text-sm font-normal text-gray-500">
-        {intl.formatMessage({ id: 'TR_MAKE_SURE_IT_IS_WELL_CONNECTED' })}
-        {intl.formatMessage({ id: 'TR_SEARCHING_FOR_YOUR_DEVICE' })}
-      </p>
-      <p className="text-xs font-normal text-gray-500 py-3">
-        {pageStatus === 'uninstall-bridge' || pageStatus === 'download-bridge'
-          ? intl.formatMessage({ id: 'TR_ONEKEY_BRIDGE_IS_NOT_RUNNING' })
-          : `${intl.formatMessage({
-              id: 'TR_BRIDGE_IS_RUNNING',
-            })}，${intl.formatMessage({ id: 'TR_VERSION' })}: ${bridgeVersion}`}
-      </p>
-      {pageStatus === 'search-timeout' ? (
+
+      {onConnectDevice ? (
+        <>
+          <p className="text-base font-medium text-gray-700 mb-6 text-center max-w-md">
+            {intl.formatMessage({ id: 'TR_WEBUSB_REQUIRES_USER_ACTION' })}
+          </p>
+          <div className="relative mb-6">
+            {/* Pulsing background effect - only show when not connecting */}
+            {!isConnecting && (
+              <div className="absolute -inset-1 bg-gradient-to-r from-brand-500 to-brand-600 rounded-lg blur opacity-30 animate-pulse" />
+            )}
+            {/* Button */}
+            <Button
+              type="primary"
+              size="xl"
+              onClick={onConnectDevice}
+              loading={isConnecting}
+              disabled={isConnecting}
+              className="relative shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 disabled:scale-100 disabled:opacity-60"
+            >
+              <span className="flex items-center gap-2 text-lg font-semibold">
+                {!isConnecting && (
+                  <svg
+                    className="w-6 h-6"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={1.5}
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9.5 3v3M14.5 3v3"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M7 6.5h10v4.25a4.75 4.75 0 01-4.75 4.75h-.5A4.75 4.75 0 017 10.75V6.5z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 15.5v4.5m-2.5 0h5"
+                    />
+                  </svg>
+                )}
+                {isConnecting
+                  ? intl.formatMessage({ id: 'TR_CONNECTING' })
+                  : intl.formatMessage({ id: 'TR_CONNECT_DEVICE' })}
+              </span>
+            </Button>
+          </div>
+          <p className="text-sm font-normal text-gray-500 mt-2 max-w-md text-center">
+            {intl.formatMessage({ id: 'TR_WEBUSB_WILL_PROMPT_PERMISSION' })}
+          </p>
+        </>
+      ) : (
         <>
           <p className="text-sm font-normal text-gray-500">
-            {intl.formatMessage({ id: 'TR_SEARCHING_TAKES_TOO_LONG' })}
+            {intl.formatMessage({ id: 'TR_MAKE_SURE_IT_IS_WELL_CONNECTED' })}
+            {intl.formatMessage({ id: 'TR_SEARCHING_FOR_YOUR_DEVICE' })}
           </p>
-          <div className="flex flex-col items-start justify-start">
-            <p className="text-sm font-normal text-gray-500 pt-4 pb-1">
-              • {intl.formatMessage({ id: 'TR_CHECK_BRIDGE' })}
-            </p>
-            <p className="text-sm font-normal text-gray-500 py-1">
-              • {intl.formatMessage({ id: 'TR_REFRESH_INSTRUCTION' })}
-            </p>
-            <p className="text-sm font-normal text-gray-500 py-1">
-              • {intl.formatMessage({ id: 'TR_ANOTHER_CABLE_INSTRUCTION' })}
-            </p>
-            <p className="text-sm font-normal text-gray-500 py-1">
-              • {intl.formatMessage({ id: 'TR_LAST_RESORT_INSTRUCTION' })}
-              <a className="text-brand-500" href="https://help.onekey.so">
-                {intl.formatMessage({ id: 'TR_CONTACT_ONEKEY_SUPPORT_LINK' })}
-              </a>
-            </p>
-          </div>
+          <p className="text-xs font-normal text-gray-500 py-3">
+            {intl.formatMessage({ id: 'TR_USING_WEBUSB_MODE' })}
+          </p>
+          {pageStatus === 'search-timeout' ? (
+            <>
+              <p className="text-sm font-normal text-gray-500">
+                {intl.formatMessage({ id: 'TR_SEARCHING_TAKES_TOO_LONG' })}
+              </p>
+              <div className="flex flex-col items-start justify-start">
+                <p className="text-sm font-normal text-gray-500 pt-4 pb-1">
+                  • {intl.formatMessage({ id: 'TR_CHECK_BRIDGE' })}
+                </p>
+                <p className="text-sm font-normal text-gray-500 pt-4 pb-1">
+                  • {intl.formatMessage({ id: 'TR_ALLOW_WEBUSB_PERMISSION' })}
+                </p>
+                <p className="text-sm font-normal text-gray-500 py-1">
+                  • {intl.formatMessage({ id: 'TR_REFRESH_INSTRUCTION' })}
+                </p>
+                <p className="text-sm font-normal text-gray-500 py-1">
+                  • {intl.formatMessage({ id: 'TR_ANOTHER_CABLE_INSTRUCTION' })}
+                </p>
+                <p className="text-sm font-normal text-gray-500 py-1">
+                  • {intl.formatMessage({ id: 'TR_LAST_RESORT_INSTRUCTION' })}
+                  <a className="text-brand-500" href="https://help.onekey.so">
+                    {intl.formatMessage({
+                      id: 'TR_CONTACT_ONEKEY_SUPPORT_LINK',
+                    })}
+                  </a>
+                </p>
+              </div>
+            </>
+          ) : null}
         </>
-      ) : pageStatus === 'uninstall-bridge' ? (
-        currentTarget && (
-          <div className="flex items-center p-6">
-            <div className="w-52 pr-3">
-              <Select
-                options={options}
-                defaultValue={currentTarget}
-                onChange={(e) => {
-                  setCurrentTarget(e);
-                }}
-              />
-            </div>
-            <a href={currentTarget.value} className="w-28 flex">
-              <Button
-                href={currentTarget.value}
-                type="primary"
-                size="lg"
-                className="flex-1"
-                onClick={() => {
-                  dispatch(setPageStatus('download-bridge'));
-                }}
-              >
-                {intl.formatMessage({ id: 'TR_DOWNLOAD' })}
-              </Button>
-            </a>
-          </div>
-        )
-      ) : pageStatus === 'download-bridge' ? (
-        <div className="flex flex-col items-center justify-center">
-          <p className="text-sm font-normal text-gray-500 pt-3 pb-1">
-            1. {intl.formatMessage({ id: 'TR_WAIT_FOR_FILE_TO_DOWNLOAD' })}
-          </p>
-          <p className="text-sm font-normal text-gray-500 py-2">
-            2.
-            {intl.formatMessage({ id: 'TR_DOUBLE_CLICK_IT_TO_RUN_INSTALLER' })}
-          </p>
-          <p className="text-sm font-normal text-gray-500 py-2">
-            3.{intl.formatMessage({ id: 'TR_DETECTING_BRIDGE' })}...
-          </p>
-        </div>
-      ) : null}
+      )}
     </div>
   );
-}
+};
+
+export default SearchDevice;

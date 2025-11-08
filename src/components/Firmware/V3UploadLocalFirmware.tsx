@@ -132,8 +132,7 @@ const V3UploadLocalFirmware: React.FC = () => {
           '本地固件上传'}
       </h3>
       <p className="text-sm text-gray-500">
-        {intl.formatMessage({ id: 'TR_LOCAL_FIRMWARE_DESCRIPTION' }) ||
-          '选择本地固件文件进行更新。上传前请确保文件来源可靠。'}
+        {intl.formatMessage({ id: 'TR_LOCAL_FIRMWARE_DESCRIPTION' })}
       </p>
 
       <div className="mt-5 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-2">
