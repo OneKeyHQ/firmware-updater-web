@@ -11,7 +11,11 @@ import {
   FirmwareUpdateV3Params,
 } from '@onekeyfe/hd-core';
 import type { IFirmwareField } from '@onekeyfe/hd-core';
-import { createDeferred, Deferred } from '@onekeyfe/hd-shared';
+import {
+  createDeferred,
+  Deferred,
+  ONEKEY_WEBUSB_FILTER,
+} from '@onekeyfe/hd-shared';
 import { store } from '@/store';
 import {
   setReleaseMap,
@@ -738,40 +742,57 @@ class ServiceHardware {
   async promptBootloaderDeviceAccess() {
     let authorized = false;
     try {
-      const hardwareSDK = await this.getSDKInstance();
+      type UsbDeviceRequestFilter = {
+        vendorId?: number;
+        productId?: number;
+        classCode?: number;
+        subclassCode?: number;
+        protocolCode?: number;
+        serialNumber?: string;
+      };
+      type UsbDeviceRequestOptions = {
+        filters: UsbDeviceRequestFilter[];
+      };
+      type UsbDeviceLike = {
+        serialNumber?: string | null;
+      };
+      type USBNavigator = Navigator & {
+        usb?: {
+          requestDevice: (
+            options: UsbDeviceRequestOptions
+          ) => Promise<UsbDeviceLike>;
+        };
+      };
 
-      // Prompt user to select the bootloader device
-      // This will show the browser's USB device selection dialog
-      const result = await hardwareSDK.promptWebDeviceAccess();
+      const usbNavigator = navigator as USBNavigator;
 
-      if (result.success && result.payload?.device) {
-        const device = result.payload.device;
-        // Use deviceId if available, fallback to uuid
-        const deviceId = device.deviceId ?? device.uuid;
-
-        console.log(
-          'Bootloader device authorized:',
-          deviceId,
-          'Sending response to SDK...'
-        );
-
-        // Send the device ID back to SDK so it can continue the update
-        await this.sendUiResponse({
-          type: UI_RESPONSE.SELECT_DEVICE_IN_BOOTLOADER_FOR_WEB_DEVICE,
-          payload: {
-            deviceId,
-          },
-        });
-
-        console.log('Device selection response sent successfully');
-        store.dispatch(setNeedsBootloaderPermission(false));
-        authorized = true;
-      } else if (!result.success) {
-        // Handle error case
-        console.error('Failed to get bootloader device:', result.payload.error);
-        // User cancelled or error occurred, but don't throw - just log it
-        // The SDK will timeout and show an appropriate error
+      if (!usbNavigator.usb) {
+        console.error('WebUSB API not available.');
+        return false;
       }
+
+      const device = await usbNavigator.usb.requestDevice({
+        filters: ONEKEY_WEBUSB_FILTER as unknown as UsbDeviceRequestFilter[],
+      });
+
+      const serialNumber = device.serialNumber ?? '';
+
+      console.log(
+        'Bootloader device authorized:',
+        serialNumber,
+        'Sending response to SDK...'
+      );
+
+      await this.sendUiResponse({
+        type: UI_RESPONSE.SELECT_DEVICE_IN_BOOTLOADER_FOR_WEB_DEVICE,
+        payload: {
+          deviceId: serialNumber,
+        },
+      });
+
+      console.log('Device selection response sent successfully');
+      store.dispatch(setNeedsBootloaderPermission(false));
+      authorized = true;
     } catch (error) {
       console.error('Error prompting bootloader device access:', error);
       // Don't throw - let the SDK handle timeout
