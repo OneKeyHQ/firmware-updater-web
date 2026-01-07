@@ -487,7 +487,7 @@ class ServiceHardware {
 
   /**
    * Performs firmware update using the V3 update protocol
-   * This method handles components from the firmware-v7 configuration including:
+   * This method handles components from the firmware-v8 configuration including:
    * - Main firmware
    * - BLE firmware
    * - Bootloader
@@ -542,7 +542,7 @@ class ServiceHardware {
         const releaseInfo = state.runtime.releaseMap[deviceType];
 
         // pro固件字段配置键
-        const firmwareField = 'firmware-v7';
+        const firmwareField = 'firmware-v8';
 
         // 处理每个选中的组件
         for (const component of filteredComponents) {
