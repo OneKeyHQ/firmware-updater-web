@@ -1,0 +1,17 @@
+{
+  "files": {
+    "main.css": "https://firmware.onekeytest.com/static/css/main.185df871.css",
+    "main.js": "https://firmware.onekeytest.com/static/js/main.326a400e.js",
+    "static/js/787.bec5df2d.chunk.js": "https://firmware.onekeytest.com/static/js/787.bec5df2d.chunk.js",
+    "static/media/disconnect-device.svg": "https://firmware.onekeytest.com/static/media/disconnect-device.3b674934850d388759e17391347437e3.svg",
+    "static/media/connect-device.svg": "https://firmware.onekeytest.com/static/media/connect-device.0d2fab5e80d2362d1a510ccb8cac5e76.svg",
+    "index.html": "https://firmware.onekeytest.com/index.html",
+    "main.185df871.css.map": "https://firmware.onekeytest.com/static/css/main.185df871.css.map",
+    "main.326a400e.js.map": "https://firmware.onekeytest.com/static/js/main.326a400e.js.map",
+    "787.bec5df2d.chunk.js.map": "https://firmware.onekeytest.com/static/js/787.bec5df2d.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.185df871.css",
+    "static/js/main.326a400e.js"
+  ]
+}
