@@ -43,6 +43,7 @@ export type DeviceTypeMap = {
     ble: IBLEFirmwareReleaseInfo[];
     'firmware-v2'?: IFirmwareReleaseInfo[];
     'firmware-v8'?: IFirmwareReleaseInfo[];
+    'firmware-btc-v8'?: IFirmwareReleaseInfo[];
   };
 };
 
