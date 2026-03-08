@@ -41,7 +41,7 @@
     "camelcase": "^6.2.1",
     "case-sensitive-paths-webpack-plugin": "^2.4.0",
     "css-loader": "^6.5.1",
-    "css-minimizer-webpack-plugin": "^3.2.0",
+    "css-minimizer-webpack-plugin": "^8.0.0",
     "dotenv": "^10.0.0",
     "dotenv-expand": "^5.1.0",
     "eslint": "^8.23.1",
@@ -62,7 +62,7 @@
     "fs-extra": "^10.0.0",
     "html-webpack-plugin": "^5.5.0",
     "identity-obj-proxy": "^3.0.0",
-    "jest": "^27.4.3",
+    "jest": "^28.0.0",
     "jest-resolve": "^27.4.2",
     "jest-watch-typeahead": "^1.0.0",
     "js-sha3": "^0.8.0",
@@ -92,13 +92,13 @@
     "source-map-loader": "^3.0.0",
     "style-loader": "^3.3.1",
     "tailwindcss": "^3.1.8",
-    "terser-webpack-plugin": "^5.2.5",
+    "terser-webpack-plugin": "^5.3.17",
     "typescript": "^4.8.3",
     "web-vitals": "^2.1.4",
     "webpack": "^5.76.0",
     "webpack-dev-server": "^4.6.0",
     "webpack-manifest-plugin": "^4.0.2",
-    "workbox-webpack-plugin": "^6.4.1"
+    "workbox-webpack-plugin": "^7.1.0"
   },
   "scripts": {
     "start": "HTTPS=true node scripts/start.js",
