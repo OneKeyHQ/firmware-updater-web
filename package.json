@@ -86,7 +86,7 @@
     "react-router-dom": "^6.4.1",
     "resolve": "^1.20.0",
     "resolve-url-loader": "^4.0.0",
-    "ripple-keypairs": "^1.1.4",
+    "ripple-keypairs": "^2.0.0",
     "sass-loader": "^12.3.0",
     "semver": "^7.3.5",
     "source-map-loader": "^3.0.0",
