@@ -21,7 +21,6 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           registry-url: 'https://npm.pkg.github.com'
-          always-auth: true
           scope: '@onekeyhq'
 
       - name: Install Dependency
@@ -30,6 +29,6 @@ jobs:
         run: yarn
 
       - name: Run linters
-        uses: wearerequired/lint-action@v2
-        with:
-          eslint: true
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: yarn lint
