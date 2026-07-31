@@ -27,7 +27,11 @@ export default function ProgressBar() {
       time = isBle ? 100 : 300;
     } else if (deviceType === 'mini') {
       time = 500;
-    } else if (deviceType === 'touch' || deviceType === 'pro') {
+    } else if (
+      deviceType === 'touch' ||
+      deviceType === 'pro' ||
+      deviceType === 'pro2'
+    ) {
       time = isBle ? 100 : 1000;
     }
     return time;
@@ -42,7 +46,8 @@ export default function ProgressBar() {
     const deviceType = getDeviceType(device.features);
 
     return (
-      semver.gte(bootloaderVersion, '2.8.0') && deviceType === EDeviceType.Pro
+      deviceType === EDeviceType.Pro2 ||
+      (semver.gte(bootloaderVersion, '2.8.0') && deviceType === EDeviceType.Pro)
     );
   }, [device]);
 

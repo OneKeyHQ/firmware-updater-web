@@ -265,5 +265,7 @@
   "TR_ALLOW_WEBUSB_PERMISSION": "Allow WebUSB permission when browser prompts",
   "TR_BOOTLOADER_PERMISSION_REQUIRED": "Authorize bootloader device",
   "TR_BOOTLOADER_PERMISSION_REQUIRED_DESC": "Bootloader mode detected. Authorize the new USB device to continue.",
-  "TR_REAUTHORIZE_DEVICE": "Authorize device"
+  "TR_REAUTHORIZE_DEVICE": "Authorize device",
+  "TR_PRO2_FIRMWARE_UPDATE": "OneKey Pro 2 firmware update",
+  "TR_PRO2_FIRMWARE_UPDATE_DESC": "The SDK will download and install the latest compatible signed Pro 2 components. Keep the device connected and confirm the update on the device when prompted."
 }

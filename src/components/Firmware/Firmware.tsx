@@ -11,7 +11,12 @@ import {
   getDeviceBootloaderVersion,
 } from '@onekeyfe/hd-core';
 import { serviceHardware } from '@/hardware';
-import { setDevice, setPageStatus } from '@/store/reducers/runtime';
+import {
+  setCurrentTab,
+  setDevice,
+  setPageStatus,
+  setSelectedUploadType,
+} from '@/store/reducers/runtime';
 import { RestartToHomeTip, ListTips, EmptyTips } from './TouchResource/Tips';
 import ResourceButton from './TouchResource/Button';
 
@@ -230,6 +235,26 @@ const ReconnectDevice: FC = () => {
   return null;
 };
 
+const Pro2ReleaseInfo: FC = () => {
+  const intl = useIntl();
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(setCurrentTab('firmware'));
+    dispatch(setSelectedUploadType('firmware'));
+  }, [dispatch]);
+
+  return (
+    <div className="my-4">
+      <Alert
+        type="info"
+        title={intl.formatMessage({ id: 'TR_PRO2_FIRMWARE_UPDATE' })}
+        content={intl.formatMessage({ id: 'TR_PRO2_FIRMWARE_UPDATE_DESC' })}
+      />
+    </div>
+  );
+};
+
 const ConfirmUpdate: FC = () => {
   const intl = useIntl();
   const device = useSelector((state: RootState) => state.runtime.device);
@@ -368,6 +393,9 @@ export default function Firmware() {
         break;
       case 'pro':
         typeFlag = 'OneKey Pro';
+        break;
+      case 'pro2':
+        typeFlag = 'OneKey Pro 2';
         break;
       case 'unknown':
         typeFlag = 'Unknown';
@@ -509,7 +537,13 @@ export default function Firmware() {
               />
             </div>
           )}
-          {isV3Compatible() ? <V3ReleaseInfo /> : <ReleaseInfo />}
+          {getDeviceType(device?.features) === 'pro2' ? (
+            <Pro2ReleaseInfo />
+          ) : isV3Compatible() ? (
+            <V3ReleaseInfo />
+          ) : (
+            <ReleaseInfo />
+          )}
           {(() => {
             if (isMiniAndNotInBootloader) {
               return <BootloaderTips />;

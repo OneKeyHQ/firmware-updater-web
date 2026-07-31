@@ -9,6 +9,7 @@ import {
   UI_REQUEST,
   UI_RESPONSE,
   FirmwareUpdateV3Params,
+  FirmwareUpdateV4Params,
 } from '@onekeyfe/hd-core';
 import type { IFirmwareField } from '@onekeyfe/hd-core';
 import {
@@ -293,6 +294,7 @@ class ServiceHardware {
       pro: data.pro,
       unknown: data.unknown,
       classicpure: data.classicpure,
+      pro2: data.pro2,
     };
     store.dispatch(setReleaseMap(deviceMap));
   }
@@ -411,14 +413,16 @@ class ServiceHardware {
 
   async firmwareUpdate() {
     const state = store.getState();
+    const { device } = state.runtime;
+
+    if (device?.deviceType === 'pro2') {
+      await this.firmwareUpdateV4();
+      return;
+    }
+
     const hardwareSDK = await this.getSDKInstance();
-    const {
-      device,
-      releaseMap,
-      selectedUploadType,
-      selectedReleaseInfo,
-      currentTab,
-    } = state.runtime;
+    const { releaseMap, selectedUploadType, selectedReleaseInfo, currentTab } =
+      state.runtime;
     const params: any = {
       platform: 'web',
     };
@@ -480,6 +484,65 @@ class ServiceHardware {
         setShowErrorAlert({
           type: 'error',
           message: formatMessage({ id: 'TR_FIRMWARE_INSTALLED_FAILED' }) ?? '',
+        })
+      );
+    }
+  }
+
+  /**
+   * Performs the standard Protocol V2 update for OneKey Pro 2.
+   * With no explicit binaries, the SDK resolves compatible firmware-v1 components remotely.
+   */
+  async firmwareUpdateV4() {
+    const state = store.getState();
+    const { device } = state.runtime;
+
+    if (device?.deviceType !== 'pro2') {
+      store.dispatch(
+        setShowErrorAlert({
+          type: 'error',
+          message: '当前设备不支持 Protocol V2 固件更新',
+        })
+      );
+      return;
+    }
+
+    const hardwareSDK = await this.getSDKInstance();
+    const updateParams: FirmwareUpdateV4Params = { platform: 'web' };
+
+    try {
+      store.dispatch(setInstallType('firmware'));
+      store.dispatch(setProgress(0));
+      store.dispatch(setMaxProgress(0));
+      store.dispatch(setShowProgressBar(true));
+      window.scrollTo({ top: 0, behavior: 'auto' });
+
+      const response = await hardwareSDK.firmwareUpdateV4(
+        device.connectId ?? undefined,
+        updateParams
+      );
+
+      if (!response.success) {
+        throw new Error(response.payload.error);
+      }
+
+      store.dispatch(
+        setShowErrorAlert({
+          type: 'success',
+          message:
+            formatMessage({ id: 'TR_FIRMWARE_INSTALLED_SUCCESS' }) ||
+            '固件更新成功',
+        })
+      );
+    } catch (error) {
+      console.error('Pro2 firmware update error:', error);
+      store.dispatch(
+        setShowErrorAlert({
+          type: 'error',
+          message:
+            error instanceof Error
+              ? error.message
+              : formatMessage({ id: 'TR_FIRMWARE_INSTALLED_FAILED' }) || '',
         })
       );
     }

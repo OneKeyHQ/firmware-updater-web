@@ -265,5 +265,7 @@
   "TR_ALLOW_WEBUSB_PERMISSION": "浏览器弹出提示时，请允许 WebUSB 权限",
   "TR_BOOTLOADER_PERMISSION_REQUIRED": "需要重新授权 Bootloader 设备",
   "TR_BOOTLOADER_PERMISSION_REQUIRED_DESC": "设备已进入 Bootloader，需授权新的 USB 设备以继续。",
-  "TR_REAUTHORIZE_DEVICE": "授权设备"
+  "TR_REAUTHORIZE_DEVICE": "授权设备",
+  "TR_PRO2_FIRMWARE_UPDATE": "OneKey Pro 2 固件更新",
+  "TR_PRO2_FIRMWARE_UPDATE_DESC": "SDK 将下载并安装最新兼容的 Pro 2 签名组件。更新期间请保持设备连接，并按提示在设备上确认。"
 }
