@@ -1,4 +1,8 @@
-import type { IDeviceType } from '@onekeyfe/hd-core';
+import type {
+  IDeviceType,
+  IProtocolV2FirmwareComponent,
+  IProtocolV2ResourceBundle,
+} from '@onekeyfe/hd-core';
 
 export type IVersionArray = [number, number, number];
 
@@ -19,6 +23,9 @@ export type IFirmwareReleaseInfo = {
   };
   bootloaderVersion?: IVersionArray;
   displayBootloaderVersion?: IVersionArray;
+  components?: Record<string, IProtocolV2FirmwareComponent>;
+  installOrder?: string[];
+  resourceBundles?: IProtocolV2ResourceBundle[];
   resource: string;
 };
 

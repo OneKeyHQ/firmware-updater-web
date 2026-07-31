@@ -8,15 +8,12 @@ import { Button, Alert, Link } from '@onekeyfe/ui-components';
 import {
   getDeviceType,
   KnownDevice,
+  getDeviceBLEFirmwareVersion,
   getDeviceBootloaderVersion,
+  getDeviceFirmwareVersion,
 } from '@onekeyfe/hd-core';
 import { serviceHardware } from '@/hardware';
-import {
-  setCurrentTab,
-  setDevice,
-  setPageStatus,
-  setSelectedUploadType,
-} from '@/store/reducers/runtime';
+import { setDevice, setPageStatus } from '@/store/reducers/runtime';
 import { RestartToHomeTip, ListTips, EmptyTips } from './TouchResource/Tips';
 import ResourceButton from './TouchResource/Button';
 
@@ -26,6 +23,7 @@ import BootloaderTips from './BootloaderTips';
 import ProgressBar from './ProgressBar';
 import V3FirmwareConfirmUpdate from './V3FirmwareConfirmUpdate';
 import V3ReleaseInfo from './V3ReleaseInfo';
+import Pro2ReleaseInfo from './Pro2ReleaseInfo';
 
 let timer: ReturnType<typeof setInterval>;
 let isPollingUpdateDevice = false;
@@ -106,6 +104,9 @@ const Description: FC<{ text: string; value: any }> = ({ text, value }) => (
     <span>{value}</span>
   </div>
 );
+
+const formatDeviceVersion = (version: number[]) =>
+  version.some((part) => part !== 0) ? version.join('.') : '-';
 
 const BootloaderStatusAlert: FC = () => {
   const intl = useIntl();
@@ -233,26 +234,6 @@ const ReconnectDevice: FC = () => {
   }
 
   return null;
-};
-
-const Pro2ReleaseInfo: FC = () => {
-  const intl = useIntl();
-  const dispatch = useDispatch();
-
-  useEffect(() => {
-    dispatch(setCurrentTab('firmware'));
-    dispatch(setSelectedUploadType('firmware'));
-  }, [dispatch]);
-
-  return (
-    <div className="my-4">
-      <Alert
-        type="info"
-        title={intl.formatMessage({ id: 'TR_PRO2_FIRMWARE_UPDATE' })}
-        content={intl.formatMessage({ id: 'TR_PRO2_FIRMWARE_UPDATE_DESC' })}
-      />
-    </div>
-  );
 };
 
 const ConfirmUpdate: FC = () => {
@@ -463,19 +444,25 @@ export default function Firmware() {
                 text={intl.formatMessage({
                   id: 'TR_FIRMWARE_BOOTLOADER_VERSION',
                 })}
-                value={device?.features.bootloader_version ?? '-'}
+                value={formatDeviceVersion(
+                  getDeviceBootloaderVersion(device?.features)
+                )}
               />
               <Description
                 text={intl.formatMessage({
                   id: 'TR_FIRMWARE_VERSION',
                 })}
-                value={device?.features.onekey_version ?? '-'}
+                value={formatDeviceVersion(
+                  getDeviceFirmwareVersion(device?.features)
+                )}
               />
               <Description
                 text={intl.formatMessage({
                   id: 'TR_BLUETOOTH_FIRMWARE_VERSION',
                 })}
-                value={device?.features.ble_ver ?? '-'}
+                value={formatDeviceVersion(
+                  getDeviceBLEFirmwareVersion(device?.features)
+                )}
               />
               <Description
                 text={intl.formatMessage({
@@ -538,7 +525,7 @@ export default function Firmware() {
             </div>
           )}
           {getDeviceType(device?.features) === 'pro2' ? (
-            <Pro2ReleaseInfo />
+            <Pro2ReleaseInfo clearTimer={clearTimer} />
           ) : isV3Compatible() ? (
             <V3ReleaseInfo />
           ) : (
@@ -547,6 +534,10 @@ export default function Firmware() {
           {(() => {
             if (isMiniAndNotInBootloader) {
               return <BootloaderTips />;
+            }
+
+            if (getDeviceType(device?.features) === 'pro2') {
+              return null;
             }
 
             if (isV3Update && isV3Compatible()) {

@@ -267,5 +267,17 @@
   "TR_BOOTLOADER_PERMISSION_REQUIRED_DESC": "设备已进入 Bootloader，需授权新的 USB 设备以继续。",
   "TR_REAUTHORIZE_DEVICE": "授权设备",
   "TR_PRO2_FIRMWARE_UPDATE": "OneKey Pro 2 固件更新",
-  "TR_PRO2_FIRMWARE_UPDATE_DESC": "SDK 将下载并安装最新兼容的 Pro 2 签名组件。更新期间请保持设备连接，并按提示在设备上确认。"
+  "TR_PRO2_FIRMWARE_UPDATE_DESC": "SDK 将下载并安装最新兼容的 Pro 2 签名组件。更新期间请保持设备连接，并按提示在设备上确认。",
+  "TR_PRO2_REMOTE_VERSION": "远程发行版本",
+  "TR_PRO2_COMPONENT_COUNT": "个固件组件",
+  "TR_PRO2_RESOURCE_COUNT": "个资源包",
+  "TR_PRO2_SELECT_COMPONENTS": "选择需要安装的组件",
+  "TR_PRO2_SELECT_ALL": "全选",
+  "TR_PRO2_CLEAR_ALL": "清空",
+  "TR_PRO2_RESOURCES": "资源包",
+  "TR_PRO2_FIRMWARE_COMPONENTS": "固件组件",
+  "TR_PRO2_RESOURCE_BUNDLES": "资源包",
+  "TR_PRO2_SELECT_FILE": "选择文件",
+  "TR_PRO2_RESELECT_FILE": "重新选择",
+  "TR_PRO2_CLEAR_FILE": "清除"
 }

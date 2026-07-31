@@ -3,6 +3,8 @@ import HardwareCommonSdk from '@onekeyfe/hd-common-connect-sdk';
 import { getSDKVersion } from '@onekeyfe/hd-core';
 import type { ConnectSettings, CoreApi } from '@onekeyfe/hd-core';
 
+import { fetchHardwareConfig } from './config';
+
 let initialized = false;
 
 export const getHardwareSDKInstance = memoizee(
@@ -17,6 +19,9 @@ export const getHardwareSDKInstance = memoizee(
         preRelease: false,
         fetchConfig: true,
         env: 'webusb',
+        ...(process.env.REACT_APP_HARDWARE_CONFIG_URL
+          ? { configFetcher: fetchHardwareConfig }
+          : {}),
       };
 
       try {

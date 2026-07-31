@@ -1,5 +1,4 @@
 /* eslint-disable class-methods-use-this */
-import axios from 'axios';
 import {
   SearchDevice,
   Success,
@@ -32,7 +31,7 @@ import {
   setShowErrorAlert,
   setProgress,
 } from '@/store/reducers/firmware';
-import type { RemoteConfigResponse, IFirmwareReleaseInfo } from '@/types';
+import type { IFirmwareReleaseInfo } from '@/types';
 import { arrayBufferToBuffer, wait } from '@/utils';
 import {
   downloadBootloaderFirmware,
@@ -40,6 +39,7 @@ import {
 } from '@/utils/touchFirmware';
 import { formatMessage } from '@/locales';
 import { getHardwareSDKInstance } from './instance';
+import { fetchHardwareConfig } from './config';
 
 let searchPromise: Deferred<void> | null = null;
 
@@ -225,6 +225,52 @@ class ServiceHardware {
     return hardwareSDK?.searchDevices();
   }
 
+  async promptWebDeviceAccess() {
+    type UsbDeviceRequestFilter = {
+      vendorId?: number;
+      productId?: number;
+    };
+    type USBNavigator = Navigator & {
+      usb?: {
+        getDevices: () => Promise<
+          Array<{
+            vendorId: number;
+            productId: number;
+            serialNumber?: string | null;
+          }>
+        >;
+        requestDevice: (options: {
+          filters: UsbDeviceRequestFilter[];
+        }) => Promise<{
+          vendorId: number;
+          productId: number;
+          serialNumber?: string | null;
+        }>;
+      };
+    };
+
+    const usbNavigator = navigator as USBNavigator;
+    if (!usbNavigator.usb) {
+      throw new Error('WebUSB is not supported in this browser');
+    }
+
+    const authorizedDevices = await usbNavigator.usb.getDevices();
+    const authorizedOneKeyDevice = authorizedDevices.find((device) =>
+      ONEKEY_WEBUSB_FILTER.some(
+        (filter) =>
+          filter.vendorId === device.vendorId &&
+          filter.productId === device.productId
+      )
+    );
+    if (authorizedOneKeyDevice) {
+      return authorizedOneKeyDevice;
+    }
+
+    return usbNavigator.usb.requestDevice({
+      filters: ONEKEY_WEBUSB_FILTER as unknown as UsbDeviceRequestFilter[],
+    });
+  }
+
   async startDeviceScan(
     callback: (searchResponse: Unsuccessful | Success<SearchDevice[]>) => void,
     onSearchStateChange: (state: 'start' | 'stop') => void
@@ -282,9 +328,7 @@ class ServiceHardware {
   }
 
   async getReleaseInfo() {
-    const { data } = await axios.get<RemoteConfigResponse>(
-      `https://data.onekey.so/config.json?noCache=${new Date().getTime()}`
-    );
+    const data = await fetchHardwareConfig();
 
     const deviceMap = {
       classic: data.classic,
@@ -493,7 +537,7 @@ class ServiceHardware {
    * Performs the standard Protocol V2 update for OneKey Pro 2.
    * With no explicit binaries, the SDK resolves compatible firmware-v1 components remotely.
    */
-  async firmwareUpdateV4() {
+  async firmwareUpdateV4(params?: FirmwareUpdateV4Params) {
     const state = store.getState();
     const { device } = state.runtime;
 
@@ -508,7 +552,20 @@ class ServiceHardware {
     }
 
     const hardwareSDK = await this.getSDKInstance();
-    const updateParams: FirmwareUpdateV4Params = { platform: 'web' };
+    const updateParams: FirmwareUpdateV4Params = params ?? {
+      platform: 'web',
+      targetsToUpdate: [
+        'boot',
+        'app_v1',
+        'app_v2',
+        'coprocessor',
+        'se01',
+        'se02',
+        'se03',
+        'se04',
+        'resource',
+      ],
+    };
 
     try {
       store.dispatch(setInstallType('firmware'));
