@@ -14,16 +14,16 @@ jobs:
     if: ${{ !github.event.workflow_run || (github.event.workflow_run && github.event.workflow_run.conclusion == 'success') }}
     steps:
       - name: Checkout Source Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v7
         with:
           lfs: true
       - name: Setup Environment
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v7
         with:
           registry-url: "https://npm.pkg.github.com"
           always-auth: true
           scope: "@onekeyhq"
-          node-version: "16.x"
+          node-version: "24.x"
 
       - name: Install Dependency
         env:
@@ -76,14 +76,14 @@ jobs:
       NODE_ENV: "production"
       CI: false
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
       - name: Setup Environment
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v7
         with:
           registry-url: "https://npm.pkg.github.com"
           always-auth: true
           scope: "@onekeyhq"
-          node-version: "16.x"
+          node-version: "24.x"
 
       - name: Install Dependency
         env:
