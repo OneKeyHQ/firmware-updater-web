@@ -133,12 +133,12 @@ describe('ServiceHardware Pro2 firmware update', () => {
 
     await serviceHardware.firmwareUpdateV4({
       platform: 'web',
-      targetsToUpdate: ['app_v1', 'resource'],
+      targetsToUpdate: ['app_v1', 'resource', 'boot_resources'],
     });
 
     expect(firmwareUpdateV4).toHaveBeenCalledWith('pro2-connect-id', {
       platform: 'web',
-      targetsToUpdate: ['app_v1', 'resource'],
+      targetsToUpdate: ['app_v1', 'resource', 'boot_resources'],
     });
   });
 });

@@ -277,6 +277,10 @@
   "TR_PRO2_RESOURCES": "Resource bundles",
   "TR_PRO2_FIRMWARE_COMPONENTS": "Firmware components",
   "TR_PRO2_RESOURCE_BUNDLES": "Resource bundles",
+  "TR_PRO2_BOOT_RESOURCES": "Startup resources",
+  "TR_PRO2_BOOT_RESOURCES_DESC": "Updates startup-stage assets such as the boot animation, startup UI, and firmware logo. It is not installed by default; select it only when needed.",
+  "TR_PRO2_BOOT_RESOURCES_PACKAGE": "Startup resources CRATE",
+  "TR_PRO2_OPTIONAL": "Optional · not installed by default",
   "TR_PRO2_SELECT_FILE": "Choose file",
   "TR_PRO2_RESELECT_FILE": "Replace",
   "TR_PRO2_CLEAR_FILE": "Clear"

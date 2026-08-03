@@ -80,6 +80,9 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
   const release = useSelector(
     (state: RootState) => state.runtime.releaseMap.pro2?.['firmware-v1']?.[0]
   );
+  const bootResources = useSelector(
+    (state: RootState) => state.runtime.releaseMap.pro2?.resources?.boot
+  );
   const [tab, setTab] = useState<Pro2Tab>('remote');
   const [selectedRemoteTargets, setSelectedRemoteTargets] = useState<
     FirmwareUpdateV4Target[]
@@ -168,6 +171,12 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
           if (selection) {
             params[target.binaryField] = await selection.file.arrayBuffer();
           }
+        }
+
+        const bootResourcesSelection = localFiles.boot_resources;
+        if (bootResourcesSelection) {
+          params.bootResourcesBinary =
+            await bootResourcesSelection.file.arrayBuffer();
         }
 
         const resourceBundleFiles = Object.entries(localFiles)
@@ -377,6 +386,48 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
                   </label>
                 ))}
               </div>
+
+              {bootResources && (
+                <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+                  <div className="border-b border-gray-200 bg-gray-50 px-4 py-3">
+                    <div className="text-sm font-semibold text-gray-900">
+                      {intl.formatMessage({
+                        id: 'TR_PRO2_BOOT_RESOURCES',
+                      })}
+                    </div>
+                    <div className="mt-1 text-xs text-gray-500">
+                      {intl.formatMessage({
+                        id: 'TR_PRO2_BOOT_RESOURCES_DESC',
+                      })}
+                    </div>
+                  </div>
+                  <label className="flex cursor-pointer items-center justify-between px-4 py-3 hover:bg-gray-50">
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+                        checked={selectedRemoteTargets.includes(
+                          'boot_resources'
+                        )}
+                        onChange={() => toggleRemoteTarget('boot_resources')}
+                      />
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {intl.formatMessage({
+                            id: 'TR_PRO2_BOOT_RESOURCES_PACKAGE',
+                          })}
+                        </div>
+                        <div className="mt-0.5 text-xs text-amber-600">
+                          {intl.formatMessage({ id: 'TR_PRO2_OPTIONAL' })}
+                        </div>
+                      </div>
+                    </div>
+                    <span className="text-sm text-gray-500">
+                      {formatFileSize(bootResources.size)}
+                    </span>
+                  </label>
+                </div>
+              )}
             </>
           ) : (
             <Alert
@@ -416,6 +467,24 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
                     bundle.name,
                     bundle.devicePath
                   )
+                )}
+              </div>
+            </div>
+          )}
+          {bootResources && (
+            <div>
+              <h3 className="mb-1 text-sm font-semibold text-gray-900">
+                {intl.formatMessage({ id: 'TR_PRO2_BOOT_RESOURCES' })}
+              </h3>
+              <p className="mb-3 text-xs text-gray-500">
+                {intl.formatMessage({ id: 'TR_PRO2_BOOT_RESOURCES_DESC' })}
+              </p>
+              <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+                {renderLocalFilePicker(
+                  'boot_resources',
+                  intl.formatMessage({
+                    id: 'TR_PRO2_BOOT_RESOURCES_PACKAGE',
+                  })
                 )}
               </div>
             </div>

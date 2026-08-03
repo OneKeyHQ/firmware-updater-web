@@ -2,6 +2,7 @@ import type {
   IDeviceType,
   IProtocolV2FirmwareComponent,
   IProtocolV2ResourceBundle,
+  IProtocolV2Resources,
 } from '@onekeyfe/hd-core';
 
 export type IVersionArray = [number, number, number];
@@ -52,6 +53,7 @@ export type DeviceTypeMap = {
     'firmware-v2'?: IFirmwareReleaseInfo[];
     'firmware-v8'?: IFirmwareReleaseInfo[];
     'firmware-btc-v8'?: IFirmwareReleaseInfo[];
+    resources?: IProtocolV2Resources;
   };
 };
 
