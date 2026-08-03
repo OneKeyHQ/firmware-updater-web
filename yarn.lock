@@ -2193,26 +2193,26 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@onekeyfe/hd-common-connect-sdk@1.2.0-alpha.48":
-  version "1.2.0-alpha.48"
-  resolved "https://registry.npmjs.org/@onekeyfe/hd-common-connect-sdk/-/hd-common-connect-sdk-1.2.0-alpha.48.tgz#c8acbb2c134242354a1ac4edc212b8a6459ca98f"
-  integrity sha512-7LD4dCvjr2BH/0Q4b82qplFKLWktWKO/1SegWhU5U9e81/dBYjFe9oJ4jO0N88BL4vWxUAG41Sgrq8p26JRFtA==
+"@onekeyfe/hd-common-connect-sdk@1.2.0-alpha.49":
+  version "1.2.0-alpha.49"
+  resolved "https://registry.npmjs.org/@onekeyfe/hd-common-connect-sdk/-/hd-common-connect-sdk-1.2.0-alpha.49.tgz#2a3fe4b8097cf983aa73da996206473c335c5db0"
+  integrity sha512-OEdhdS5EQk6ChEKpPq470cNxKvFVdH/CaC/IIXN/b6wWreijPOjsw1p+Z9GCpKVcz900imGAeKUQx9zKU/qSrg==
   dependencies:
-    "@onekeyfe/hd-core" "1.2.0-alpha.48"
-    "@onekeyfe/hd-shared" "1.2.0-alpha.48"
-    "@onekeyfe/hd-transport-emulator" "1.2.0-alpha.48"
-    "@onekeyfe/hd-transport-http" "1.2.0-alpha.48"
-    "@onekeyfe/hd-transport-lowlevel" "1.2.0-alpha.48"
-    "@onekeyfe/hd-transport-usb" "1.2.0-alpha.48"
-    "@onekeyfe/hd-transport-web-device" "1.2.0-alpha.48"
+    "@onekeyfe/hd-core" "1.2.0-alpha.49"
+    "@onekeyfe/hd-shared" "1.2.0-alpha.49"
+    "@onekeyfe/hd-transport-emulator" "1.2.0-alpha.49"
+    "@onekeyfe/hd-transport-http" "1.2.0-alpha.49"
+    "@onekeyfe/hd-transport-lowlevel" "1.2.0-alpha.49"
+    "@onekeyfe/hd-transport-usb" "1.2.0-alpha.49"
+    "@onekeyfe/hd-transport-web-device" "1.2.0-alpha.49"
 
-"@onekeyfe/hd-core@1.2.0-alpha.48":
-  version "1.2.0-alpha.48"
-  resolved "https://registry.npmjs.org/@onekeyfe/hd-core/-/hd-core-1.2.0-alpha.48.tgz#42666f6aa0a86d96c9f89aa411c9746ccf6b406f"
-  integrity sha512-u1VskXHtuXGPo0H2d5mJ889v3dUtPf2/9aMe3vcmveeQk84gy1qSLZIgpt40f2iUlIT5XqR/VzbperlLxfA23w==
+"@onekeyfe/hd-core@1.2.0-alpha.49":
+  version "1.2.0-alpha.49"
+  resolved "https://registry.npmjs.org/@onekeyfe/hd-core/-/hd-core-1.2.0-alpha.49.tgz#4135368ddb42d1a9baf4d18fc4f2e8dc8a9adf65"
+  integrity sha512-hYgFub/j2S8OJhLQZ34kCXpj0aZpLbQloa0gDTImf3UqKeqBFmjncjgCWquqXanhyN2/B5c4Lya/1kkuABgSeg==
   dependencies:
-    "@onekeyfe/hd-shared" "1.2.0-alpha.48"
-    "@onekeyfe/hd-transport" "1.2.0-alpha.48"
+    "@onekeyfe/hd-shared" "1.2.0-alpha.49"
+    "@onekeyfe/hd-transport" "1.2.0-alpha.49"
     axios "1.15.2"
     bignumber.js "^9.0.2"
     bytebuffer "^5.0.1"
@@ -2220,61 +2220,61 @@
     parse-uri "^1.0.7"
     semver "^7.3.7"
 
-"@onekeyfe/hd-shared@1.2.0-alpha.48":
-  version "1.2.0-alpha.48"
-  resolved "https://registry.npmjs.org/@onekeyfe/hd-shared/-/hd-shared-1.2.0-alpha.48.tgz#8e3b752cc491778be3a518ab1b732311a4ed232f"
-  integrity sha512-VAm9aQtQnb6lkSUA84gcR48hESyqkygsrQUniURG0HlGI64+1zVylYkNp7PSvSxux6zuRsao1DsapfFJ55OOsg==
+"@onekeyfe/hd-shared@1.2.0-alpha.49":
+  version "1.2.0-alpha.49"
+  resolved "https://registry.npmjs.org/@onekeyfe/hd-shared/-/hd-shared-1.2.0-alpha.49.tgz#a7420c9e0ea600c7a6bf5c002fd679f99737a586"
+  integrity sha512-d357hBSOCxwfX4mwgJJk9fa3cyp4pT+DB6YblM1XhUrqIwZk+aTLGiIaesFzFxoZUrkz0d1qavXmjusH7YTuNw==
 
-"@onekeyfe/hd-transport-emulator@1.2.0-alpha.48":
-  version "1.2.0-alpha.48"
-  resolved "https://registry.npmjs.org/@onekeyfe/hd-transport-emulator/-/hd-transport-emulator-1.2.0-alpha.48.tgz#85048f29d92b9aeb3adb4065fd938959e802c155"
-  integrity sha512-ZzQZWdnH+IB7fcd5TVVSWfi/oL22zQXQwtcKt7QMqI0SS5N2XuYgYe96ZWref8dAdW9+S6XqIYwMGQn3IuTG2g==
+"@onekeyfe/hd-transport-emulator@1.2.0-alpha.49":
+  version "1.2.0-alpha.49"
+  resolved "https://registry.npmjs.org/@onekeyfe/hd-transport-emulator/-/hd-transport-emulator-1.2.0-alpha.49.tgz#2a9602bb7a9ea1c350ecb611b1edc659077c49a2"
+  integrity sha512-gsYHOhOkLec1+FVNEsabfAk9GOkVJ5xrfMeUXQsulGVMZtnM08u8iAzRkjozsPWz5rY1//Oswl05rZvpn/QxoQ==
   dependencies:
-    "@onekeyfe/hd-shared" "1.2.0-alpha.48"
-    "@onekeyfe/hd-transport" "1.2.0-alpha.48"
+    "@onekeyfe/hd-shared" "1.2.0-alpha.49"
+    "@onekeyfe/hd-transport" "1.2.0-alpha.49"
     axios "1.15.2"
     secure-json-parse "^4.0.0"
 
-"@onekeyfe/hd-transport-http@1.2.0-alpha.48":
-  version "1.2.0-alpha.48"
-  resolved "https://registry.npmjs.org/@onekeyfe/hd-transport-http/-/hd-transport-http-1.2.0-alpha.48.tgz#e301fcb6e37e2beba621c0b2e8a4f1622f35a766"
-  integrity sha512-4nAWAqQin2YKVJ+xTrtzq2Dd7rPgsAwG65bx6bLOA9AUdeN6xM3X7JbTs2tx+ygAxO2qNHGvv3I/yyeTDqQs/Q==
+"@onekeyfe/hd-transport-http@1.2.0-alpha.49":
+  version "1.2.0-alpha.49"
+  resolved "https://registry.npmjs.org/@onekeyfe/hd-transport-http/-/hd-transport-http-1.2.0-alpha.49.tgz#e9ae08eb22024f391767655283a28e2b19b5cb38"
+  integrity sha512-Vde0Qrk9/eUy2H8/ZoLKVgBqPbtkvCKNIo9/8M4zK4vzsO0HlSjbFIJZDwJnY/AbvZm67ftWdUl6OC7lwJ+htQ==
   dependencies:
-    "@onekeyfe/hd-shared" "1.2.0-alpha.48"
-    "@onekeyfe/hd-transport" "1.2.0-alpha.48"
+    "@onekeyfe/hd-shared" "1.2.0-alpha.49"
+    "@onekeyfe/hd-transport" "1.2.0-alpha.49"
     axios "1.15.2"
     secure-json-parse "^4.0.0"
 
-"@onekeyfe/hd-transport-lowlevel@1.2.0-alpha.48":
-  version "1.2.0-alpha.48"
-  resolved "https://registry.npmjs.org/@onekeyfe/hd-transport-lowlevel/-/hd-transport-lowlevel-1.2.0-alpha.48.tgz#5c24e7a0801e1e7d709ae11069e60798b6ab78a8"
-  integrity sha512-oP3Lgc2kGjUOxHBMiEPKccAeo1auzSRouyY0AUtJ/0ZO4cyQSTB4lR/G9HfFKiUFJZZTqTx25ZCUzmFQOKo45w==
+"@onekeyfe/hd-transport-lowlevel@1.2.0-alpha.49":
+  version "1.2.0-alpha.49"
+  resolved "https://registry.npmjs.org/@onekeyfe/hd-transport-lowlevel/-/hd-transport-lowlevel-1.2.0-alpha.49.tgz#cc2ab52bbf0b00cdec96d1792e2648e21cce8dee"
+  integrity sha512-pzKLIkDWPSCBgtgHDf2+Stph7bON6yLtw5pfdge4u/0gvz+OXDX0ASYG7rVrki48p6ZK5POe/hjgxCbe9J/u6w==
   dependencies:
-    "@onekeyfe/hd-shared" "1.2.0-alpha.48"
-    "@onekeyfe/hd-transport" "1.2.0-alpha.48"
+    "@onekeyfe/hd-shared" "1.2.0-alpha.49"
+    "@onekeyfe/hd-transport" "1.2.0-alpha.49"
 
-"@onekeyfe/hd-transport-usb@1.2.0-alpha.48":
-  version "1.2.0-alpha.48"
-  resolved "https://registry.npmjs.org/@onekeyfe/hd-transport-usb/-/hd-transport-usb-1.2.0-alpha.48.tgz#195d0e45e75d049337f49ed27c183926cea78f5b"
-  integrity sha512-P1hyz0pbDVYtbyQh3uircinv/216jJHIyPnjuJ7JEz3rudo/kHacsao01pmbfrwAhTpu9WmTUP3DXj0elEHydg==
+"@onekeyfe/hd-transport-usb@1.2.0-alpha.49":
+  version "1.2.0-alpha.49"
+  resolved "https://registry.npmjs.org/@onekeyfe/hd-transport-usb/-/hd-transport-usb-1.2.0-alpha.49.tgz#8b6d7682e26e9c4792e485ee24531383559cc42e"
+  integrity sha512-W9IuRUU8yOJqS8ebslxQYnDVuxYd+rexjhS4E3c3n4mTD1/knTM2ksL91BFFP8hG3I9hi6k/mQu68AHuemGgIQ==
   dependencies:
-    "@onekeyfe/hd-shared" "1.2.0-alpha.48"
-    "@onekeyfe/hd-transport" "1.2.0-alpha.48"
+    "@onekeyfe/hd-shared" "1.2.0-alpha.49"
+    "@onekeyfe/hd-transport" "1.2.0-alpha.49"
     bytebuffer "^5.0.1"
     usb "^2.14.0"
 
-"@onekeyfe/hd-transport-web-device@1.2.0-alpha.48":
-  version "1.2.0-alpha.48"
-  resolved "https://registry.npmjs.org/@onekeyfe/hd-transport-web-device/-/hd-transport-web-device-1.2.0-alpha.48.tgz#3636941ffb42844750a6f3937ea04f5b844cefbf"
-  integrity sha512-X10xUTbJe7tmZGl4nnlxnpNZt54GtxCVClWfgJymQmKDa0Y+NKpzenstObQwDlWdmtA0CY0zDlM9/+5q/9P+Ng==
+"@onekeyfe/hd-transport-web-device@1.2.0-alpha.49":
+  version "1.2.0-alpha.49"
+  resolved "https://registry.npmjs.org/@onekeyfe/hd-transport-web-device/-/hd-transport-web-device-1.2.0-alpha.49.tgz#e828819bfc670dd66728583a345dfbd183e2c1f7"
+  integrity sha512-Vf1mAmoaxPkXYhX8W9ZX1DZjJ6hvEoxYoJfih0L+PN32t3k58BUtrWfowfvG9ZHqZgM3b3kDv8etc/8h5PZ7AQ==
   dependencies:
-    "@onekeyfe/hd-shared" "1.2.0-alpha.48"
-    "@onekeyfe/hd-transport" "1.2.0-alpha.48"
+    "@onekeyfe/hd-shared" "1.2.0-alpha.49"
+    "@onekeyfe/hd-transport" "1.2.0-alpha.49"
 
-"@onekeyfe/hd-transport@1.2.0-alpha.48":
-  version "1.2.0-alpha.48"
-  resolved "https://registry.npmjs.org/@onekeyfe/hd-transport/-/hd-transport-1.2.0-alpha.48.tgz#fe1b44cdc6503508bc3fa608d06daf72541bf898"
-  integrity sha512-VZwtbazCRHAAPfihdpTqHHy9bK4XX9nKugxSFkhUgZPOckzwD5a5fW3pX1y7LvJ8lWmJJWMlH4Yjc86nYoErZw==
+"@onekeyfe/hd-transport@1.2.0-alpha.49":
+  version "1.2.0-alpha.49"
+  resolved "https://registry.npmjs.org/@onekeyfe/hd-transport/-/hd-transport-1.2.0-alpha.49.tgz#6c66f05e20132804c5c5abce4173233582c2a606"
+  integrity sha512-0+jzFiYjk6/X2vuwcHXTEtqXwBxFW29p4Q8iioQY/088a6JL5339SLfyY+lzUgx8DtfQN5hAauxeiudtw1gRUw==
   dependencies:
     bytebuffer "^5.0.1"
     long "^4.0.0"
