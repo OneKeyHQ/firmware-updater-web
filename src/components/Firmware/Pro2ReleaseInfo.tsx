@@ -106,15 +106,19 @@ interface Pro2ReleaseInfoProps {
 const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
   const intl = useIntl();
   const device = useSelector((state: RootState) => state.runtime.device);
+  const releaseDeviceType = device?.deviceType === 'neo' ? 'neo' : 'pro2';
   const locale = useSelector((state: RootState) => state.runtime.locale);
   const release = useSelector(
-    (state: RootState) => state.runtime.releaseMap.pro2?.['firmware-v1']?.[0]
+    (state: RootState) =>
+      state.runtime.releaseMap[releaseDeviceType]?.['firmware-v1']?.[0]
   );
   const bootResources = useSelector(
-    (state: RootState) => state.runtime.releaseMap.pro2?.resources?.boot
+    (state: RootState) =>
+      state.runtime.releaseMap[releaseDeviceType]?.resources?.boot
   );
   const stableResources = useSelector(
-    (state: RootState) => state.runtime.releaseMap.pro2?.resources?.stable ?? []
+    (state: RootState) =>
+      state.runtime.releaseMap[releaseDeviceType]?.resources?.stable ?? []
   );
   const [tab, setTab] = useState<Pro2Tab>('remote');
   const [selectedRemoteTargets, setSelectedRemoteTargets] = useState<

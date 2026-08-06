@@ -221,4 +221,35 @@ describe('Pro2ReleaseInfo startup resources', () => {
       );
     });
   });
+
+  test('uses the Neo release and resource configuration for a Neo device', () => {
+    store.dispatch(
+      setReleaseMap({
+        neo: releaseMap.pro2,
+      } as unknown as DeviceTypeMap)
+    );
+    store.dispatch(
+      setDevice({
+        connectId: 'neo-connect-id',
+        deviceType: 'neo',
+        features: { deviceType: 'neo' },
+      } as unknown as KnownDevice)
+    );
+
+    render(
+      <Provider store={store}>
+        <IntlProvider locale="en-US" messages={LOCALES['en-US']}>
+          <Pro2ReleaseInfo />
+        </IntlProvider>
+      </Provider>
+    );
+
+    expect(
+      screen.getByRole('checkbox', {
+        name: /2 startup resource packages/i,
+      })
+    ).toBeInTheDocument();
+    userEvent.click(screen.getByRole('button', { name: 'Local Firmware' }));
+    expect(screen.getByLabelText('Choose resource folder')).toBeInTheDocument();
+  });
 });

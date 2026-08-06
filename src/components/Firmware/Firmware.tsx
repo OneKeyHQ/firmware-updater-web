@@ -406,6 +406,11 @@ export default function Firmware() {
 
   // Check if we're in V3 mode
   const isV3Update = tabType === 'v3-remote' || tabType === 'v3-local';
+  const currentDeviceType =
+    device?.deviceType ?? getDeviceType(device?.features);
+  const isProtocolV2FirmwareDevice = ['pro2', 'neo'].includes(
+    currentDeviceType
+  );
 
   const isV3Compatible = () => {
     if (!device?.features) return false;
@@ -524,7 +529,7 @@ export default function Firmware() {
               />
             </div>
           )}
-          {getDeviceType(device?.features) === 'pro2' ? (
+          {isProtocolV2FirmwareDevice ? (
             <Pro2ReleaseInfo clearTimer={clearTimer} />
           ) : isV3Compatible() ? (
             <V3ReleaseInfo />
@@ -536,7 +541,7 @@ export default function Firmware() {
               return <BootloaderTips />;
             }
 
-            if (getDeviceType(device?.features) === 'pro2') {
+            if (isProtocolV2FirmwareDevice) {
               return null;
             }
 
