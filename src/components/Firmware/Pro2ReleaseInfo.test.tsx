@@ -109,7 +109,7 @@ describe('Pro2ReleaseInfo startup resources', () => {
     store.dispatch(setReleaseMap({} as DeviceTypeMap));
   });
 
-  test('keeps startup resources opt-in and forwards the selected target', async () => {
+  test('installs all nine resource packages through one resource target', async () => {
     render(
       <Provider store={store}>
         <IntlProvider locale="en-US" messages={LOCALES['en-US']}>
@@ -118,12 +118,14 @@ describe('Pro2ReleaseInfo startup resources', () => {
       </Provider>
     );
 
-    const startupResources = screen.getByRole('checkbox', {
-      name: /2 startup resource packages/i,
+    const resources = screen.getByRole('checkbox', {
+      name: /9 resource packages/i,
     });
-    expect(startupResources).not.toBeChecked();
+    expect(resources).toBeChecked();
+    expect(
+      screen.queryByText(/not installed by default/i)
+    ).not.toBeInTheDocument();
 
-    userEvent.click(startupResources);
     userEvent.click(
       screen.getByRole('checkbox', {
         name: /I confirm that the device is empty/i,
@@ -137,7 +139,7 @@ describe('Pro2ReleaseInfo startup resources', () => {
     await waitFor(() => {
       expect(mockedFirmwareUpdateV4).toHaveBeenCalledWith({
         platform: 'web',
-        targetsToUpdate: ['resource', 'boot_resources'],
+        targetsToUpdate: ['resource'],
       });
       expect(installButton).toBeEnabled();
     });
@@ -245,7 +247,7 @@ describe('Pro2ReleaseInfo startup resources', () => {
 
     expect(
       screen.getByRole('checkbox', {
-        name: /2 startup resource packages/i,
+        name: /9 resource packages/i,
       })
     ).toBeInTheDocument();
     userEvent.click(screen.getByRole('button', { name: 'Local Firmware' }));

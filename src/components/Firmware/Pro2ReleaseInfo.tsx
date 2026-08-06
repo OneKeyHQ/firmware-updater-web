@@ -136,6 +136,8 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
     (state: RootState) =>
       state.runtime.releaseMap[releaseDeviceType]?.resources?.stable ?? []
   );
+  const resourcePackageCount =
+    stableResources.length + (bootResources?.files.length ?? 0);
   const [tab, setTab] = useState<Pro2Tab>('remote');
   const [selectedRemoteTargets, setSelectedRemoteTargets] = useState<
     FirmwareUpdateV4Target[]
@@ -176,9 +178,9 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
 
   const remoteTargets = useMemo(() => {
     const targets = remoteComponents.map((component) => component.target);
-    if (stableResources.length) targets.push('resource');
+    if (resourcePackageCount) targets.push('resource');
     return targets;
-  }, [remoteComponents, stableResources.length]);
+  }, [remoteComponents, resourcePackageCount]);
 
   const localResourcePackageSlots = useMemo<LocalResourcePackageSlot[]>(
     () => [
@@ -385,8 +387,8 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
                   <div className="text-sm text-gray-500">
                     {remoteComponents.length}{' '}
                     {intl.formatMessage({ id: 'TR_PRO2_COMPONENT_COUNT' })}
-                    {stableResources.length
-                      ? ` · ${stableResources.length} ${intl.formatMessage({
+                    {resourcePackageCount
+                      ? ` · ${resourcePackageCount} ${intl.formatMessage({
                           id: 'TR_PRO2_RESOURCE_COUNT',
                         })}`
                       : ''}
@@ -427,7 +429,7 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
                 </div>
                 {[
                   ...remoteComponents,
-                  ...(stableResources.length
+                  ...(resourcePackageCount
                     ? [
                         {
                           key: 'resource',
@@ -463,53 +465,6 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
                   </label>
                 ))}
               </div>
-
-              {bootResources && (
-                <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
-                  <div className="border-b border-gray-200 bg-gray-50 px-4 py-3">
-                    <div className="text-sm font-semibold text-gray-900">
-                      {intl.formatMessage({
-                        id: 'TR_PRO2_BOOT_RESOURCES',
-                      })}
-                    </div>
-                    <div className="mt-1 text-xs text-gray-500">
-                      {intl.formatMessage({
-                        id: 'TR_PRO2_BOOT_RESOURCES_DESC',
-                      })}
-                    </div>
-                  </div>
-                  <label className="flex cursor-pointer items-center justify-between px-4 py-3 hover:bg-gray-50">
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="checkbox"
-                        className="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
-                        checked={selectedRemoteTargets.includes(
-                          'boot_resources'
-                        )}
-                        onChange={() => toggleRemoteTarget('boot_resources')}
-                      />
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">
-                          {intl.formatMessage({
-                            id: 'TR_PRO2_BOOT_RESOURCES_PACKAGE',
-                          })}
-                        </div>
-                        <div className="mt-0.5 text-xs text-amber-600">
-                          {intl.formatMessage({ id: 'TR_PRO2_OPTIONAL' })}
-                        </div>
-                      </div>
-                    </div>
-                    <span className="text-sm text-gray-500">
-                      {formatFileSize(
-                        bootResources.files.reduce(
-                          (total, file) => total + file.size,
-                          0
-                        )
-                      )}
-                    </span>
-                  </label>
-                </div>
-              )}
             </>
           ) : (
             <Alert
