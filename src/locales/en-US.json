@@ -278,10 +278,15 @@
   "TR_PRO2_FIRMWARE_COMPONENTS": "Firmware components",
   "TR_PRO2_RESOURCE_BUNDLES": "Resource bundles",
   "TR_PRO2_BOOT_RESOURCES": "Startup resources",
-  "TR_PRO2_BOOT_RESOURCES_DESC": "Updates startup-stage assets such as the boot animation, startup UI, and firmware logo. It is not installed by default; select it only when needed.",
-  "TR_PRO2_BOOT_RESOURCES_PACKAGE": "Startup resources CRATE",
+  "TR_PRO2_BOOT_RESOURCES_DESC": "Updates the bootloader and ROM loader resource packages. They are not installed by default; select them only when needed.",
+  "TR_PRO2_BOOT_RESOURCES_PACKAGE": "2 startup resource packages",
   "TR_PRO2_OPTIONAL": "Optional · not installed by default",
   "TR_PRO2_SELECT_FILE": "Choose file",
   "TR_PRO2_RESELECT_FILE": "Replace",
-  "TR_PRO2_CLEAR_FILE": "Clear"
+  "TR_PRO2_CLEAR_FILE": "Clear",
+  "TR_PRO2_RESOURCE_FOLDER": "Resource package folder",
+  "TR_PRO2_SELECT_RESOURCE_FOLDER": "Choose resource folder",
+  "TR_PRO2_RESELECT_RESOURCE_FOLDER": "Replace resource folder",
+  "TR_PRO2_RESOURCE_FOLDER_HINT": "Automatically matches all 9 .okpkg files; manifest.json is not required.",
+  "TR_PRO2_RESOURCE_FOLDER_MATCHED": "{folder}: all 9 packages matched"
 }

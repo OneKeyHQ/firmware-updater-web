@@ -10,6 +10,7 @@ import type {
 } from '@onekeyfe/hd-core';
 import { RootState } from '@/store';
 import { serviceHardware } from '@/hardware';
+import { matchPro2ResourcePackageDirectory } from '@/utils/pro2ResourcePackageDirectory';
 
 type Pro2Tab = 'remote' | 'local';
 type Pro2BinaryField =
@@ -32,6 +33,22 @@ type LocalFileSelection = {
   file: File;
   devicePath?: string;
 };
+
+type LocalResourcePackageSlot = {
+  key: string;
+  label: string;
+  fileNamePrefix: string;
+  devicePath: string;
+};
+
+type Pro2ResourceType =
+  | 'images'
+  | 'animation'
+  | 'wallpaper'
+  | 'translations'
+  | 'roobert'
+  | 'noto'
+  | 'firmware_logo';
 
 const TARGET_BY_CONFIG_TARGET: Partial<
   Record<IProtocolV2FirmwareComponentTarget, FirmwareUpdateV4Target>
@@ -61,6 +78,16 @@ const LOCAL_TARGETS: LocalTarget[] = [
   { key: 'se04', label: 'SE04', binaryField: 'se04Binary' },
 ];
 
+const RESOURCE_DEVICE_PATHS: Record<Pro2ResourceType, string> = {
+  images: 'vol0:/bundles/images/images.okpkg',
+  animation: 'vol0:/bundles/images/animation.okpkg',
+  wallpaper: 'vol0:/bundles/images/wallpaper.okpkg',
+  translations: 'vol0:/bundles/translations/translations.okpkg',
+  roobert: 'vol0:/bundles/font/roobert.okpkg',
+  noto: 'vol0:/bundles/font/noto.okpkg',
+  firmware_logo: 'vol0:/bundles/firmware_logo.okpkg',
+};
+
 const formatVersion = (version?: number[]) => version?.join('.') || '-';
 
 const formatFileSize = (size: number) => {
@@ -68,6 +95,9 @@ const formatFileSize = (size: number) => {
   if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
   return `${(size / 1024 / 1024).toFixed(1)} MB`;
 };
+
+const getFileNamePrefix = (fileName: string) =>
+  fileName.replace(/\.okpkg$/i, '').replace(/-resource-.+$/i, '');
 
 interface Pro2ReleaseInfoProps {
   clearTimer?: () => void;
@@ -83,6 +113,9 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
   const bootResources = useSelector(
     (state: RootState) => state.runtime.releaseMap.pro2?.resources?.boot
   );
+  const stableResources = useSelector(
+    (state: RootState) => state.runtime.releaseMap.pro2?.resources?.stable ?? []
+  );
   const [tab, setTab] = useState<Pro2Tab>('remote');
   const [selectedRemoteTargets, setSelectedRemoteTargets] = useState<
     FirmwareUpdateV4Target[]
@@ -90,6 +123,8 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
   const [localFiles, setLocalFiles] = useState<
     Record<string, LocalFileSelection>
   >({});
+  const [resourceFolderName, setResourceFolderName] = useState<string>();
+  const [resourceFolderError, setResourceFolderError] = useState<string>();
   const [confirmed, setConfirmed] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
 
@@ -122,9 +157,38 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
 
   const remoteTargets = useMemo(() => {
     const targets = remoteComponents.map((component) => component.target);
-    if (release?.resourceBundles?.length) targets.push('resource');
+    if (stableResources.length) targets.push('resource');
     return targets;
-  }, [release, remoteComponents]);
+  }, [remoteComponents, stableResources.length]);
+
+  const localResourcePackageSlots = useMemo<LocalResourcePackageSlot[]>(
+    () => [
+      ...stableResources.flatMap((resource) => {
+        const type = resource.type as Pro2ResourceType;
+        const devicePath = RESOURCE_DEVICE_PATHS[type];
+        if (!devicePath) return [];
+        return [
+          {
+            key: `resource:${resource.type}`,
+            label: resource.type,
+            fileNamePrefix: resource.type,
+            devicePath,
+          },
+        ];
+      }),
+      ...(bootResources?.files.map((file) => {
+        const fileName =
+          file.name ?? file.devicePath.split('/').pop() ?? file.devicePath;
+        return {
+          key: `boot-resource:${file.devicePath}`,
+          label: fileName,
+          fileNamePrefix: getFileNamePrefix(fileName),
+          devicePath: file.devicePath,
+        };
+      }) ?? []),
+    ],
+    [bootResources, stableResources]
+  );
 
   useEffect(() => {
     setSelectedRemoteTargets(remoteTargets);
@@ -143,6 +207,10 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
     file: File | undefined,
     devicePath?: string
   ) => {
+    if (devicePath) {
+      setResourceFolderName(undefined);
+      setResourceFolderError(undefined);
+    }
     setLocalFiles((current) => {
       const next = { ...current };
       if (file) next[key] = { file, devicePath };
@@ -173,23 +241,14 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
           }
         }
 
-        const bootResourcesSelection = localFiles.boot_resources;
-        if (bootResourcesSelection) {
-          params.bootResourcesBinary =
-            await bootResourcesSelection.file.arrayBuffer();
-        }
-
-        const resourceBundleFiles = Object.entries(localFiles)
-          .filter(
-            ([key, selection]) =>
-              key.startsWith('resource:') && Boolean(selection.devicePath)
-          )
-          .map(async ([, selection]) => ({
+        const resourceFiles = Object.values(localFiles)
+          .filter((selection) => Boolean(selection.devicePath))
+          .map(async (selection) => ({
             binary: await selection.file.arrayBuffer(),
             devicePath: selection.devicePath as string,
           }));
-        if (resourceBundleFiles.length) {
-          params.resourceBundleFiles = await Promise.all(resourceBundleFiles);
+        if (resourceFiles.length) {
+          params.resourceFiles = await Promise.all(resourceFiles);
         }
       }
 
@@ -306,10 +365,8 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
                   <div className="text-sm text-gray-500">
                     {remoteComponents.length}{' '}
                     {intl.formatMessage({ id: 'TR_PRO2_COMPONENT_COUNT' })}
-                    {release.resourceBundles?.length
-                      ? ` · ${
-                          release.resourceBundles.length
-                        } ${intl.formatMessage({
+                    {stableResources.length
+                      ? ` · ${stableResources.length} ${intl.formatMessage({
                           id: 'TR_PRO2_RESOURCE_COUNT',
                         })}`
                       : ''}
@@ -350,7 +407,7 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
                 </div>
                 {[
                   ...remoteComponents,
-                  ...(release.resourceBundles?.length
+                  ...(stableResources.length
                     ? [
                         {
                           key: 'resource',
@@ -423,7 +480,12 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
                       </div>
                     </div>
                     <span className="text-sm text-gray-500">
-                      {formatFileSize(bootResources.size)}
+                      {formatFileSize(
+                        bootResources.files.reduce(
+                          (total, file) => total + file.size,
+                          0
+                        )
+                      )}
                     </span>
                   </label>
                 </div>
@@ -455,17 +517,101 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
               )}
             </div>
           </div>
-          {!!release?.resourceBundles?.length && (
+          {!!localResourcePackageSlots.length && (
+            <div className="rounded-lg border border-gray-200 bg-white p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <div className="text-sm font-semibold text-gray-900">
+                    {intl.formatMessage({
+                      id: 'TR_PRO2_RESOURCE_FOLDER',
+                    })}
+                  </div>
+                  <div className="mt-1 text-xs text-gray-500">
+                    {resourceFolderName
+                      ? intl.formatMessage(
+                          { id: 'TR_PRO2_RESOURCE_FOLDER_MATCHED' },
+                          { folder: resourceFolderName }
+                        )
+                      : intl.formatMessage({
+                          id: 'TR_PRO2_RESOURCE_FOLDER_HINT',
+                        })}
+                  </div>
+                </div>
+                <label className="cursor-pointer rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-500">
+                  {intl.formatMessage({
+                    id: resourceFolderName
+                      ? 'TR_PRO2_RESELECT_RESOURCE_FOLDER'
+                      : 'TR_PRO2_SELECT_RESOURCE_FOLDER',
+                  })}
+                  <input
+                    type="file"
+                    className="hidden"
+                    multiple
+                    aria-label={intl.formatMessage({
+                      id: 'TR_PRO2_SELECT_RESOURCE_FOLDER',
+                    })}
+                    {...({
+                      webkitdirectory: '',
+                      directory: '',
+                    } as React.InputHTMLAttributes<HTMLInputElement>)}
+                    onChange={(event) => {
+                      const selectedFiles = Array.from(
+                        event.currentTarget.files ?? []
+                      );
+                      event.currentTarget.value = '';
+                      try {
+                        if (localResourcePackageSlots.length !== 9) {
+                          throw new Error(
+                            `Expected 9 configured resource packages, received ${localResourcePackageSlots.length}`
+                          );
+                        }
+                        const matchedFiles = matchPro2ResourcePackageDirectory(
+                          selectedFiles,
+                          localResourcePackageSlots
+                        );
+                        const relativePath =
+                          selectedFiles[0]?.webkitRelativePath ?? '';
+                        const folderName =
+                          relativePath.split('/')[0] || 'Selected folder';
+                        setLocalFiles((current) => {
+                          const next = { ...current };
+                          for (const slot of localResourcePackageSlots) {
+                            next[slot.key] = {
+                              file: matchedFiles[slot.key],
+                              devicePath: slot.devicePath,
+                            };
+                          }
+                          return next;
+                        });
+                        setResourceFolderName(folderName);
+                        setResourceFolderError(undefined);
+                      } catch (error) {
+                        setResourceFolderError(
+                          error instanceof Error ? error.message : String(error)
+                        );
+                      }
+                    }}
+                  />
+                </label>
+              </div>
+              {resourceFolderError && (
+                <div className="mt-2 text-xs text-red-600">
+                  {resourceFolderError}
+                </div>
+              )}
+            </div>
+          )}
+          {!!stableResources.length && (
             <div>
               <h3 className="mb-3 text-sm font-semibold text-gray-900">
                 {intl.formatMessage({ id: 'TR_PRO2_RESOURCE_BUNDLES' })}
               </h3>
               <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-                {release.resourceBundles.map((bundle) =>
+                {stableResources.map((resource) =>
                   renderLocalFilePicker(
-                    `resource:${bundle.name}`,
-                    bundle.name,
-                    bundle.devicePath
+                    `resource:${resource.type}`,
+                    resource.type,
+                    RESOURCE_DEVICE_PATHS[resource.type as Pro2ResourceType]
                   )
                 )}
               </div>
@@ -480,11 +626,14 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
                 {intl.formatMessage({ id: 'TR_PRO2_BOOT_RESOURCES_DESC' })}
               </p>
               <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-                {renderLocalFilePicker(
-                  'boot_resources',
-                  intl.formatMessage({
-                    id: 'TR_PRO2_BOOT_RESOURCES_PACKAGE',
-                  })
+                {bootResources.files.map((file) =>
+                  renderLocalFilePicker(
+                    `boot-resource:${file.devicePath}`,
+                    file.name ??
+                      file.devicePath.split('/').pop() ??
+                      file.devicePath,
+                    file.devicePath
+                  )
                 )}
               </div>
             </div>

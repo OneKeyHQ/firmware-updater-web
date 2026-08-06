@@ -339,6 +339,7 @@ class ServiceHardware {
       unknown: data.unknown,
       classicpure: data.classicpure,
       pro2: data.pro2,
+      neo: data.neo,
     };
     store.dispatch(setReleaseMap(deviceMap));
   }
