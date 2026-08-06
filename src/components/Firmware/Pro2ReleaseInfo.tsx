@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
 import { Alert, Button } from '@onekeyfe/ui-components';
 import { marked } from 'marked';
+import { getDeviceType } from '@onekeyfe/hd-core';
 import type {
   FirmwareUpdateV4Params,
   FirmwareUpdateV4Target,
@@ -106,7 +107,9 @@ interface Pro2ReleaseInfoProps {
 const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
   const intl = useIntl();
   const device = useSelector((state: RootState) => state.runtime.device);
-  const releaseDeviceType = device?.deviceType === 'neo' ? 'neo' : 'pro2';
+  const currentDeviceType =
+    device?.deviceType ?? getDeviceType(device?.features);
+  const releaseDeviceType = currentDeviceType === 'neo' ? 'neo' : 'pro2';
   const localTargets = useMemo(
     () =>
       releaseDeviceType === 'neo'

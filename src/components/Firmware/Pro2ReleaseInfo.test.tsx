@@ -231,7 +231,6 @@ describe('Pro2ReleaseInfo startup resources', () => {
     store.dispatch(
       setDevice({
         connectId: 'neo-connect-id',
-        deviceType: 'neo',
         features: { deviceType: 'neo' },
       } as unknown as KnownDevice)
     );
