@@ -53,16 +53,12 @@ const releaseMap = {
       stable: [],
       boot: {
         required: false,
-        target: 'RES',
-        files: [
-          {
-            url: 'https://example.com/bootloader_crest.bin',
-            devicePath:
-              'vol0:/assets/loaders/boot.staging/graphics/bootloader_crest.bin',
-            size: 1_900_291,
-            fileHash: '1'.repeat(64),
-          },
-        ],
+        target: 'CRATE',
+        url: 'https://example.com/pro2-boot-resources.crate.okpkg',
+        size: 1_900_291,
+        fileHash: '1'.repeat(64),
+        payloadHash: '2'.repeat(128),
+        headerHash: '3'.repeat(128),
       },
     },
   },
@@ -98,7 +94,7 @@ describe('Pro2ReleaseInfo startup resources', () => {
     );
 
     const startupResources = screen.getByRole('checkbox', {
-      name: /Startup resource files/i,
+      name: /Startup resources CRATE/i,
     });
     expect(startupResources).not.toBeChecked();
 

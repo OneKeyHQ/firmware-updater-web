@@ -10,7 +10,6 @@ import type {
 } from '@onekeyfe/hd-core';
 import { RootState } from '@/store';
 import { serviceHardware } from '@/hardware';
-import { buildResourceFilesFromDirectory } from '@/utils/protocolV2ResourceManifest';
 
 type Pro2Tab = 'remote' | 'local';
 type Pro2BinaryField =
@@ -78,14 +77,11 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
   const intl = useIntl();
   const device = useSelector((state: RootState) => state.runtime.device);
   const locale = useSelector((state: RootState) => state.runtime.locale);
-  const protocolV2DeviceType = device?.deviceType === 'neo' ? 'neo' : 'pro2';
   const release = useSelector(
-    (state: RootState) =>
-      state.runtime.releaseMap[protocolV2DeviceType]?.['firmware-v1']?.[0]
+    (state: RootState) => state.runtime.releaseMap.pro2?.['firmware-v1']?.[0]
   );
   const bootResources = useSelector(
-    (state: RootState) =>
-      state.runtime.releaseMap[protocolV2DeviceType]?.resources?.boot
+    (state: RootState) => state.runtime.releaseMap.pro2?.resources?.boot
   );
   const [tab, setTab] = useState<Pro2Tab>('remote');
   const [selectedRemoteTargets, setSelectedRemoteTargets] = useState<
@@ -94,7 +90,6 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
   const [localFiles, setLocalFiles] = useState<
     Record<string, LocalFileSelection>
   >({});
-  const [resourceDirectory, setResourceDirectory] = useState<File[]>([]);
   const [confirmed, setConfirmed] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
 
@@ -159,7 +154,7 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
   const selectedCount =
     tab === 'remote'
       ? selectedRemoteTargets.length
-      : Object.keys(localFiles).length + (resourceDirectory.length ? 1 : 0);
+      : Object.keys(localFiles).length;
 
   const handleInstall = useCallback(async () => {
     if (!device || !confirmed || selectedCount === 0 || isUpdating) return;
@@ -178,23 +173,23 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
           }
         }
 
-        if (resourceDirectory.length) {
-          params.resourceFiles = await buildResourceFilesFromDirectory(
-            resourceDirectory
-          );
-        } else {
-          const resourceFiles = Object.entries(localFiles)
-            .filter(
-              ([key, selection]) =>
-                key.startsWith('resource:') && Boolean(selection.devicePath)
-            )
-            .map(async ([, selection]) => ({
-              binary: await selection.file.arrayBuffer(),
-              devicePath: selection.devicePath as string,
-            }));
-          if (resourceFiles.length) {
-            params.resourceFiles = await Promise.all(resourceFiles);
-          }
+        const bootResourcesSelection = localFiles.boot_resources;
+        if (bootResourcesSelection) {
+          params.bootResourcesBinary =
+            await bootResourcesSelection.file.arrayBuffer();
+        }
+
+        const resourceBundleFiles = Object.entries(localFiles)
+          .filter(
+            ([key, selection]) =>
+              key.startsWith('resource:') && Boolean(selection.devicePath)
+          )
+          .map(async ([, selection]) => ({
+            binary: await selection.file.arrayBuffer(),
+            devicePath: selection.devicePath as string,
+          }));
+        if (resourceBundleFiles.length) {
+          params.resourceBundleFiles = await Promise.all(resourceBundleFiles);
         }
       }
 
@@ -208,7 +203,6 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
     device,
     isUpdating,
     localFiles,
-    resourceDirectory,
     selectedCount,
     selectedRemoteTargets,
     tab,
@@ -269,10 +263,7 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
   return (
     <div className="my-6">
       <div className="border-b border-gray-200">
-        <nav
-          className="-mb-px flex gap-8"
-          aria-label="Protocol V2 firmware source"
-        >
+        <nav className="-mb-px flex gap-8" aria-label="Pro2 firmware source">
           {(['remote', 'local'] as const).map((item) => (
             <button
               key={item}
@@ -432,12 +423,7 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
                       </div>
                     </div>
                     <span className="text-sm text-gray-500">
-                      {formatFileSize(
-                        bootResources.files.reduce(
-                          (total, file) => total + file.size,
-                          0
-                        )
-                      )}
+                      {formatFileSize(bootResources.size)}
                     </span>
                   </label>
                 </div>
@@ -469,72 +455,7 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
               )}
             </div>
           </div>
-          <div>
-            <h3 className="mb-1 text-sm font-semibold text-gray-900">
-              {intl.formatMessage({ id: 'TR_PRO2_FULL_RESOURCES' })}
-            </h3>
-            <p className="mb-3 text-xs text-gray-500">
-              {intl.formatMessage({ id: 'TR_PRO2_FULL_RESOURCES_DESC' })}
-            </p>
-            <div className="rounded-lg border border-gray-200 p-4">
-              <div className="flex items-center justify-between gap-4">
-                <div className="min-w-0 text-sm text-gray-600">
-                  {resourceDirectory.length
-                    ? intl.formatMessage(
-                        { id: 'TR_PRO2_RESOURCE_FILES_SELECTED' },
-                        { count: resourceDirectory.length }
-                      )
-                    : intl.formatMessage({
-                        id: 'TR_PRO2_RESOURCE_DIRECTORY_EXPECTED',
-                      })}
-                </div>
-                <div className="flex shrink-0 items-center gap-2">
-                  {!!resourceDirectory.length && (
-                    <button
-                      type="button"
-                      className="rounded-md px-3 py-2 text-sm text-gray-600 hover:bg-gray-100"
-                      onClick={() => setResourceDirectory([])}
-                    >
-                      {intl.formatMessage({ id: 'TR_PRO2_CLEAR_FILE' })}
-                    </button>
-                  )}
-                  <label className="cursor-pointer rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-500">
-                    {intl.formatMessage({
-                      id: resourceDirectory.length
-                        ? 'TR_PRO2_RESELECT_FILE'
-                        : 'TR_PRO2_SELECT_DIRECTORY',
-                    })}
-                    <input
-                      type="file"
-                      multiple
-                      className="hidden"
-                      aria-label={intl.formatMessage({
-                        id: 'TR_PRO2_SELECT_DIRECTORY',
-                      })}
-                      {...({
-                        webkitdirectory: '',
-                        directory: '',
-                      } as React.InputHTMLAttributes<HTMLInputElement>)}
-                      onChange={(event) => {
-                        const files = Array.from(event.target.files ?? []);
-                        setResourceDirectory(files);
-                        if (files.length) {
-                          setLocalFiles((current) =>
-                            Object.fromEntries(
-                              Object.entries(current).filter(
-                                ([key]) => !key.startsWith('resource:')
-                              )
-                            )
-                          );
-                        }
-                      }}
-                    />
-                  </label>
-                </div>
-              </div>
-            </div>
-          </div>
-          {!!release?.resourceBundles?.length && !resourceDirectory.length && (
+          {!!release?.resourceBundles?.length && (
             <div>
               <h3 className="mb-3 text-sm font-semibold text-gray-900">
                 {intl.formatMessage({ id: 'TR_PRO2_RESOURCE_BUNDLES' })}
@@ -546,6 +467,24 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
                     bundle.name,
                     bundle.devicePath
                   )
+                )}
+              </div>
+            </div>
+          )}
+          {bootResources && (
+            <div>
+              <h3 className="mb-1 text-sm font-semibold text-gray-900">
+                {intl.formatMessage({ id: 'TR_PRO2_BOOT_RESOURCES' })}
+              </h3>
+              <p className="mb-3 text-xs text-gray-500">
+                {intl.formatMessage({ id: 'TR_PRO2_BOOT_RESOURCES_DESC' })}
+              </p>
+              <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+                {renderLocalFilePicker(
+                  'boot_resources',
+                  intl.formatMessage({
+                    id: 'TR_PRO2_BOOT_RESOURCES_PACKAGE',
+                  })
                 )}
               </div>
             </div>

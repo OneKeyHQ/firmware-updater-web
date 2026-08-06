@@ -32,7 +32,7 @@ import {
   setProgress,
 } from '@/store/reducers/firmware';
 import type { IFirmwareReleaseInfo } from '@/types';
-import { arrayBufferToBuffer, isProtocolV2DeviceType, wait } from '@/utils';
+import { arrayBufferToBuffer, wait } from '@/utils';
 import {
   downloadBootloaderFirmware,
   downloadLegacyTouchFirmware,
@@ -339,7 +339,6 @@ class ServiceHardware {
       unknown: data.unknown,
       classicpure: data.classicpure,
       pro2: data.pro2,
-      neo: data.neo,
     };
     store.dispatch(setReleaseMap(deviceMap));
   }
@@ -460,7 +459,7 @@ class ServiceHardware {
     const state = store.getState();
     const { device } = state.runtime;
 
-    if (isProtocolV2DeviceType(device?.deviceType)) {
+    if (device?.deviceType === 'pro2') {
       await this.firmwareUpdateV4();
       return;
     }
@@ -535,14 +534,14 @@ class ServiceHardware {
   }
 
   /**
-   * Performs the standard Protocol V2 update for OneKey Pro 2 and Neo.
+   * Performs the standard Protocol V2 update for OneKey Pro 2.
    * With no explicit binaries, the SDK resolves compatible firmware-v1 components remotely.
    */
   async firmwareUpdateV4(params?: FirmwareUpdateV4Params) {
     const state = store.getState();
     const { device } = state.runtime;
 
-    if (!device || !isProtocolV2DeviceType(device.deviceType)) {
+    if (device?.deviceType !== 'pro2') {
       store.dispatch(
         setShowErrorAlert({
           type: 'error',
@@ -593,7 +592,7 @@ class ServiceHardware {
         })
       );
     } catch (error) {
-      console.error('Protocol V2 firmware update error:', error);
+      console.error('Pro2 firmware update error:', error);
       store.dispatch(
         setShowErrorAlert({
           type: 'error',
