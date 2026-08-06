@@ -253,7 +253,14 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
     try {
       const params: FirmwareUpdateV4Params = { platform: 'web' };
       if (tab === 'remote') {
-        params.targetsToUpdate = selectedRemoteTargets;
+        params.targetsToUpdate = selectedRemoteTargets.includes('resource')
+          ? Array.from(
+              new Set<FirmwareUpdateV4Target>([
+                ...selectedRemoteTargets,
+                'boot_resources',
+              ])
+            )
+          : selectedRemoteTargets;
       } else {
         for (const target of localTargets) {
           const selection = localFiles[target.key];

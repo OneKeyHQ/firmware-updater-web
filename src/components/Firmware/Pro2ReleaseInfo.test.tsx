@@ -139,7 +139,7 @@ describe('Pro2ReleaseInfo startup resources', () => {
     await waitFor(() => {
       expect(mockedFirmwareUpdateV4).toHaveBeenCalledWith({
         platform: 'web',
-        targetsToUpdate: ['resource'],
+        targetsToUpdate: ['resource', 'boot_resources'],
       });
       expect(installButton).toBeEnabled();
     });
