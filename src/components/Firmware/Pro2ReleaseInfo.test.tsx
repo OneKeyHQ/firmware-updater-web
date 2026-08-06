@@ -251,5 +251,9 @@ describe('Pro2ReleaseInfo startup resources', () => {
     ).toBeInTheDocument();
     userEvent.click(screen.getByRole('button', { name: 'Local Firmware' }));
     expect(screen.getByLabelText('Choose resource folder')).toBeInTheDocument();
+    expect(screen.getByText('SE01')).toBeInTheDocument();
+    expect(screen.getByText('SE02')).toBeInTheDocument();
+    expect(screen.queryByText('SE03')).not.toBeInTheDocument();
+    expect(screen.queryByText('SE04')).not.toBeInTheDocument();
   });
 });

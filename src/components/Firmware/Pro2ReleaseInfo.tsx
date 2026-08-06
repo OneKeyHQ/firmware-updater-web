@@ -107,6 +107,19 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
   const intl = useIntl();
   const device = useSelector((state: RootState) => state.runtime.device);
   const releaseDeviceType = device?.deviceType === 'neo' ? 'neo' : 'pro2';
+  const localTargets = useMemo(
+    () =>
+      releaseDeviceType === 'neo'
+        ? LOCAL_TARGETS.filter(
+            (target) => target.key !== 'se03' && target.key !== 'se04'
+          )
+        : LOCAL_TARGETS,
+    [releaseDeviceType]
+  );
+  const supportedFirmwareTargets = useMemo(
+    () => new Set(localTargets.map((target) => target.key)),
+    [localTargets]
+  );
   const locale = useSelector((state: RootState) => state.runtime.locale);
   const release = useSelector(
     (state: RootState) =>
@@ -146,18 +159,17 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
       const component = release.components?.[key];
       if (!component) return [];
       const target = TARGET_BY_CONFIG_TARGET[component.target];
-      if (!target) return [];
+      if (!target || !supportedFirmwareTargets.has(target)) return [];
       return [
         {
           key,
-          label:
-            LOCAL_TARGETS.find((item) => item.key === target)?.label ?? key,
+          label: localTargets.find((item) => item.key === target)?.label ?? key,
           target,
           version: component.version,
         },
       ];
     });
-  }, [release]);
+  }, [localTargets, release, supportedFirmwareTargets]);
 
   const remoteTargets = useMemo(() => {
     const targets = remoteComponents.map((component) => component.target);
@@ -238,7 +250,7 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
       if (tab === 'remote') {
         params.targetsToUpdate = selectedRemoteTargets;
       } else {
-        for (const target of LOCAL_TARGETS) {
+        for (const target of localTargets) {
           const selection = localFiles[target.key];
           if (selection) {
             params[target.binaryField] = await selection.file.arrayBuffer();
@@ -266,6 +278,7 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
     device,
     isUpdating,
     localFiles,
+    localTargets,
     selectedCount,
     selectedRemoteTargets,
     tab,
@@ -516,7 +529,7 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
               {intl.formatMessage({ id: 'TR_PRO2_FIRMWARE_COMPONENTS' })}
             </h3>
             <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-              {LOCAL_TARGETS.map((target) =>
+              {localTargets.map((target) =>
                 renderLocalFilePicker(target.key, target.label)
               )}
             </div>
