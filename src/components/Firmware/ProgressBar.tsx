@@ -30,7 +30,8 @@ export default function ProgressBar() {
     } else if (
       deviceType === 'touch' ||
       deviceType === 'pro' ||
-      deviceType === 'pro2'
+      deviceType === 'pro2' ||
+      deviceType === 'neo'
     ) {
       time = isBle ? 100 : 1000;
     }
@@ -47,6 +48,7 @@ export default function ProgressBar() {
 
     return (
       deviceType === EDeviceType.Pro2 ||
+      deviceType === EDeviceType.Neo ||
       (semver.gte(bootloaderVersion, '2.8.0') && deviceType === EDeviceType.Pro)
     );
   }, [device]);

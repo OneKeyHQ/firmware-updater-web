@@ -1,6 +1,11 @@
 import { BridgeSystem } from '@/types';
 import { Buffer } from 'buffer';
-import type { Features } from '@onekeyfe/hd-core';
+import type { Features, IDeviceType } from '@onekeyfe/hd-core';
+import { EDeviceType } from '@onekeyfe/hd-shared';
+
+export const isProtocolV2DeviceType = (
+  deviceType: IDeviceType | string | null | undefined
+) => deviceType === EDeviceType.Pro2 || deviceType === EDeviceType.Neo;
 
 export function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ');

@@ -266,8 +266,8 @@
   "TR_BOOTLOADER_PERMISSION_REQUIRED": "Authorize bootloader device",
   "TR_BOOTLOADER_PERMISSION_REQUIRED_DESC": "Bootloader mode detected. Authorize the new USB device to continue.",
   "TR_REAUTHORIZE_DEVICE": "Authorize device",
-  "TR_PRO2_FIRMWARE_UPDATE": "OneKey Pro 2 firmware update",
-  "TR_PRO2_FIRMWARE_UPDATE_DESC": "The SDK will download and install the latest compatible signed Pro 2 components. Keep the device connected and confirm the update on the device when prompted.",
+  "TR_PRO2_FIRMWARE_UPDATE": "OneKey Pro 2 / Neo firmware update",
+  "TR_PRO2_FIRMWARE_UPDATE_DESC": "The SDK will download and install the latest compatible signed components for the connected Pro 2 or Neo. Keep the device connected and confirm the update on the device when prompted.",
   "TR_PRO2_REMOTE_VERSION": "Remote release version",
   "TR_PRO2_COMPONENT_COUNT": "firmware components",
   "TR_PRO2_RESOURCE_COUNT": "resource bundles",
@@ -279,9 +279,14 @@
   "TR_PRO2_RESOURCE_BUNDLES": "Resource bundles",
   "TR_PRO2_BOOT_RESOURCES": "Startup resources",
   "TR_PRO2_BOOT_RESOURCES_DESC": "Updates startup-stage assets such as the boot animation, startup UI, and firmware logo. It is not installed by default; select it only when needed.",
-  "TR_PRO2_BOOT_RESOURCES_PACKAGE": "Startup resources CRATE",
+  "TR_PRO2_BOOT_RESOURCES_PACKAGE": "Startup resource files",
   "TR_PRO2_OPTIONAL": "Optional · not installed by default",
   "TR_PRO2_SELECT_FILE": "Choose file",
   "TR_PRO2_RESELECT_FILE": "Replace",
-  "TR_PRO2_CLEAR_FILE": "Clear"
+  "TR_PRO2_CLEAR_FILE": "Clear",
+  "TR_PRO2_FULL_RESOURCES": "Full resources",
+  "TR_PRO2_FULL_RESOURCES_DESC": "Choose the extracted resource directory containing manifest.json. Every manifest file, including stable bundles and startup resources, will be written to its mapped device path.",
+  "TR_PRO2_RESOURCE_FILES_SELECTED": "{count} files selected; manifest will be validated before upload",
+  "TR_PRO2_RESOURCE_DIRECTORY_EXPECTED": "Expected: manifest.json and all referenced files",
+  "TR_PRO2_SELECT_DIRECTORY": "Choose directory"
 }

@@ -14,6 +14,7 @@ import {
 } from '@onekeyfe/hd-core';
 import { serviceHardware } from '@/hardware';
 import { setDevice, setPageStatus } from '@/store/reducers/runtime';
+import { isProtocolV2DeviceType } from '@/utils';
 import { RestartToHomeTip, ListTips, EmptyTips } from './TouchResource/Tips';
 import ResourceButton from './TouchResource/Button';
 
@@ -378,6 +379,9 @@ export default function Firmware() {
       case 'pro2':
         typeFlag = 'OneKey Pro 2';
         break;
+      case 'neo':
+        typeFlag = 'OneKey Neo';
+        break;
       case 'unknown':
         typeFlag = 'Unknown';
         break;
@@ -524,7 +528,7 @@ export default function Firmware() {
               />
             </div>
           )}
-          {getDeviceType(device?.features) === 'pro2' ? (
+          {isProtocolV2DeviceType(getDeviceType(device?.features)) ? (
             <Pro2ReleaseInfo clearTimer={clearTimer} />
           ) : isV3Compatible() ? (
             <V3ReleaseInfo />
@@ -536,7 +540,7 @@ export default function Firmware() {
               return <BootloaderTips />;
             }
 
-            if (getDeviceType(device?.features) === 'pro2') {
+            if (isProtocolV2DeviceType(getDeviceType(device?.features))) {
               return null;
             }
 
