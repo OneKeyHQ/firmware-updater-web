@@ -145,6 +145,39 @@ describe('Pro2ReleaseInfo startup resources', () => {
     });
   });
 
+  test('renders a legacy boot resource config without files', () => {
+    store.dispatch(
+      setReleaseMap({
+        pro2: {
+          ...releaseMap.pro2,
+          resources: {
+            stable: releaseMap.pro2.resources?.stable?.slice(0, 6) ?? [],
+            boot: {
+              required: false,
+              target: 'CRATE',
+              url: 'https://example.com/boot-resources.zip',
+              size: 1,
+              hash: '3'.repeat(64),
+            },
+          },
+        },
+      } as unknown as DeviceTypeMap)
+    );
+
+    render(
+      <Provider store={store}>
+        <IntlProvider locale="en-US" messages={LOCALES['en-US']}>
+          <Pro2ReleaseInfo />
+        </IntlProvider>
+      </Provider>
+    );
+
+    expect(screen.getByText(/6 resource packages/i)).toBeInTheDocument();
+
+    userEvent.click(screen.getByRole('button', { name: 'Local Firmware' }));
+    expect(screen.queryByText('Startup resources')).not.toBeInTheDocument();
+  });
+
   test('loads all nine local resource packages from a directory', async () => {
     render(
       <Provider store={store}>

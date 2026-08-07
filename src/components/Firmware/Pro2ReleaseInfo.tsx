@@ -137,7 +137,7 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
       state.runtime.releaseMap[releaseDeviceType]?.resources?.stable ?? []
   );
   const resourcePackageCount =
-    stableResources.length + (bootResources?.files.length ?? 0);
+    stableResources.length + (bootResources?.files?.length ?? 0);
   const [tab, setTab] = useState<Pro2Tab>('remote');
   const [selectedRemoteTargets, setSelectedRemoteTargets] = useState<
     FirmwareUpdateV4Target[]
@@ -197,7 +197,7 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
           },
         ];
       }),
-      ...(bootResources?.files.map((file) => {
+      ...(bootResources?.files?.map((file) => {
         const fileName =
           file.name ?? file.devicePath.split('/').pop() ?? file.devicePath;
         return {
@@ -599,7 +599,7 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
               </div>
             </div>
           )}
-          {bootResources && (
+          {!!bootResources?.files?.length && (
             <div>
               <h3 className="mb-1 text-sm font-semibold text-gray-900">
                 {intl.formatMessage({ id: 'TR_PRO2_BOOT_RESOURCES' })}
