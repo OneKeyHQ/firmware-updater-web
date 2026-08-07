@@ -12,7 +12,7 @@ jobs:
       NODE_ENV: "production"
       CI: false
       NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      REACT_APP_HARDWARE_CONFIG_URL: "https://pub-568cac7a13bf4c42b7a8113ffffc6793.r2.dev/hardware/pro2/config/config.json"
+      REACT_APP_HARDWARE_CONFIG_URL: "https://data.onekey.so/pre-config.json"
     if: ${{ !github.event.workflow_run || (github.event.workflow_run && github.event.workflow_run.conclusion == 'success') }}
     steps:
       - name: Checkout Source Code
