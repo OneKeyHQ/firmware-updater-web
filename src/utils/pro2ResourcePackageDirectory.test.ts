@@ -76,7 +76,7 @@ describe('Pro2 resource manifest package', () => {
           archivePath: manifest.files[1].archive_path,
         }),
       ]),
-      targetsToUpdate: ['resource', 'boot_resources'],
+      targetsToUpdate: ['resource'],
     });
   });
 

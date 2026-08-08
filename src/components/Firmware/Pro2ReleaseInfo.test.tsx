@@ -57,7 +57,9 @@ const releaseMap = {
     ],
     resources: {
       source: {
-        manifestUrl: 'https://example.com/pro2-resource/manifest.json',
+        archiveUrl: 'https://example.com/pro2-resource/resource.zip',
+        archiveSha256: 'a'.repeat(64),
+        archiveSize: 1024,
       },
     },
   },
@@ -113,7 +115,7 @@ describe('Pro2ReleaseInfo startup resources', () => {
     await waitFor(() => {
       expect(mockedFirmwareUpdateV4).toHaveBeenCalledWith({
         platform: 'web',
-        targetsToUpdate: ['resource', 'boot_resources'],
+        targetsToUpdate: ['resource'],
       });
       expect(installButton).toBeEnabled();
     });

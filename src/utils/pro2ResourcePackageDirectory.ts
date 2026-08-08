@@ -1,18 +1,18 @@
 import JSZip from 'jszip';
+import { sha256 } from '@noble/hashes/sha256';
+import { bytesToHex } from '@noble/hashes/utils';
 
 import type {
   CoreApi,
   FirmwareUpdateV4Target,
   IProtocolV2ResourceManifest,
+  IProtocolV2ResourceSource,
   ProtocolV2PreparedResourceFile,
 } from '@onekeyfe/hd-core';
 
 type ResourcePreparer = Pick<CoreApi, 'prepareProtocolV2ResourceFiles'>;
 
-const RESOURCE_TARGETS: FirmwareUpdateV4Target[] = [
-  'resource',
-  'boot_resources',
-];
+const RESOURCE_TARGETS: FirmwareUpdateV4Target[] = ['resource'];
 
 function parseManifest(text: string): IProtocolV2ResourceManifest {
   try {
@@ -128,33 +128,54 @@ export async function preparePro2ResourcePackageZip({
 
 export async function preparePro2RemoteResourcePackage({
   hardwareSDK,
-  manifestUrl,
+  archive,
   targetsToUpdate,
 }: {
   hardwareSDK: ResourcePreparer;
-  manifestUrl: string;
+  archive: IProtocolV2ResourceSource;
   targetsToUpdate: FirmwareUpdateV4Target[];
 }): Promise<ProtocolV2PreparedResourceFile[]> {
-  const manifestResponse = await fetch(manifestUrl);
-  if (!manifestResponse.ok) {
+  if (!archive.archiveUrl.startsWith('https://')) {
+    throw new Error('Resource archive URL must use HTTPS');
+  }
+  if (!/^[a-fA-F0-9]{64}$/u.test(archive.archiveSha256)) {
+    throw new Error('Invalid resource archive SHA-256');
+  }
+  if (!Number.isSafeInteger(archive.archiveSize) || archive.archiveSize <= 0) {
+    throw new Error('Invalid resource archive size');
+  }
+  const archiveResponse = await fetch(archive.archiveUrl);
+  if (!archiveResponse.ok) {
     throw new Error(
-      `Failed to download resource manifest: ${manifestResponse.status}`
+      `Failed to download resource archive: ${archiveResponse.status}`
     );
   }
-  const manifest =
-    (await manifestResponse.json()) as IProtocolV2ResourceManifest;
+  const archiveBinary = await archiveResponse.arrayBuffer();
+  if (archiveBinary.byteLength !== archive.archiveSize) {
+    throw new Error('Resource archive size mismatch');
+  }
+  if (
+    bytesToHex(sha256(new Uint8Array(archiveBinary))) !==
+    archive.archiveSha256.toLowerCase()
+  ) {
+    throw new Error('Resource archive SHA-256 mismatch');
+  }
+
+  const zip = await JSZip.loadAsync(archiveBinary);
+  const manifestEntry = zip.file('manifest.json');
+  if (!manifestEntry) {
+    throw new Error('Missing resource manifest.json');
+  }
+  const manifest = parseManifest(await manifestEntry.async('text'));
   const files = await Promise.all(
     getManifestEntries(manifest).map(async (entry) => {
-      const fileUrl = new URL(entry.archive_path, manifestUrl).toString();
-      const response = await fetch(fileUrl);
-      if (!response.ok) {
-        throw new Error(
-          `Failed to download resource package: ${entry.archive_path}`
-        );
+      const packageEntry = zip.file(entry.archive_path);
+      if (!packageEntry) {
+        throw new Error(`Missing resource package: ${entry.archive_path}`);
       }
       return {
         archivePath: entry.archive_path,
-        binary: await response.arrayBuffer(),
+        binary: await packageEntry.async('arraybuffer'),
       };
     })
   );

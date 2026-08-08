@@ -149,9 +149,9 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
 
   const remoteTargets = useMemo(() => {
     const targets = remoteComponents.map((component) => component.target);
-    if (resourceSource?.manifestUrl) targets.push('resource');
+    if (resourceSource?.archiveUrl) targets.push('resource');
     return targets;
-  }, [remoteComponents, resourceSource?.manifestUrl]);
+  }, [remoteComponents, resourceSource?.archiveUrl]);
 
   useEffect(() => {
     setSelectedRemoteTargets(remoteTargets);
@@ -195,14 +195,7 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
     try {
       const params: FirmwareUpdateV4Params = { platform: 'web' };
       if (tab === 'remote') {
-        params.targetsToUpdate = selectedRemoteTargets.includes('resource')
-          ? Array.from(
-              new Set<FirmwareUpdateV4Target>([
-                ...selectedRemoteTargets,
-                'boot_resources',
-              ])
-            )
-          : selectedRemoteTargets;
+        params.targetsToUpdate = selectedRemoteTargets;
       } else {
         for (const target of localTargets) {
           const selection = localFiles[target.key];
@@ -331,7 +324,7 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
                   <div className="text-sm text-gray-500">
                     {remoteComponents.length}{' '}
                     {intl.formatMessage({ id: 'TR_PRO2_COMPONENT_COUNT' })}
-                    {resourceSource?.manifestUrl
+                    {resourceSource?.archiveUrl
                       ? ` · ${intl.formatMessage({
                           id: 'TR_PRO2_RESOURCE_COUNT',
                         })}`
@@ -373,7 +366,7 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
                 </div>
                 {[
                   ...remoteComponents,
-                  ...(resourceSource?.manifestUrl
+                  ...(resourceSource?.archiveUrl
                     ? [
                         {
                           key: 'resource',

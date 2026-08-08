@@ -1,3 +1,7 @@
+import JSZip from 'jszip';
+import { sha256 } from '@noble/hashes/sha256';
+import { bytesToHex } from '@noble/hashes/utils';
+
 import type { CoreApi, KnownDevice } from '@onekeyfe/hd-core';
 import type { DeviceTypeMap } from '@/types';
 import { store } from '@/store';
@@ -26,7 +30,7 @@ const neoDevice = {
   features: { deviceType: 'neo' },
 } as unknown as KnownDevice;
 
-const manifestUrl = 'https://example.com/pro2-resource/manifest.json';
+const archiveUrl = 'https://example.com/pro2-resource/resource.zip';
 const resourceManifest = {
   schema: 1,
   files: [
@@ -45,29 +49,43 @@ const preparedResourceFiles = [
   },
 ];
 
+let resourceArchiveBinary: ArrayBuffer;
+let resourceArchive: {
+  archiveUrl: string;
+  archiveSha256: string;
+  archiveSize: number;
+};
+
 function mockRemoteResourceDownloads() {
   return jest.spyOn(global, 'fetch').mockImplementation((url) => {
-    if (url === manifestUrl) {
+    if (url === archiveUrl) {
       return Promise.resolve({
         ok: true,
-        json: () => Promise.resolve(resourceManifest),
+        arrayBuffer: () => Promise.resolve(resourceArchiveBinary),
       } as Response);
     }
-    return Promise.resolve({
-      ok: true,
-      arrayBuffer: () => Promise.resolve(new Uint8Array([1]).buffer),
-    } as Response);
+    return Promise.reject(new Error(`Unexpected URL: ${String(url)}`));
   });
 }
 
 describe('ServiceHardware Pro2 firmware update', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     jest.clearAllMocks();
+    const zip = new JSZip();
+    zip.file('manifest.json', JSON.stringify(resourceManifest));
+    zip.file(resourceManifest.files[0].archive_path, new Uint8Array([1]));
+    resourceArchiveBinary = (await zip.generateAsync({ type: 'uint8array' }))
+      .buffer;
+    resourceArchive = {
+      archiveUrl,
+      archiveSha256: bytesToHex(sha256(new Uint8Array(resourceArchiveBinary))),
+      archiveSize: resourceArchiveBinary.byteLength,
+    };
     store.dispatch(setDevice(pro2Device));
     store.dispatch(
       setReleaseMap({
-        pro2: { resources: { source: { manifestUrl } } },
-        neo: { resources: { source: { manifestUrl } } },
+        pro2: { resources: { source: resourceArchive } },
+        neo: { resources: { source: resourceArchive } },
       } as unknown as DeviceTypeMap)
     );
     window.scrollTo = jest.fn();
@@ -154,7 +172,7 @@ describe('ServiceHardware Pro2 firmware update', () => {
   });
 
   test('starts the remote Protocol V2 update for the connected Pro2', async () => {
-    mockRemoteResourceDownloads();
+    const fetchSpy = mockRemoteResourceDownloads();
     const firmwareUpdateV4 = jest.fn().mockResolvedValue({
       success: true,
       payload: {},
@@ -181,10 +199,11 @@ describe('ServiceHardware Pro2 firmware update', () => {
         'se03',
         'se04',
         'resource',
-        'boot_resources',
       ],
       resourceFiles: preparedResourceFiles,
     });
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(fetchSpy).toHaveBeenCalledWith(archiveUrl);
     expect(store.getState().firmware.resultType).toBe('success');
   });
 
@@ -204,13 +223,13 @@ describe('ServiceHardware Pro2 firmware update', () => {
 
     await serviceHardware.firmwareUpdateV4({
       platform: 'web',
-      targetsToUpdate: ['app_v1', 'resource', 'boot_resources'],
+      targetsToUpdate: ['app_v1', 'resource'],
       resourceFiles: preparedResourceFiles,
     });
 
     expect(firmwareUpdateV4).toHaveBeenCalledWith('pro2-connect-id', {
       platform: 'web',
-      targetsToUpdate: ['app_v1', 'resource', 'boot_resources'],
+      targetsToUpdate: ['app_v1', 'resource'],
       resourceFiles: preparedResourceFiles,
     });
   });
@@ -242,7 +261,6 @@ describe('ServiceHardware Pro2 firmware update', () => {
         'se01',
         'se02',
         'resource',
-        'boot_resources',
       ],
       resourceFiles: preparedResourceFiles,
     });

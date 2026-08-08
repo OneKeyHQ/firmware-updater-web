@@ -571,7 +571,6 @@ class ServiceHardware {
       'se01',
       'se02',
       'resource',
-      'boot_resources',
     ];
     if (deviceType === 'pro2') {
       defaultTargets.splice(6, 0, 'se03', 'se04');
@@ -591,18 +590,15 @@ class ServiceHardware {
       window.scrollTo({ top: 0, behavior: 'auto' });
 
       const targetsToUpdate = updateParams.targetsToUpdate ?? [];
-      const needsResourceFiles = targetsToUpdate.some(
-        (target) => target === 'resource' || target === 'boot_resources'
-      );
+      const needsResourceFiles = targetsToUpdate.includes('resource');
       if (needsResourceFiles && !updateParams.resourceFiles?.length) {
-        const manifestUrl =
-          state.runtime.releaseMap[deviceType]?.resources?.source.manifestUrl;
-        if (!manifestUrl) {
-          throw new Error('Missing Protocol V2 resource manifest URL');
+        const archive = state.runtime.releaseMap[deviceType]?.resources?.source;
+        if (!archive) {
+          throw new Error('Missing Protocol V2 resource archive');
         }
         updateParams.resourceFiles = await preparePro2RemoteResourcePackage({
           hardwareSDK,
-          manifestUrl,
+          archive,
           targetsToUpdate,
         });
       }
