@@ -9,6 +9,7 @@ import {
   UI_RESPONSE,
   FirmwareUpdateV3Params,
   FirmwareUpdateV4Params,
+  getDeviceType,
 } from '@onekeyfe/hd-core';
 import type { IFirmwareField } from '@onekeyfe/hd-core';
 import {
@@ -40,6 +41,7 @@ import {
 import { formatMessage } from '@/locales';
 import { getHardwareSDKInstance } from './instance';
 import { fetchHardwareConfig } from './config';
+import { preparePro2RemoteResourcePackage } from '../utils/pro2ResourcePackageDirectory';
 
 let searchPromise: Deferred<void> | null = null;
 
@@ -459,8 +461,12 @@ class ServiceHardware {
   async firmwareUpdate() {
     const state = store.getState();
     const { device } = state.runtime;
+    const deviceType = device?.deviceType ?? getDeviceType(device?.features);
 
-    if (device?.deviceType === 'pro2') {
+    if (
+      device?.connectProtocol === 'V2' &&
+      (deviceType === 'pro2' || deviceType === 'neo')
+    ) {
       await this.firmwareUpdateV4();
       return;
     }
@@ -535,14 +541,18 @@ class ServiceHardware {
   }
 
   /**
-   * Performs the standard Protocol V2 update for OneKey Pro 2.
+   * Performs the standard Protocol V2 update for OneKey Pro 2 or Neo.
    * With no explicit binaries, the SDK resolves compatible firmware-v1 components remotely.
    */
   async firmwareUpdateV4(params?: FirmwareUpdateV4Params) {
     const state = store.getState();
     const { device } = state.runtime;
+    const deviceType = device?.deviceType ?? getDeviceType(device?.features);
 
-    if (device?.deviceType !== 'pro2') {
+    if (
+      device?.connectProtocol !== 'V2' ||
+      (deviceType !== 'pro2' && deviceType !== 'neo')
+    ) {
       store.dispatch(
         setShowErrorAlert({
           type: 'error',
@@ -553,20 +563,25 @@ class ServiceHardware {
     }
 
     const hardwareSDK = await this.getSDKInstance();
-    const updateParams: FirmwareUpdateV4Params = params ?? {
-      platform: 'web',
-      targetsToUpdate: [
-        'boot',
-        'app_v1',
-        'app_v2',
-        'coprocessor',
-        'se01',
-        'se02',
-        'se03',
-        'se04',
-        'resource',
-      ],
-    };
+    const defaultTargets: FirmwareUpdateV4Params['targetsToUpdate'] = [
+      'boot',
+      'app_v1',
+      'app_v2',
+      'coprocessor',
+      'se01',
+      'se02',
+      'resource',
+      'boot_resources',
+    ];
+    if (deviceType === 'pro2') {
+      defaultTargets.splice(6, 0, 'se03', 'se04');
+    }
+    const updateParams: FirmwareUpdateV4Params = params
+      ? { ...params }
+      : {
+          platform: 'web',
+          targetsToUpdate: defaultTargets,
+        };
 
     try {
       store.dispatch(setInstallType('firmware'));
@@ -574,6 +589,23 @@ class ServiceHardware {
       store.dispatch(setMaxProgress(0));
       store.dispatch(setShowProgressBar(true));
       window.scrollTo({ top: 0, behavior: 'auto' });
+
+      const targetsToUpdate = updateParams.targetsToUpdate ?? [];
+      const needsResourceFiles = targetsToUpdate.some(
+        (target) => target === 'resource' || target === 'boot_resources'
+      );
+      if (needsResourceFiles && !updateParams.resourceFiles?.length) {
+        const manifestUrl =
+          state.runtime.releaseMap[deviceType]?.resources?.source.manifestUrl;
+        if (!manifestUrl) {
+          throw new Error('Missing Protocol V2 resource manifest URL');
+        }
+        updateParams.resourceFiles = await preparePro2RemoteResourcePackage({
+          hardwareSDK,
+          manifestUrl,
+          targetsToUpdate,
+        });
+      }
 
       const response = await hardwareSDK.firmwareUpdateV4(
         device.connectId ?? undefined,
@@ -593,7 +625,7 @@ class ServiceHardware {
         })
       );
     } catch (error) {
-      console.error('Pro2 firmware update error:', error);
+      console.error('Protocol V2 firmware update error:', error);
       store.dispatch(
         setShowErrorAlert({
           type: 'error',

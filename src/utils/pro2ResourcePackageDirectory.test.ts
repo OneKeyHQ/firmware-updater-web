@@ -1,48 +1,110 @@
-import { matchPro2ResourcePackageDirectory } from './pro2ResourcePackageDirectory';
+import JSZip from 'jszip';
 
-const slots = [
-  { key: 'images', label: 'Images', fileNamePrefix: 'images' },
+import {
+  preparePro2ResourcePackageDirectory,
+  preparePro2ResourcePackageZip,
+} from './pro2ResourcePackageDirectory';
+
+const manifest = {
+  schema: 1,
+  files: [
+    {
+      archive_path: 'bundles/images/images-build.okpkg',
+      device_path: 'vol0:/bundles/images/images.okpkg',
+    },
+    {
+      archive_path: 'loaders/bootloader/boot_resource-build.okpkg',
+      device_path: 'vol0:/loaders/bootloader/boot_resource.okpkg',
+    },
+  ],
+};
+
+const prepared = [
   {
-    key: 'boot_resource',
-    label: 'Boot Resource',
-    fileNamePrefix: 'boot_resource',
+    binary: new Uint8Array([1]).buffer,
+    devicePath: 'vol0:/bundles/images/images.okpkg',
+    size: 1,
+    fileHash: 'a'.repeat(64),
   },
-] as const;
+];
 
-describe('Pro2 resource package directory', () => {
-  test('matches release-suffixed and simplified package names without a manifest', () => {
-    const result = matchPro2ResourcePackageDirectory(
-      [
-        new File(['{}'], 'manifest.json'),
-        new File(['images'], 'images-resource-build-id.okpkg'),
-        new File(['boot'], 'boot_resource.okpkg'),
-      ],
-      slots
-    );
+function createDirectoryFile(content: BlobPart, relativePath: string) {
+  const file = new File([content], relativePath.split('/').pop() ?? 'file');
+  Object.defineProperty(file, 'webkitRelativePath', {
+    configurable: true,
+    value: `Pro2 Resource/${relativePath}`,
+  });
+  Object.defineProperty(file, 'text', {
+    configurable: true,
+    value: () =>
+      typeof content === 'string'
+        ? Promise.resolve(content)
+        : Promise.reject(new Error('Expected text fixture')),
+  });
+  Object.defineProperty(file, 'arrayBuffer', {
+    configurable: true,
+    value: () =>
+      Promise.resolve(
+        Uint8Array.from(String(content), (character) => character.charCodeAt(0))
+          .buffer
+      ),
+  });
+  return file;
+}
 
-    expect(result.images.name).toBe('images-resource-build-id.okpkg');
-    expect(result.boot_resource.name).toBe('boot_resource.okpkg');
+describe('Pro2 resource manifest package', () => {
+  test('uses manifest archive paths from an extracted CI directory', async () => {
+    const hardwareSDK = {
+      prepareProtocolV2ResourceFiles: jest.fn().mockReturnValue(prepared),
+    };
+    const selectedFiles = [
+      createDirectoryFile(JSON.stringify(manifest), 'manifest.json'),
+      createDirectoryFile('images', manifest.files[0].archive_path),
+      createDirectoryFile('boot', manifest.files[1].archive_path),
+    ];
+
+    await expect(
+      preparePro2ResourcePackageDirectory({ hardwareSDK, selectedFiles })
+    ).resolves.toEqual(prepared);
+    expect(hardwareSDK.prepareProtocolV2ResourceFiles).toHaveBeenCalledWith({
+      manifest,
+      files: expect.arrayContaining([
+        expect.objectContaining({
+          archivePath: manifest.files[0].archive_path,
+        }),
+        expect.objectContaining({
+          archivePath: manifest.files[1].archive_path,
+        }),
+      ]),
+      targetsToUpdate: ['resource', 'boot_resources'],
+    });
   });
 
-  test('rejects incomplete directories', () => {
-    expect(() =>
-      matchPro2ResourcePackageDirectory(
-        [new File(['images'], 'images.okpkg')],
-        slots
-      )
-    ).toThrow('Missing resource package: Boot Resource');
+  test('extracts the hardware CI ZIP before SDK verification', async () => {
+    const zip = new JSZip();
+    zip.file('manifest.json', JSON.stringify(manifest));
+    zip.file(manifest.files[0].archive_path, 'images');
+    zip.file(manifest.files[1].archive_path, 'boot');
+    const zipBytes = await zip.generateAsync({ type: 'uint8array' });
+    const hardwareSDK = {
+      prepareProtocolV2ResourceFiles: jest.fn().mockReturnValue(prepared),
+    };
+
+    await expect(
+      preparePro2ResourcePackageZip({
+        hardwareSDK,
+        zipFile: new File([zipBytes], 'pro2-resource.zip'),
+      })
+    ).resolves.toEqual(prepared);
+    expect(hardwareSDK.prepareProtocolV2ResourceFiles).toHaveBeenCalledTimes(1);
   });
 
-  test('rejects duplicate packages', () => {
-    expect(() =>
-      matchPro2ResourcePackageDirectory(
-        [
-          new File(['images'], 'images.okpkg'),
-          new File(['images'], 'images-resource-build-id.okpkg'),
-          new File(['boot'], 'boot_resource.okpkg'),
-        ],
-        slots
-      )
-    ).toThrow('Duplicate resource package: Images');
+  test('requires manifest.json instead of matching package filename prefixes', async () => {
+    await expect(
+      preparePro2ResourcePackageDirectory({
+        hardwareSDK: { prepareProtocolV2ResourceFiles: jest.fn() },
+        selectedFiles: [createDirectoryFile('images', 'images.okpkg')],
+      })
+    ).rejects.toThrow('manifest.json');
   });
 });

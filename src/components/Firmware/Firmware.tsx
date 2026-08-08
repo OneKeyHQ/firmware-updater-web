@@ -378,6 +378,9 @@ export default function Firmware() {
       case 'pro2':
         typeFlag = 'OneKey Pro 2';
         break;
+      case 'neo':
+        typeFlag = 'OneKey Neo';
+        break;
       case 'unknown':
         typeFlag = 'Unknown';
         break;
@@ -408,9 +411,9 @@ export default function Firmware() {
   const isV3Update = tabType === 'v3-remote' || tabType === 'v3-local';
   const currentDeviceType =
     device?.deviceType ?? getDeviceType(device?.features);
-  const isProtocolV2FirmwareDevice = ['pro2', 'neo'].includes(
-    currentDeviceType
-  );
+  const isProtocolV2FirmwareDevice =
+    device?.connectProtocol === 'V2' &&
+    ['pro2', 'neo'].includes(currentDeviceType);
 
   const isV3Compatible = () => {
     if (!device?.features) return false;

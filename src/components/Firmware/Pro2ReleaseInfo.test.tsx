@@ -3,7 +3,7 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { IntlProvider } from 'react-intl';
 import { Provider } from 'react-redux';
-import type { KnownDevice } from '@onekeyfe/hd-core';
+import type { CoreApi, KnownDevice } from '@onekeyfe/hd-core';
 import { serviceHardware } from '@/hardware';
 import LOCALES from '@/locales';
 import { store } from '@/store';
@@ -26,6 +26,7 @@ jest.mock('@onekeyfe/ui-components', () => ({
 jest.mock('@/hardware', () => ({
   serviceHardware: {
     firmwareUpdateV4: jest.fn(),
+    getSDKInstance: jest.fn(),
   },
 }));
 
@@ -33,6 +34,11 @@ const mockedFirmwareUpdateV4 =
   // eslint-disable-next-line @typescript-eslint/unbound-method
   serviceHardware.firmwareUpdateV4 as jest.MockedFunction<
     typeof serviceHardware.firmwareUpdateV4
+  >;
+const mockedGetSDKInstance =
+  // eslint-disable-next-line @typescript-eslint/unbound-method
+  serviceHardware.getSDKInstance as jest.MockedFunction<
+    typeof serviceHardware.getSDKInstance
   >;
 
 const releaseMap = {
@@ -50,40 +56,8 @@ const releaseMap = {
       },
     ],
     resources: {
-      stable: [
-        'images',
-        'animation',
-        'wallpaper',
-        'translations',
-        'roobert',
-        'noto',
-        'firmware_logo',
-      ].map((type) => ({
-        type,
-        url: `https://example.com/${type}.okpkg`,
-        size: 1,
-        fileHash: '1'.repeat(64),
-        headerHash: '2'.repeat(128),
-      })),
-      boot: {
-        required: false,
-        target: 'RES',
-        files: [
-          {
-            name: 'boot_resource.okpkg',
-            url: 'https://example.com/loaders/bootloader/boot_resource.okpkg',
-            devicePath: 'vol0:/loaders/bootloader/boot_resource.okpkg',
-            size: 1_822_594,
-            fileHash: '3'.repeat(64),
-          },
-          {
-            name: 'params.okpkg',
-            url: 'https://example.com/loaders/rom/params.okpkg',
-            devicePath: 'vol0:/loaders/rom/params.okpkg',
-            size: 49_869,
-            fileHash: '4'.repeat(64),
-          },
-        ],
+      source: {
+        manifestUrl: 'https://example.com/pro2-resource/manifest.json',
       },
     },
   },
@@ -145,25 +119,7 @@ describe('Pro2ReleaseInfo startup resources', () => {
     });
   });
 
-  test('renders a legacy boot resource config without files', () => {
-    store.dispatch(
-      setReleaseMap({
-        pro2: {
-          ...releaseMap.pro2,
-          resources: {
-            stable: releaseMap.pro2.resources?.stable?.slice(0, 6) ?? [],
-            boot: {
-              required: false,
-              target: 'CRATE',
-              url: 'https://example.com/boot-resources.zip',
-              size: 1,
-              hash: '3'.repeat(64),
-            },
-          },
-        },
-      } as unknown as DeviceTypeMap)
-    );
-
+  test('offers the CI ZIP and extracted-folder manifest flows', () => {
     render(
       <Provider store={store}>
         <IntlProvider locale="en-US" messages={LOCALES['en-US']}>
@@ -172,10 +128,10 @@ describe('Pro2ReleaseInfo startup resources', () => {
       </Provider>
     );
 
-    expect(screen.getByText(/6 resource packages/i)).toBeInTheDocument();
-
     userEvent.click(screen.getByRole('button', { name: 'Local Firmware' }));
-    expect(screen.queryByText('Startup resources')).not.toBeInTheDocument();
+    expect(screen.getByText('Select CI ZIP')).toBeInTheDocument();
+    expect(screen.getByText('Select extracted folder')).toBeInTheDocument();
+    expect(screen.getByText(/manifest\.json is required/i)).toBeInTheDocument();
   });
 
   test('loads all nine local resource packages from a directory', async () => {
@@ -193,21 +149,44 @@ describe('Pro2ReleaseInfo startup resources', () => {
       })
     );
 
-    const packageNames = [
-      'firmware_logo-resource-build.okpkg',
-      'images-resource-build.okpkg',
-      'animation-resource-build.okpkg',
-      'wallpaper-resource-build.okpkg',
-      'translations-resource-build.okpkg',
-      'roobert-resource-build.okpkg',
-      'noto-resource-build.okpkg',
-      'boot_resource-resource-build.okpkg',
-      'params-resource-build.okpkg',
+    const packagePaths = [
+      'bundles/firmware_logo-resource-build.okpkg',
+      'bundles/images/images-resource-build.okpkg',
+      'bundles/images/animation-resource-build.okpkg',
+      'bundles/images/wallpaper-resource-build.okpkg',
+      'bundles/translations/translations-resource-build.okpkg',
+      'bundles/font/roobert-resource-build.okpkg',
+      'bundles/font/noto-resource-build.okpkg',
+      'loaders/bootloader/boot_resource-resource-build.okpkg',
+      'loaders/rom/params-resource-build.okpkg',
     ];
-    const packageFiles = packageNames.map((name) => {
+    const manifest = {
+      schema: 1,
+      files: packagePaths.map((archivePath) => ({
+        archive_path: archivePath,
+      })),
+    };
+    const preparedFiles = packagePaths.map((archivePath) => ({
+      binary: new ArrayBuffer(1),
+      devicePath: `vol0:/${archivePath}`,
+      size: 1,
+      fileHash: '1'.repeat(64),
+    }));
+    mockedGetSDKInstance.mockResolvedValue({
+      prepareProtocolV2ResourceFiles: jest.fn().mockReturnValue(preparedFiles),
+    } as unknown as CoreApi);
+    const manifestFile = new File([JSON.stringify(manifest)], 'manifest.json');
+    Object.defineProperty(manifestFile, 'webkitRelativePath', {
+      value: 'pro2-resource/manifest.json',
+    });
+    Object.defineProperty(manifestFile, 'text', {
+      value: () => Promise.resolve(JSON.stringify(manifest)),
+    });
+    const packageFiles = packagePaths.map((path) => {
+      const name = path.split('/').pop() ?? path;
       const file = new File([name], name);
       Object.defineProperty(file, 'webkitRelativePath', {
-        value: `pro2-resource/${name}`,
+        value: `pro2-resource/${path}`,
       });
       Object.defineProperty(file, 'arrayBuffer', {
         value: () => Promise.resolve(new ArrayBuffer(1)),
@@ -215,17 +194,14 @@ describe('Pro2ReleaseInfo startup resources', () => {
       return file;
     });
 
-    userEvent.upload(
-      screen.getByLabelText('Choose resource folder'),
-      packageFiles
-    );
+    userEvent.upload(screen.getByLabelText('Select extracted folder'), [
+      manifestFile,
+      ...packageFiles,
+    ]);
 
     expect(
-      await screen.findByText('pro2-resource: all 9 packages matched')
+      await screen.findByText('pro2-resource · 9 packages')
     ).toBeInTheDocument();
-    for (const name of packageNames) {
-      expect(screen.getByText(new RegExp(name))).toBeInTheDocument();
-    }
 
     userEvent.click(
       screen.getByRole('checkbox', {
@@ -240,20 +216,7 @@ describe('Pro2ReleaseInfo startup resources', () => {
 
     await waitFor(() => {
       const params = mockedFirmwareUpdateV4.mock.calls[0]?.[0];
-      expect(params?.resourceFiles).toHaveLength(9);
-      expect(params?.resourceFiles?.map((file) => file.devicePath)).toEqual(
-        expect.arrayContaining([
-          'vol0:/bundles/firmware_logo.okpkg',
-          'vol0:/bundles/images/images.okpkg',
-          'vol0:/bundles/images/animation.okpkg',
-          'vol0:/bundles/images/wallpaper.okpkg',
-          'vol0:/bundles/translations/translations.okpkg',
-          'vol0:/bundles/font/roobert.okpkg',
-          'vol0:/bundles/font/noto.okpkg',
-          'vol0:/loaders/bootloader/boot_resource.okpkg',
-          'vol0:/loaders/rom/params.okpkg',
-        ])
-      );
+      expect(params?.resourceFiles).toEqual(preparedFiles);
     });
   });
 
@@ -284,7 +247,9 @@ describe('Pro2ReleaseInfo startup resources', () => {
       })
     ).toBeInTheDocument();
     userEvent.click(screen.getByRole('button', { name: 'Local Firmware' }));
-    expect(screen.getByLabelText('Choose resource folder')).toBeInTheDocument();
+    expect(
+      screen.getByLabelText('Select extracted folder')
+    ).toBeInTheDocument();
     expect(screen.getByText('SE01')).toBeInTheDocument();
     expect(screen.getByText('SE02')).toBeInTheDocument();
     expect(screen.queryByText('SE03')).not.toBeInTheDocument();
