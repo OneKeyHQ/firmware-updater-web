@@ -2,7 +2,13 @@ import JSZip from 'jszip';
 import { sha256 } from '@noble/hashes/sha256';
 import { bytesToHex } from '@noble/hashes/utils';
 
-import type { CoreApi, KnownDevice } from '@onekeyfe/hd-core';
+import { prepareFirmwareUpdateV4MemoryHost } from '@onekeyfe/hd-core';
+import { EFirmwareType } from '@onekeyfe/hd-shared';
+import type {
+  CoreApi,
+  FirmwareUpdatePlan,
+  KnownDevice,
+} from '@onekeyfe/hd-core';
 import type { DeviceTypeMap } from '@/types';
 import { store } from '@/store';
 import { setDevice, setReleaseMap } from '@/store/reducers/runtime';
@@ -13,8 +19,17 @@ jest.mock('./instance', () => ({
   getHardwareSDKInstance: jest.fn(),
 }));
 
+jest.mock('@onekeyfe/hd-core', () => ({
+  ...jest.requireActual('@onekeyfe/hd-core'),
+  prepareFirmwareUpdateV4MemoryHost: jest.fn(),
+}));
+
 const mockedGetHardwareSDKInstance =
   getHardwareSDKInstance as jest.MockedFunction<typeof getHardwareSDKInstance>;
+const mockedPrepareFirmwareUpdateV4MemoryHost =
+  prepareFirmwareUpdateV4MemoryHost as jest.MockedFunction<
+    typeof prepareFirmwareUpdateV4MemoryHost
+  >;
 
 const pro2Device = {
   connectId: 'pro2-connect-id',
@@ -40,21 +55,14 @@ const resourceManifest = {
     },
   ],
 };
-const preparedResourceFiles = [
-  {
-    binary: new Uint8Array([1]).buffer,
-    devicePath: 'vol0:/bundles/images/images.okpkg',
-    size: 1,
-    fileHash: 'a'.repeat(64),
-  },
-];
-
 let resourceArchiveBinary: ArrayBuffer;
 let resourceArchive: {
   archiveUrl: string;
   archiveSha256: string;
   archiveSize: number;
 };
+let firmwareUpdatePlan: FirmwareUpdatePlan;
+let releaseMemoryHost: jest.Mock;
 
 function mockRemoteResourceDownloads() {
   return jest.spyOn(global, 'fetch').mockImplementation((url) => {
@@ -81,6 +89,38 @@ describe('ServiceHardware Pro2 firmware update', () => {
       archiveSha256: bytesToHex(sha256(new Uint8Array(resourceArchiveBinary))),
       archiveSize: resourceArchiveBinary.byteLength,
     };
+    firmwareUpdatePlan = {
+      schemaVersion: 2,
+      planDigest: 'a'.repeat(64),
+      executor: 'v4',
+      deviceIdentity: 'pro2-device-id',
+      deviceModel: 'pro2',
+      firmwareType: EFirmwareType.Universal,
+      platform: 'web',
+      targetsToUpdate: ['resource'],
+      artifacts: [
+        {
+          artifactId: 'resource:archive',
+          role: 'resourceBundle',
+          target: 'resource',
+          url: archiveUrl,
+          container: 'zip',
+          logicalName: 'protocol-v2-resource-archive',
+          expectedSize: resourceArchive.archiveSize,
+          expectedSha256: resourceArchive.archiveSha256,
+        },
+      ],
+    } as FirmwareUpdatePlan;
+    releaseMemoryHost = jest.fn();
+    mockedPrepareFirmwareUpdateV4MemoryHost.mockReturnValue({
+      preparedPlan: { preparedPlanDigest: 'b'.repeat(64) },
+      hostBindingGeneration: 7,
+      targetsToUpdate: ['resource'],
+      expectedDeviceId: 'pro2-device-id',
+      expectedTargetVersions: {},
+      componentArtifacts: {},
+      release: releaseMemoryHost,
+    } as unknown as ReturnType<typeof prepareFirmwareUpdateV4MemoryHost>);
     store.dispatch(setDevice(pro2Device));
     store.dispatch(
       setReleaseMap({
@@ -173,15 +213,17 @@ describe('ServiceHardware Pro2 firmware update', () => {
 
   test('starts the remote Protocol V2 update for the connected Pro2', async () => {
     const fetchSpy = mockRemoteResourceDownloads();
+    const checkAllFirmwareRelease = jest.fn().mockResolvedValue({
+      success: true,
+      payload: { firmwareUpdatePlan },
+    });
     const firmwareUpdateV4 = jest.fn().mockResolvedValue({
       success: true,
       payload: {},
     });
     mockedGetHardwareSDKInstance.mockResolvedValue({
+      checkAllFirmwareRelease,
       firmwareUpdateV4,
-      prepareProtocolV2ResourceFiles: jest
-        .fn()
-        .mockReturnValue(preparedResourceFiles),
       on: jest.fn(),
     } as unknown as CoreApi);
 
@@ -189,7 +231,16 @@ describe('ServiceHardware Pro2 firmware update', () => {
 
     expect(firmwareUpdateV4).toHaveBeenCalledWith('pro2-connect-id', {
       platform: 'web',
-      targetsToUpdate: [
+      preparedPlan: { preparedPlanDigest: 'b'.repeat(64) },
+      hostBindingGeneration: 7,
+      targetsToUpdate: ['resource'],
+      expectedDeviceId: 'pro2-device-id',
+      expectedTargetVersions: {},
+      componentArtifacts: {},
+    });
+    expect(checkAllFirmwareRelease).toHaveBeenCalledWith('pro2-connect-id', {
+      platform: 'web',
+      protocolV2ForceUpdateTargets: [
         'boot',
         'app_v1',
         'app_v2',
@@ -200,60 +251,191 @@ describe('ServiceHardware Pro2 firmware update', () => {
         'se04',
         'resource',
       ],
-      resourceFiles: preparedResourceFiles,
     });
     expect(fetchSpy).toHaveBeenCalledTimes(1);
     expect(fetchSpy).toHaveBeenCalledWith(archiveUrl);
+    expect(mockedPrepareFirmwareUpdateV4MemoryHost).toHaveBeenCalledWith({
+      sdk: expect.any(Object),
+      plan: firmwareUpdatePlan,
+      artifacts: [
+        {
+          artifactId: 'resource:archive',
+          binary: resourceArchiveBinary,
+          materializedEntries: expect.arrayContaining([
+            expect.objectContaining({ entryName: 'manifest.json' }),
+            expect.objectContaining({
+              entryName: resourceManifest.files[0].archive_path,
+            }),
+          ]),
+        },
+      ],
+    });
+    expect(releaseMemoryHost).toHaveBeenCalledTimes(1);
     expect(store.getState().firmware.resultType).toBe('success');
   });
 
-  test('passes selected Protocol V2 targets to the SDK', async () => {
+  test('passes selected Protocol V2 targets to the release Plan request', async () => {
     mockRemoteResourceDownloads();
+    const checkAllFirmwareRelease = jest.fn().mockResolvedValue({
+      success: true,
+      payload: { firmwareUpdatePlan },
+    });
     const firmwareUpdateV4 = jest.fn().mockResolvedValue({
       success: true,
       payload: {},
     });
     mockedGetHardwareSDKInstance.mockResolvedValue({
+      checkAllFirmwareRelease,
       firmwareUpdateV4,
-      prepareProtocolV2ResourceFiles: jest
-        .fn()
-        .mockReturnValue(preparedResourceFiles),
       on: jest.fn(),
     } as unknown as CoreApi);
 
     await serviceHardware.firmwareUpdateV4({
       platform: 'web',
       targetsToUpdate: ['app_v1', 'resource'],
-      resourceFiles: preparedResourceFiles,
     });
 
-    expect(firmwareUpdateV4).toHaveBeenCalledWith('pro2-connect-id', {
+    expect(checkAllFirmwareRelease).toHaveBeenCalledWith('pro2-connect-id', {
       platform: 'web',
-      targetsToUpdate: ['app_v1', 'resource'],
-      resourceFiles: preparedResourceFiles,
+      protocolV2ForceUpdateTargets: ['app_v1', 'resource'],
     });
   });
 
-  test('updates Neo resources without unsupported SE03 and SE04 targets', async () => {
-    mockRemoteResourceDownloads();
-    store.dispatch(setDevice(neoDevice));
+  test('derives the Plan target from a selected local resource ZIP', async () => {
+    const fetchSpy = jest
+      .spyOn(global, 'fetch')
+      .mockRejectedValue(new Error('local artifact must not be downloaded'));
+    const checkAllFirmwareRelease = jest.fn().mockResolvedValue({
+      success: true,
+      payload: { firmwareUpdatePlan },
+    });
     const firmwareUpdateV4 = jest.fn().mockResolvedValue({
       success: true,
       payload: {},
     });
     mockedGetHardwareSDKInstance.mockResolvedValue({
+      checkAllFirmwareRelease,
       firmwareUpdateV4,
-      prepareProtocolV2ResourceFiles: jest
-        .fn()
-        .mockReturnValue(preparedResourceFiles),
+      on: jest.fn(),
+    } as unknown as CoreApi);
+
+    await serviceHardware.firmwareUpdateV4({
+      platform: 'web',
+      localResourceArchiveBinary: resourceArchiveBinary,
+    });
+
+    expect(checkAllFirmwareRelease).toHaveBeenCalledWith('pro2-connect-id', {
+      platform: 'web',
+      protocolV2ForceUpdateTargets: ['resource'],
+    });
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(mockedPrepareFirmwareUpdateV4MemoryHost).toHaveBeenCalledWith(
+      expect.objectContaining({
+        plan: firmwareUpdatePlan,
+        artifacts: [
+          expect.objectContaining({
+            artifactId: 'resource:archive',
+            binary: resourceArchiveBinary,
+          }),
+        ],
+      })
+    );
+  });
+
+  test('derives the Plan target from a selected local firmware component', async () => {
+    const applicationBinary = new Uint8Array([7, 8, 9]).buffer;
+    firmwareUpdatePlan = {
+      ...firmwareUpdatePlan,
+      targetsToUpdate: ['app_v1'],
+      artifacts: [
+        {
+          artifactId: 'component:application-p1',
+          role: 'component',
+          target: 'app_v1',
+          url: 'https://example.com/application-p1.okpkg',
+          container: 'raw',
+          expectedSize: applicationBinary.byteLength,
+          expectedSha256: bytesToHex(sha256(new Uint8Array(applicationBinary))),
+        },
+      ],
+    };
+    mockedPrepareFirmwareUpdateV4MemoryHost.mockReturnValueOnce({
+      preparedPlan: { preparedPlanDigest: 'c'.repeat(64) },
+      hostBindingGeneration: 8,
+      targetsToUpdate: ['app_v1'],
+      expectedDeviceId: 'pro2-device-id',
+      expectedTargetVersions: {},
+      componentArtifacts: {
+        app_v1: {
+          artifactRef: 'fwmem:application-p1',
+          size: applicationBinary.byteLength,
+          sha256: bytesToHex(sha256(new Uint8Array(applicationBinary))),
+        },
+      },
+      release: releaseMemoryHost,
+    } as unknown as ReturnType<typeof prepareFirmwareUpdateV4MemoryHost>);
+    const fetchSpy = jest
+      .spyOn(global, 'fetch')
+      .mockRejectedValue(new Error('local artifact must not be downloaded'));
+    const checkAllFirmwareRelease = jest.fn().mockResolvedValue({
+      success: true,
+      payload: { firmwareUpdatePlan },
+    });
+    const firmwareUpdateV4 = jest.fn().mockResolvedValue({
+      success: true,
+      payload: {},
+    });
+    mockedGetHardwareSDKInstance.mockResolvedValue({
+      checkAllFirmwareRelease,
+      firmwareUpdateV4,
+      on: jest.fn(),
+    } as unknown as CoreApi);
+
+    await serviceHardware.firmwareUpdateV4({
+      platform: 'web',
+      applicationP1Binary: applicationBinary,
+    });
+
+    expect(checkAllFirmwareRelease).toHaveBeenCalledWith('pro2-connect-id', {
+      platform: 'web',
+      protocolV2ForceUpdateTargets: ['app_v1'],
+    });
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(mockedPrepareFirmwareUpdateV4MemoryHost).toHaveBeenCalledWith(
+      expect.objectContaining({
+        plan: firmwareUpdatePlan,
+        artifacts: [
+          {
+            artifactId: 'component:application-p1',
+            binary: applicationBinary,
+          },
+        ],
+      })
+    );
+  });
+
+  test('updates Neo resources without unsupported SE03 and SE04 targets', async () => {
+    mockRemoteResourceDownloads();
+    store.dispatch(setDevice(neoDevice));
+    const checkAllFirmwareRelease = jest.fn().mockResolvedValue({
+      success: true,
+      payload: { firmwareUpdatePlan },
+    });
+    const firmwareUpdateV4 = jest.fn().mockResolvedValue({
+      success: true,
+      payload: {},
+    });
+    mockedGetHardwareSDKInstance.mockResolvedValue({
+      checkAllFirmwareRelease,
+      firmwareUpdateV4,
       on: jest.fn(),
     } as unknown as CoreApi);
 
     await serviceHardware.firmwareUpdateV4();
 
-    expect(firmwareUpdateV4).toHaveBeenCalledWith('neo-connect-id', {
+    expect(checkAllFirmwareRelease).toHaveBeenCalledWith('neo-connect-id', {
       platform: 'web',
-      targetsToUpdate: [
+      protocolV2ForceUpdateTargets: [
         'boot',
         'app_v1',
         'app_v2',
@@ -262,7 +444,6 @@ describe('ServiceHardware Pro2 firmware update', () => {
         'se02',
         'resource',
       ],
-      resourceFiles: preparedResourceFiles,
     });
   });
 });

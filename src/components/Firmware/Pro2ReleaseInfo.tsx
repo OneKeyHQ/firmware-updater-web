@@ -5,16 +5,12 @@ import { Alert, Button } from '@onekeyfe/ui-components';
 import { marked } from 'marked';
 import { getDeviceType } from '@onekeyfe/hd-core';
 import type {
-  FirmwareUpdateV4Params,
   FirmwareUpdateV4Target,
   IProtocolV2FirmwareComponentTarget,
 } from '@onekeyfe/hd-core';
 import { RootState } from '@/store';
 import { serviceHardware } from '@/hardware';
-import {
-  preparePro2ResourcePackageDirectory,
-  preparePro2ResourcePackageZip,
-} from '@/utils/pro2ResourcePackageDirectory';
+import type { FirmwareUpdateV4Request } from '@/hardware';
 
 type Pro2Tab = 'remote' | 'local';
 type Pro2BinaryField =
@@ -35,7 +31,6 @@ type LocalTarget = {
 
 type LocalFileSelection = {
   file: File;
-  devicePath?: string;
 };
 
 const TARGET_BY_CONFIG_TARGET: Partial<
@@ -113,11 +108,7 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
   const [localFiles, setLocalFiles] = useState<
     Record<string, LocalFileSelection>
   >({});
-  const [resourceFolderName, setResourceFolderName] = useState<string>();
-  const [resourceFolderError, setResourceFolderError] = useState<string>();
-  const [resourceFiles, setResourceFiles] = useState<
-    NonNullable<FirmwareUpdateV4Params['resourceFiles']>
-  >([]);
+  const [resourceArchiveFile, setResourceArchiveFile] = useState<File>();
   const [confirmed, setConfirmed] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
 
@@ -165,18 +156,10 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
     );
   };
 
-  const setLocalFile = (
-    key: string,
-    file: File | undefined,
-    devicePath?: string
-  ) => {
-    if (devicePath) {
-      setResourceFolderName(undefined);
-      setResourceFolderError(undefined);
-    }
+  const setLocalFile = (key: string, file: File | undefined) => {
     setLocalFiles((current) => {
       const next = { ...current };
-      if (file) next[key] = { file, devicePath };
+      if (file) next[key] = { file };
       else delete next[key];
       return next;
     });
@@ -185,7 +168,7 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
   const selectedCount =
     tab === 'remote'
       ? selectedRemoteTargets.length
-      : Object.keys(localFiles).length + (resourceFiles.length ? 1 : 0);
+      : Object.keys(localFiles).length + (resourceArchiveFile ? 1 : 0);
 
   const handleInstall = useCallback(async () => {
     if (!device || !confirmed || selectedCount === 0 || isUpdating) return;
@@ -193,7 +176,7 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
     setIsUpdating(true);
     clearTimer?.();
     try {
-      const params: FirmwareUpdateV4Params = { platform: 'web' };
+      const params: FirmwareUpdateV4Request = { platform: 'web' };
       if (tab === 'remote') {
         params.targetsToUpdate = selectedRemoteTargets;
       } else {
@@ -204,8 +187,9 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
           }
         }
 
-        if (resourceFiles.length) {
-          params.resourceFiles = resourceFiles;
+        if (resourceArchiveFile) {
+          params.localResourceArchiveBinary =
+            await resourceArchiveFile.arrayBuffer();
         }
       }
 
@@ -220,28 +204,19 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
     isUpdating,
     localFiles,
     localTargets,
-    resourceFiles,
+    resourceArchiveFile,
     selectedCount,
     selectedRemoteTargets,
     tab,
   ]);
 
-  const renderLocalFilePicker = (
-    key: string,
-    label: string,
-    devicePath?: string
-  ) => {
+  const renderLocalFilePicker = (key: string, label: string) => {
     const selection = localFiles[key];
     return (
       <div key={key} className="rounded-lg border border-gray-200 p-4">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <div className="font-medium text-gray-900">{label}</div>
-            {devicePath && (
-              <div className="mt-1 break-all font-mono text-xs text-gray-500">
-                {devicePath}
-              </div>
-            )}
             {selection && (
               <div className="mt-2 truncate text-sm text-gray-600">
                 {selection.file.name} · {formatFileSize(selection.file.size)}
@@ -267,9 +242,7 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
                 type="file"
                 className="hidden"
                 accept=".okpkg,.bin"
-                onChange={(event) =>
-                  setLocalFile(key, event.target.files?.[0], devicePath)
-                }
+                onChange={(event) => setLocalFile(key, event.target.files?.[0])}
               />
             </label>
           </div>
@@ -433,12 +406,14 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <div className="text-sm font-semibold text-gray-900">
-                  {intl.formatMessage({ id: 'TR_PRO2_RESOURCE_FOLDER' })}
+                  {intl.formatMessage({ id: 'TR_PRO2_RESOURCES' })}
                 </div>
                 <div className="mt-1 text-xs text-gray-500">
-                  {resourceFolderName
-                    ? `${resourceFolderName} · ${resourceFiles.length} packages`
-                    : 'Select the hardware CI ZIP or its extracted folder. manifest.json is required.'}
+                  {resourceArchiveFile
+                    ? `${resourceArchiveFile.name} · ${formatFileSize(
+                        resourceArchiveFile.size
+                      )}`
+                    : 'Select the exact hardware CI resource ZIP referenced by the firmware Plan.'}
                 </div>
               </div>
               <div className="flex gap-2">
@@ -448,74 +423,25 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
                     type="file"
                     className="hidden"
                     accept=".zip,application/zip"
-                    onChange={async (event) => {
+                    onChange={(event) => {
                       const zipFile = event.currentTarget.files?.[0];
                       event.currentTarget.value = '';
                       if (!zipFile) return;
-                      try {
-                        const hardwareSDK =
-                          await serviceHardware.getSDKInstance();
-                        setResourceFiles(
-                          await preparePro2ResourcePackageZip({
-                            hardwareSDK,
-                            zipFile,
-                          })
-                        );
-                        setResourceFolderName(zipFile.name);
-                        setResourceFolderError(undefined);
-                      } catch (error) {
-                        setResourceFolderError(
-                          error instanceof Error ? error.message : String(error)
-                        );
-                      }
+                      setResourceArchiveFile(zipFile);
                     }}
                   />
                 </label>
-                <label className="cursor-pointer rounded-md bg-gray-700 px-3 py-2 text-sm font-medium text-white hover:bg-gray-600">
-                  Select extracted folder
-                  <input
-                    type="file"
-                    className="hidden"
-                    multiple
-                    {...({
-                      webkitdirectory: '',
-                      directory: '',
-                    } as React.InputHTMLAttributes<HTMLInputElement>)}
-                    onChange={async (event) => {
-                      const selectedFiles = Array.from(
-                        event.currentTarget.files ?? []
-                      );
-                      event.currentTarget.value = '';
-                      if (!selectedFiles.length) return;
-                      try {
-                        const hardwareSDK =
-                          await serviceHardware.getSDKInstance();
-                        setResourceFiles(
-                          await preparePro2ResourcePackageDirectory({
-                            hardwareSDK,
-                            selectedFiles,
-                          })
-                        );
-                        setResourceFolderName(
-                          selectedFiles[0].webkitRelativePath.split('/')[0] ||
-                            'Selected folder'
-                        );
-                        setResourceFolderError(undefined);
-                      } catch (error) {
-                        setResourceFolderError(
-                          error instanceof Error ? error.message : String(error)
-                        );
-                      }
-                    }}
-                  />
-                </label>
+                {resourceArchiveFile && (
+                  <button
+                    type="button"
+                    className="rounded-md px-3 py-2 text-sm text-gray-600 hover:bg-gray-100"
+                    onClick={() => setResourceArchiveFile(undefined)}
+                  >
+                    {intl.formatMessage({ id: 'TR_PRO2_CLEAR_FILE' })}
+                  </button>
+                )}
               </div>
             </div>
-            {resourceFolderError && (
-              <div className="mt-2 text-xs text-red-600">
-                {resourceFolderError}
-              </div>
-            )}
           </div>
         </div>
       )}

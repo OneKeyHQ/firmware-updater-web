@@ -9,6 +9,7 @@ import {
   UI_RESPONSE,
   FirmwareUpdateV3Params,
   FirmwareUpdateV4Params,
+  FirmwareUpdateV4Target,
   getDeviceType,
 } from '@onekeyfe/hd-core';
 import type { IFirmwareField } from '@onekeyfe/hd-core';
@@ -41,7 +42,43 @@ import {
 import { formatMessage } from '@/locales';
 import { getHardwareSDKInstance } from './instance';
 import { fetchHardwareConfig } from './config';
-import { preparePro2RemoteResourcePackage } from '../utils/pro2ResourcePackageDirectory';
+import {
+  FirmwarePlanArtifactOverrides,
+  prepareFirmwareUpdatePlanMemoryHost,
+} from '../utils/firmwareUpdatePlanHost';
+
+type FirmwareUpdateV4ComponentBinaryField =
+  | 'bootloaderBinary'
+  | 'applicationP1Binary'
+  | 'applicationP2Binary'
+  | 'coprocessorBinary'
+  | 'se01Binary'
+  | 'se02Binary'
+  | 'se03Binary'
+  | 'se04Binary';
+
+export type FirmwareUpdateV4Request = Pick<
+  FirmwareUpdateV4Params,
+  'platform' | 'targetsToUpdate' | FirmwareUpdateV4ComponentBinaryField
+> & {
+  localResourceArchiveBinary?: ArrayBuffer;
+};
+
+const LOCAL_COMPONENT_BINARY_FIELDS: Array<
+  [
+    Exclude<FirmwareUpdateV4Target, 'resource'>,
+    FirmwareUpdateV4ComponentBinaryField
+  ]
+> = [
+  ['boot', 'bootloaderBinary'],
+  ['app_v1', 'applicationP1Binary'],
+  ['app_v2', 'applicationP2Binary'],
+  ['coprocessor', 'coprocessorBinary'],
+  ['se01', 'se01Binary'],
+  ['se02', 'se02Binary'],
+  ['se03', 'se03Binary'],
+  ['se04', 'se04Binary'],
+];
 
 let searchPromise: Deferred<void> | null = null;
 
@@ -544,7 +581,7 @@ class ServiceHardware {
    * Performs the standard Protocol V2 update for OneKey Pro 2 or Neo.
    * With no explicit binaries, the SDK resolves compatible firmware-v1 components remotely.
    */
-  async firmwareUpdateV4(params?: FirmwareUpdateV4Params) {
+  async firmwareUpdateV4(params?: FirmwareUpdateV4Request) {
     const state = store.getState();
     const { device } = state.runtime;
     const deviceType = device?.deviceType ?? getDeviceType(device?.features);
@@ -575,7 +612,7 @@ class ServiceHardware {
     if (deviceType === 'pro2') {
       defaultTargets.splice(6, 0, 'se03', 'se04');
     }
-    const updateParams: FirmwareUpdateV4Params = params
+    const updateParams: FirmwareUpdateV4Request = params
       ? { ...params }
       : {
           platform: 'web',
@@ -589,24 +626,67 @@ class ServiceHardware {
       store.dispatch(setShowProgressBar(true));
       window.scrollTo({ top: 0, behavior: 'auto' });
 
-      const targetsToUpdate = updateParams.targetsToUpdate ?? [];
-      const needsResourceFiles = targetsToUpdate.includes('resource');
-      if (needsResourceFiles && !updateParams.resourceFiles?.length) {
-        const archive = state.runtime.releaseMap[deviceType]?.resources?.source;
-        if (!archive) {
-          throw new Error('Missing Protocol V2 resource archive');
-        }
-        updateParams.resourceFiles = await preparePro2RemoteResourcePackage({
-          hardwareSDK,
-          archive,
-          targetsToUpdate,
-        });
+      const selectedTargets =
+        updateParams.targetsToUpdate ??
+        LOCAL_COMPONENT_BINARY_FIELDS.flatMap(([target, field]) =>
+          updateParams[field] instanceof ArrayBuffer ? [target] : []
+        );
+      const requestedTargets = Array.from(
+        new Set<FirmwareUpdateV4Target>([
+          ...selectedTargets,
+          ...(updateParams.localResourceArchiveBinary
+            ? (['resource'] as const)
+            : []),
+        ])
+      );
+      if (requestedTargets.length === 0) {
+        throw new Error('Protocol V2 firmware update has no selected targets');
       }
 
-      const response = await hardwareSDK.firmwareUpdateV4(
+      const releaseResponse = await hardwareSDK.checkAllFirmwareRelease(
         device.connectId ?? undefined,
-        updateParams
+        {
+          platform: 'web',
+          protocolV2ForceUpdateTargets: requestedTargets,
+        }
       );
+      if (!releaseResponse.success) {
+        throw new Error(releaseResponse.payload.error);
+      }
+      const plan = releaseResponse.payload.firmwareUpdatePlan;
+      if (!plan || plan.executor !== 'v4') {
+        throw new Error('Protocol V2 firmware update Plan is unavailable');
+      }
+      const overrides: FirmwarePlanArtifactOverrides = {};
+      for (const [target, field] of LOCAL_COMPONENT_BINARY_FIELDS) {
+        const binary = updateParams[field];
+        if (binary instanceof ArrayBuffer) overrides[target] = binary;
+      }
+      if (updateParams.localResourceArchiveBinary) {
+        overrides.resource = updateParams.localResourceArchiveBinary;
+      }
+      const memoryHost = await prepareFirmwareUpdatePlanMemoryHost({
+        hardwareSDK,
+        plan,
+        overrides,
+      });
+      let response;
+      try {
+        response = await hardwareSDK.firmwareUpdateV4(
+          device.connectId ?? undefined,
+          {
+            platform: 'web',
+            preparedPlan: memoryHost.preparedPlan,
+            hostBindingGeneration: memoryHost.hostBindingGeneration,
+            targetsToUpdate: memoryHost.targetsToUpdate,
+            expectedDeviceId: memoryHost.expectedDeviceId,
+            expectedTargetVersions: memoryHost.expectedTargetVersions,
+            componentArtifacts: memoryHost.componentArtifacts,
+          }
+        );
+      } finally {
+        memoryHost.release();
+      }
 
       if (!response.success) {
         throw new Error(response.payload.error);
