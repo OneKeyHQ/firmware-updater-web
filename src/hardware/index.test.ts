@@ -115,10 +115,6 @@ describe('ServiceHardware Pro2 firmware update', () => {
     mockedPrepareFirmwareUpdateV4MemoryHost.mockReturnValue({
       preparedPlan: { preparedPlanDigest: 'b'.repeat(64) },
       hostBindingGeneration: 7,
-      targetsToUpdate: ['resource'],
-      expectedDeviceId: 'pro2-device-id',
-      expectedTargetVersions: {},
-      componentArtifacts: {},
       release: releaseMemoryHost,
     } as unknown as ReturnType<typeof prepareFirmwareUpdateV4MemoryHost>);
     store.dispatch(setDevice(pro2Device));
@@ -233,10 +229,6 @@ describe('ServiceHardware Pro2 firmware update', () => {
       platform: 'web',
       preparedPlan: { preparedPlanDigest: 'b'.repeat(64) },
       hostBindingGeneration: 7,
-      targetsToUpdate: ['resource'],
-      expectedDeviceId: 'pro2-device-id',
-      expectedTargetVersions: {},
-      componentArtifacts: {},
     });
     expect(checkAllFirmwareRelease).toHaveBeenCalledWith('pro2-connect-id', {
       platform: 'web',
@@ -301,7 +293,7 @@ describe('ServiceHardware Pro2 firmware update', () => {
     });
   });
 
-  test('derives the Plan target from a selected local resource ZIP', async () => {
+  test('uses a selected local resource ZIP without a remote Plan', async () => {
     const fetchSpy = jest
       .spyOn(global, 'fetch')
       .mockRejectedValue(new Error('local artifact must not be downloaded'));
@@ -324,56 +316,18 @@ describe('ServiceHardware Pro2 firmware update', () => {
       localResourceArchiveBinary: resourceArchiveBinary,
     });
 
-    expect(checkAllFirmwareRelease).toHaveBeenCalledWith('pro2-connect-id', {
-      platform: 'web',
-      protocolV2ForceUpdateTargets: ['resource'],
-    });
+    expect(checkAllFirmwareRelease).not.toHaveBeenCalled();
     expect(fetchSpy).not.toHaveBeenCalled();
-    expect(mockedPrepareFirmwareUpdateV4MemoryHost).toHaveBeenCalledWith(
-      expect.objectContaining({
-        plan: firmwareUpdatePlan,
-        artifacts: [
-          expect.objectContaining({
-            artifactId: 'resource:archive',
-            binary: resourceArchiveBinary,
-          }),
-        ],
-      })
-    );
+    expect(mockedPrepareFirmwareUpdateV4MemoryHost).not.toHaveBeenCalled();
+    expect(firmwareUpdateV4).toHaveBeenCalledWith('pro2-connect-id', {
+      platform: 'web',
+      targetsToUpdate: ['resource'],
+      resourceArchiveBinary,
+    });
   });
 
-  test('derives the Plan target from a selected local firmware component', async () => {
+  test('uses a selected local firmware component without a remote Plan', async () => {
     const applicationBinary = new Uint8Array([7, 8, 9]).buffer;
-    firmwareUpdatePlan = {
-      ...firmwareUpdatePlan,
-      targetsToUpdate: ['app_v1'],
-      artifacts: [
-        {
-          artifactId: 'component:application-p1',
-          role: 'component',
-          target: 'app_v1',
-          url: 'https://example.com/application-p1.okpkg',
-          container: 'raw',
-          expectedSize: applicationBinary.byteLength,
-          expectedSha256: bytesToHex(sha256(new Uint8Array(applicationBinary))),
-        },
-      ],
-    };
-    mockedPrepareFirmwareUpdateV4MemoryHost.mockReturnValueOnce({
-      preparedPlan: { preparedPlanDigest: 'c'.repeat(64) },
-      hostBindingGeneration: 8,
-      targetsToUpdate: ['app_v1'],
-      expectedDeviceId: 'pro2-device-id',
-      expectedTargetVersions: {},
-      componentArtifacts: {
-        app_v1: {
-          artifactRef: 'fwmem:application-p1',
-          size: applicationBinary.byteLength,
-          sha256: bytesToHex(sha256(new Uint8Array(applicationBinary))),
-        },
-      },
-      release: releaseMemoryHost,
-    } as unknown as ReturnType<typeof prepareFirmwareUpdateV4MemoryHost>);
     const fetchSpy = jest
       .spyOn(global, 'fetch')
       .mockRejectedValue(new Error('local artifact must not be downloaded'));
@@ -396,22 +350,14 @@ describe('ServiceHardware Pro2 firmware update', () => {
       applicationP1Binary: applicationBinary,
     });
 
-    expect(checkAllFirmwareRelease).toHaveBeenCalledWith('pro2-connect-id', {
-      platform: 'web',
-      protocolV2ForceUpdateTargets: ['app_v1'],
-    });
+    expect(checkAllFirmwareRelease).not.toHaveBeenCalled();
     expect(fetchSpy).not.toHaveBeenCalled();
-    expect(mockedPrepareFirmwareUpdateV4MemoryHost).toHaveBeenCalledWith(
-      expect.objectContaining({
-        plan: firmwareUpdatePlan,
-        artifacts: [
-          {
-            artifactId: 'component:application-p1',
-            binary: applicationBinary,
-          },
-        ],
-      })
-    );
+    expect(mockedPrepareFirmwareUpdateV4MemoryHost).not.toHaveBeenCalled();
+    expect(firmwareUpdateV4).toHaveBeenCalledWith('pro2-connect-id', {
+      platform: 'web',
+      targetsToUpdate: ['app_v1'],
+      applicationP1Binary: applicationBinary,
+    });
   });
 
   test('updates Neo resources without unsupported SE03 and SE04 targets', async () => {

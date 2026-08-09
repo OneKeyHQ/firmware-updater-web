@@ -42,10 +42,7 @@ import {
 import { formatMessage } from '@/locales';
 import { getHardwareSDKInstance } from './instance';
 import { fetchHardwareConfig } from './config';
-import {
-  FirmwarePlanArtifactOverrides,
-  prepareFirmwareUpdatePlanMemoryHost,
-} from '../utils/firmwareUpdatePlanHost';
+import { prepareFirmwareUpdatePlanMemoryHost } from '../utils/firmwareUpdatePlanHost';
 
 type FirmwareUpdateV4ComponentBinaryField =
   | 'bootloaderBinary'
@@ -626,66 +623,72 @@ class ServiceHardware {
       store.dispatch(setShowProgressBar(true));
       window.scrollTo({ top: 0, behavior: 'auto' });
 
-      const selectedTargets =
-        updateParams.targetsToUpdate ??
+      const localTargets: FirmwareUpdateV4Target[] =
         LOCAL_COMPONENT_BINARY_FIELDS.flatMap(([target, field]) =>
           updateParams[field] instanceof ArrayBuffer ? [target] : []
         );
-      const requestedTargets = Array.from(
-        new Set<FirmwareUpdateV4Target>([
-          ...selectedTargets,
-          ...(updateParams.localResourceArchiveBinary
-            ? (['resource'] as const)
-            : []),
-        ])
-      );
+      if (updateParams.localResourceArchiveBinary)
+        localTargets.push('resource');
+      const requestedTargets =
+        localTargets.length > 0
+          ? Array.from(new Set<FirmwareUpdateV4Target>(localTargets))
+          : updateParams.targetsToUpdate ?? [];
       if (requestedTargets.length === 0) {
         throw new Error('Protocol V2 firmware update has no selected targets');
       }
 
-      const releaseResponse = await hardwareSDK.checkAllFirmwareRelease(
-        device.connectId ?? undefined,
-        {
-          platform: 'web',
-          protocolV2ForceUpdateTargets: requestedTargets,
-        }
-      );
-      if (!releaseResponse.success) {
-        throw new Error(releaseResponse.payload.error);
-      }
-      const plan = releaseResponse.payload.firmwareUpdatePlan;
-      if (!plan || plan.executor !== 'v4') {
-        throw new Error('Protocol V2 firmware update Plan is unavailable');
-      }
-      const overrides: FirmwarePlanArtifactOverrides = {};
-      for (const [target, field] of LOCAL_COMPONENT_BINARY_FIELDS) {
-        const binary = updateParams[field];
-        if (binary instanceof ArrayBuffer) overrides[target] = binary;
-      }
-      if (updateParams.localResourceArchiveBinary) {
-        overrides.resource = updateParams.localResourceArchiveBinary;
-      }
-      const memoryHost = await prepareFirmwareUpdatePlanMemoryHost({
-        hardwareSDK,
-        plan,
-        overrides,
-      });
       let response;
-      try {
+      if (localTargets.length > 0) {
         response = await hardwareSDK.firmwareUpdateV4(
           device.connectId ?? undefined,
           {
             platform: 'web',
-            preparedPlan: memoryHost.preparedPlan,
-            hostBindingGeneration: memoryHost.hostBindingGeneration,
-            targetsToUpdate: memoryHost.targetsToUpdate,
-            expectedDeviceId: memoryHost.expectedDeviceId,
-            expectedTargetVersions: memoryHost.expectedTargetVersions,
-            componentArtifacts: memoryHost.componentArtifacts,
+            targetsToUpdate: requestedTargets,
+            ...Object.fromEntries(
+              LOCAL_COMPONENT_BINARY_FIELDS.flatMap(([, field]) => {
+                const binary = updateParams[field];
+                return binary instanceof ArrayBuffer ? [[field, binary]] : [];
+              })
+            ),
+            ...(updateParams.localResourceArchiveBinary
+              ? {
+                  resourceArchiveBinary:
+                    updateParams.localResourceArchiveBinary,
+                }
+              : {}),
           }
         );
-      } finally {
-        memoryHost.release();
+      } else {
+        const releaseResponse = await hardwareSDK.checkAllFirmwareRelease(
+          device.connectId ?? undefined,
+          {
+            platform: 'web',
+            protocolV2ForceUpdateTargets: requestedTargets,
+          }
+        );
+        if (!releaseResponse.success) {
+          throw new Error(releaseResponse.payload.error);
+        }
+        const plan = releaseResponse.payload.firmwareUpdatePlan;
+        if (!plan || plan.executor !== 'v4') {
+          throw new Error('Protocol V2 firmware update Plan is unavailable');
+        }
+        const memoryHost = await prepareFirmwareUpdatePlanMemoryHost({
+          hardwareSDK,
+          plan,
+        });
+        try {
+          response = await hardwareSDK.firmwareUpdateV4(
+            device.connectId ?? undefined,
+            {
+              platform: 'web',
+              preparedPlan: memoryHost.preparedPlan,
+              hostBindingGeneration: memoryHost.hostBindingGeneration,
+            }
+          );
+        } finally {
+          memoryHost.release();
+        }
       }
 
       if (!response.success) {
