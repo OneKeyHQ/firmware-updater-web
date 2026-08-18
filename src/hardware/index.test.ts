@@ -2,7 +2,10 @@ import JSZip from 'jszip';
 import { sha256 } from '@noble/hashes/sha256';
 import { bytesToHex } from '@noble/hashes/utils';
 
-import { prepareFirmwareUpdateV4MemoryHost } from '@onekeyfe/hd-core';
+import {
+  prepareFirmwareUpdateV4MemoryHost,
+  UI_RESPONSE,
+} from '@onekeyfe/hd-core';
 import { EFirmwareType } from '@onekeyfe/hd-shared';
 import type {
   CoreApi,
@@ -199,6 +202,46 @@ describe('ServiceHardware Pro2 firmware update', () => {
       expect(getDevices).toHaveBeenCalledTimes(1);
       expect(requestDevice).not.toHaveBeenCalled();
     } finally {
+      if (previousUsb) {
+        Object.defineProperty(navigator, 'usb', previousUsb);
+      } else {
+        delete (navigator as { usb?: unknown }).usb;
+      }
+    }
+  });
+
+  test('reuses the authorized 1209:4f4c handle after reboot when serial is empty', async () => {
+    const authorizedDevice = {
+      vendorId: 0x1209,
+      productId: 0x4f4c,
+      productName: 'OneKey Pro 2',
+      serialNumber: '',
+    };
+    const getDevices = jest.fn().mockResolvedValue([authorizedDevice]);
+    const requestDevice = jest.fn();
+    const previousUsb = Object.getOwnPropertyDescriptor(navigator, 'usb');
+    Object.defineProperty(navigator, 'usb', {
+      configurable: true,
+      value: { getDevices, requestDevice },
+    });
+    const sendUiResponse = jest
+      .spyOn(serviceHardware, 'sendUiResponse')
+      .mockResolvedValue(undefined as never);
+
+    try {
+      await expect(
+        serviceHardware.promptBootloaderDeviceAccess()
+      ).resolves.toBe(true);
+      expect(getDevices).toHaveBeenCalledTimes(1);
+      expect(requestDevice).not.toHaveBeenCalled();
+      expect(sendUiResponse).toHaveBeenCalledWith({
+        type: UI_RESPONSE.SELECT_DEVICE_IN_BOOTLOADER_FOR_WEB_DEVICE,
+        payload: {
+          deviceId: 'usb-1209-4f4c-onekey-pro-2',
+        },
+      });
+    } finally {
+      sendUiResponse.mockRestore();
       if (previousUsb) {
         Object.defineProperty(navigator, 'usb', previousUsb);
       } else {

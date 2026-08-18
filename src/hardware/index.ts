@@ -17,6 +17,7 @@ import {
   createDeferred,
   Deferred,
   ONEKEY_WEBUSB_FILTER,
+  resolveOneKeyUsbDevicePath,
 } from '@onekeyfe/hd-shared';
 import { store } from '@/store';
 import {
@@ -59,6 +60,65 @@ export type FirmwareUpdateV4Request = Pick<
   'platform' | 'targetsToUpdate' | FirmwareUpdateV4ComponentBinaryField
 > & {
   localResourceArchiveBinary?: ArrayBuffer;
+};
+
+type UsbDeviceRequestFilter = {
+  vendorId?: number;
+  productId?: number;
+};
+
+type UsbDeviceLike = {
+  vendorId: number;
+  productId: number;
+  serialNumber?: string | null;
+  productName?: string | null;
+};
+
+type USBNavigator = Navigator & {
+  usb?: {
+    getDevices: () => Promise<UsbDeviceLike[]>;
+    requestDevice: (options: {
+      filters: UsbDeviceRequestFilter[];
+    }) => Promise<UsbDeviceLike>;
+  };
+};
+
+const getWebUsb = () => {
+  const usbNavigator = navigator as USBNavigator;
+  if (!usbNavigator.usb) {
+    throw new Error('WebUSB is not supported in this browser');
+  }
+  return usbNavigator.usb;
+};
+
+const isAuthorizedOneKeyUsbDevice = (device: UsbDeviceLike) =>
+  ONEKEY_WEBUSB_FILTER.some(
+    (filter) =>
+      filter.vendorId === device.vendorId &&
+      filter.productId === device.productId
+  );
+
+const resolveAuthorizedWebUsbDeviceId = (device: UsbDeviceLike) => {
+  const deviceId = resolveOneKeyUsbDevicePath(device);
+  if (!deviceId) {
+    throw new Error('Unable to resolve WebUSB device identity');
+  }
+  return deviceId;
+};
+
+const requestOrReuseOneKeyWebUsbDevice = async () => {
+  const usb = getWebUsb();
+  const authorizedDevices = await usb.getDevices();
+  const authorizedOneKeyDevice = authorizedDevices.find(
+    isAuthorizedOneKeyUsbDevice
+  );
+  if (authorizedOneKeyDevice) {
+    return authorizedOneKeyDevice;
+  }
+
+  return usb.requestDevice({
+    filters: ONEKEY_WEBUSB_FILTER as unknown as UsbDeviceRequestFilter[],
+  });
 };
 
 const LOCAL_COMPONENT_BINARY_FIELDS: Array<
@@ -162,10 +222,11 @@ class ServiceHardware {
           } else if (
             type === 'ui-request_select_device_in_bootloader_for_web_device'
           ) {
-            // When device enters bootloader mode, it re-enumerates with different PID
-            // WebUSB requires user action to authorize this "new" device
+            // Reboot re-enumerates the USB device. Latest Pro2/Neo firmware keeps
+            // VID/PID 1209:4f4c in every mode, so reuse an already-authorized
+            // handle when possible instead of assuming a new PID.
             console.log(
-              'Device entered bootloader mode, prompting for USB access...'
+              'Device reconnected after reboot, prompting for USB access...'
             );
             store.dispatch(setShowPinAlert(false));
             store.dispatch(setShowButtonAlert(false));
@@ -262,49 +323,7 @@ class ServiceHardware {
   }
 
   async promptWebDeviceAccess() {
-    type UsbDeviceRequestFilter = {
-      vendorId?: number;
-      productId?: number;
-    };
-    type USBNavigator = Navigator & {
-      usb?: {
-        getDevices: () => Promise<
-          Array<{
-            vendorId: number;
-            productId: number;
-            serialNumber?: string | null;
-          }>
-        >;
-        requestDevice: (options: {
-          filters: UsbDeviceRequestFilter[];
-        }) => Promise<{
-          vendorId: number;
-          productId: number;
-          serialNumber?: string | null;
-        }>;
-      };
-    };
-
-    const usbNavigator = navigator as USBNavigator;
-    if (!usbNavigator.usb) {
-      throw new Error('WebUSB is not supported in this browser');
-    }
-
-    const authorizedDevices = await usbNavigator.usb.getDevices();
-    const authorizedOneKeyDevice = authorizedDevices.find((device) =>
-      ONEKEY_WEBUSB_FILTER.some(
-        (filter) =>
-          filter.vendorId === device.vendorId &&
-          filter.productId === device.productId
-      )
-    );
-    if (authorizedOneKeyDevice) {
-      return authorizedOneKeyDevice;
-    }
-
-    return usbNavigator.usb.requestDevice({
-      filters: ONEKEY_WEBUSB_FILTER as unknown as UsbDeviceRequestFilter[],
-    });
+    return requestOrReuseOneKeyWebUsbDevice();
   }
 
   async startDeviceScan(
@@ -967,58 +986,27 @@ class ServiceHardware {
   }
 
   /**
-   * Prompts user to grant USB access to bootloader device
-   * This is needed because when device enters bootloader mode, it re-enumerates
-   * with a different PID, and WebUSB requires user action to authorize it
+   * Re-authorize the USB device after a firmware reboot.
+   * Latest Pro2/Neo firmware keeps VID/PID 1209:4f4c in every mode and may omit
+   * iSerialNumber, so reuse an already-granted WebUSB handle and report the
+   * same synthesized path the SDK uses for empty serials.
    */
   async promptBootloaderDeviceAccess() {
     let authorized = false;
     try {
-      type UsbDeviceRequestFilter = {
-        vendorId?: number;
-        productId?: number;
-        classCode?: number;
-        subclassCode?: number;
-        protocolCode?: number;
-        serialNumber?: string;
-      };
-      type UsbDeviceRequestOptions = {
-        filters: UsbDeviceRequestFilter[];
-      };
-      type UsbDeviceLike = {
-        serialNumber?: string | null;
-      };
-      type USBNavigator = Navigator & {
-        usb?: {
-          requestDevice: (
-            options: UsbDeviceRequestOptions
-          ) => Promise<UsbDeviceLike>;
-        };
-      };
-
-      const usbNavigator = navigator as USBNavigator;
-
-      if (!usbNavigator.usb) {
-        console.error('WebUSB API not available.');
-        return false;
-      }
-
-      const device = await usbNavigator.usb.requestDevice({
-        filters: ONEKEY_WEBUSB_FILTER as unknown as UsbDeviceRequestFilter[],
-      });
-
-      const serialNumber = device.serialNumber ?? '';
+      const device = await requestOrReuseOneKeyWebUsbDevice();
+      const deviceId = resolveAuthorizedWebUsbDeviceId(device);
 
       console.log(
         'Bootloader device authorized:',
-        serialNumber,
+        deviceId,
         'Sending response to SDK...'
       );
 
       await this.sendUiResponse({
         type: UI_RESPONSE.SELECT_DEVICE_IN_BOOTLOADER_FOR_WEB_DEVICE,
         payload: {
-          deviceId: serialNumber,
+          deviceId,
         },
       });
 
