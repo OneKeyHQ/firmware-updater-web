@@ -10,7 +10,7 @@
     "@heroicons/react": "^2.0.11",
     "@noble/hashes": "^1.1.3",
     "@onekeyfe/hd-common-connect-sdk": "1.2.0-alpha.153",
-    "@onekeyfe/hd-core": "1.2.0-alpha.153",
+    "@onekeyfe/hd-core": "file:vendor/onekeyfe-hd-core-v1.2.0-alpha.152.tgz",
     "@onekeyfe/hd-shared": "1.2.0-alpha.153",
     "@onekeyfe/ui-components": "^1.0.0",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.3",

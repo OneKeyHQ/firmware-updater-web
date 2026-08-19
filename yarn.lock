@@ -2222,6 +2222,26 @@
     parse-uri "^1.0.7"
     semver "^7.3.7"
 
+"@onekeyfe/hd-core@file:vendor/onekeyfe-hd-core-v1.2.0-alpha.152.tgz":
+  version "1.2.0-alpha.152"
+  resolved "file:vendor/onekeyfe-hd-core-v1.2.0-alpha.152.tgz#a00793627d235c0bd3bc28b488abd33eea3d3848"
+  dependencies:
+    "@onekeyfe/hd-shared" "1.2.0-alpha.152"
+    "@onekeyfe/hd-transport" "1.2.0-alpha.152"
+    axios "1.15.2"
+    bignumber.js "^9.0.2"
+    buffer "^6.0.3"
+    bytebuffer "^5.0.1"
+    jpeg-js "^0.4.4"
+    jszip "^3.10.1"
+    parse-uri "^1.0.7"
+    semver "^7.3.7"
+
+"@onekeyfe/hd-shared@1.2.0-alpha.152":
+  version "1.2.0-alpha.152"
+  resolved "https://registry.npmjs.org/@onekeyfe/hd-shared/-/hd-shared-1.2.0-alpha.152.tgz#fdaf059e1b7c2ae687dbb20b82309a4d88dee613"
+  integrity sha512-ofKhCma3gaQfsduCsihtJAWApnHpNa96cGvyynHiyZI3Cyfsh7IKslbXPFlK5FzbcUaeWOrH97dNeon5LP7hxw==
+
 "@onekeyfe/hd-shared@1.2.0-alpha.153":
   version "1.2.0-alpha.153"
   resolved "https://registry.npmjs.org/@onekeyfe/hd-shared/-/hd-shared-1.2.0-alpha.153.tgz#5c1674eb625057cdb0e984b112d703f9f7ad9e30"
@@ -2272,6 +2292,15 @@
   dependencies:
     "@onekeyfe/hd-shared" "1.2.0-alpha.153"
     "@onekeyfe/hd-transport" "1.2.0-alpha.153"
+
+"@onekeyfe/hd-transport@1.2.0-alpha.152":
+  version "1.2.0-alpha.152"
+  resolved "https://registry.npmjs.org/@onekeyfe/hd-transport/-/hd-transport-1.2.0-alpha.152.tgz#955dfc11bc59efaea1eaffb54fbc3c1cc289af00"
+  integrity sha512-vVZVwJU8dPFOwEbtE1OfbEx853NWMePpaerceBOU2K1h7QOV6+OnRBSEXczC7ue4U6rCcOGO5ORZbcHgcJRJXw==
+  dependencies:
+    bytebuffer "^5.0.1"
+    long "^4.0.0"
+    protobufjs "^6.11.2"
 
 "@onekeyfe/hd-transport@1.2.0-alpha.153":
   version "1.2.0-alpha.153"
