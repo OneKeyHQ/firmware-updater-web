@@ -196,6 +196,7 @@
     "cross-spawn": "7.0.6",
     "shell-quote": "1.8.4",
     "webpack-dev-middleware": "5.3.4",
-    "axios": "1.15.2"
+    "axios": "1.15.2",
+    "@onekeyfe/hd-core": "file:vendor/onekeyfe-hd-core-v1.2.0-alpha.152.tgz"
   }
 }

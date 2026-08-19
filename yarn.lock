@@ -2206,23 +2206,7 @@
     "@onekeyfe/hd-transport-usb" "1.2.0-alpha.153"
     "@onekeyfe/hd-transport-web-device" "1.2.0-alpha.153"
 
-"@onekeyfe/hd-core@1.2.0-alpha.153":
-  version "1.2.0-alpha.153"
-  resolved "https://registry.npmjs.org/@onekeyfe/hd-core/-/hd-core-1.2.0-alpha.153.tgz#cfd739b617cdb4d6900261d8e83c92996a8bf831"
-  integrity sha512-ewi9Rb7vrPj1THjTXJk1z9hUOpeu3y8bcsfazKOYcWZnAqRy9qy935N1PwRYkopm5jPKG2HdBW9rF7Evf6kZ5Q==
-  dependencies:
-    "@onekeyfe/hd-shared" "1.2.0-alpha.153"
-    "@onekeyfe/hd-transport" "1.2.0-alpha.153"
-    axios "1.15.2"
-    bignumber.js "^9.0.2"
-    buffer "^6.0.3"
-    bytebuffer "^5.0.1"
-    jpeg-js "^0.4.4"
-    jszip "^3.10.1"
-    parse-uri "^1.0.7"
-    semver "^7.3.7"
-
-"@onekeyfe/hd-core@file:vendor/onekeyfe-hd-core-v1.2.0-alpha.152.tgz":
+"@onekeyfe/hd-core@1.2.0-alpha.153", "@onekeyfe/hd-core@file:vendor/onekeyfe-hd-core-v1.2.0-alpha.152.tgz":
   version "1.2.0-alpha.152"
   resolved "file:vendor/onekeyfe-hd-core-v1.2.0-alpha.152.tgz#a00793627d235c0bd3bc28b488abd33eea3d3848"
   dependencies:
