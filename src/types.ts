@@ -26,6 +26,8 @@ export type IFirmwareReleaseInfo = {
   components?: Record<string, IProtocolV2FirmwareComponent>;
   installOrder?: string[];
   resource: string;
+  /** Protocol V2 resources bound to this firmware release. */
+  resources?: IProtocolV2Resources;
 };
 
 /** BLE firmware config */
@@ -51,6 +53,7 @@ export type DeviceTypeMap = {
     'firmware-v2'?: IFirmwareReleaseInfo[];
     'firmware-v8'?: IFirmwareReleaseInfo[];
     'firmware-btc-v8'?: IFirmwareReleaseInfo[];
+    /** @deprecated Protocol V2 resources now live on the firmware-v1 release. */
     resources?: IProtocolV2Resources;
   };
 };

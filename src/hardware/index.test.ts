@@ -83,8 +83,8 @@ describe('ServiceHardware Pro2 firmware update', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     const zip = new JSZip();
-    zip.file('manifest.json', JSON.stringify(resourceManifest));
     zip.file(resourceManifest.files[0].archive_path, new Uint8Array([1]));
+    zip.file('manifest.json', JSON.stringify(resourceManifest));
     resourceArchiveBinary = (await zip.generateAsync({ type: 'uint8array' }))
       .buffer;
     resourceArchive = {
@@ -123,8 +123,22 @@ describe('ServiceHardware Pro2 firmware update', () => {
     store.dispatch(setDevice(pro2Device));
     store.dispatch(
       setReleaseMap({
-        pro2: { resources: { source: resourceArchive } },
-        neo: { resources: { source: resourceArchive } },
+        pro2: {
+          'firmware-v1': [
+            {
+              version: [1, 0, 0],
+              resources: { source: resourceArchive },
+            },
+          ],
+        },
+        neo: {
+          'firmware-v1': [
+            {
+              version: [1, 0, 0],
+              resources: { source: resourceArchive },
+            },
+          ],
+        },
       } as unknown as DeviceTypeMap)
     );
     window.scrollTo = jest.fn();
@@ -297,7 +311,6 @@ describe('ServiceHardware Pro2 firmware update', () => {
           artifactId: 'resource:archive',
           binary: resourceArchiveBinary,
           materializedEntries: expect.arrayContaining([
-            expect.objectContaining({ entryName: 'manifest.json' }),
             expect.objectContaining({
               entryName: resourceManifest.files[0].archive_path,
             }),

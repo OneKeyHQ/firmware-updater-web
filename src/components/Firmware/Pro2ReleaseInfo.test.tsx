@@ -48,6 +48,12 @@ const protocolV2Components = {
 
 const protocolV2InstallOrder = Object.keys(protocolV2Components);
 
+const protocolV2ResourceSource = {
+  archiveUrl: 'https://example.com/pro2-resource/resource.zip',
+  archiveSha256: 'a'.repeat(64),
+  archiveSize: 1024,
+};
+
 const baseProtocolV2Release = {
   required: false,
   url: '',
@@ -55,6 +61,9 @@ const baseProtocolV2Release = {
   version: [1, 0, 0],
   changelog: { 'zh-CN': '', 'en-US': '' },
   resource: '',
+  resources: {
+    source: protocolV2ResourceSource,
+  },
 };
 
 const releaseMap = {
@@ -62,13 +71,6 @@ const releaseMap = {
     firmware: [],
     ble: [],
     'firmware-v1': [baseProtocolV2Release],
-    resources: {
-      source: {
-        archiveUrl: 'https://example.com/pro2-resource/resource.zip',
-        archiveSha256: 'a'.repeat(64),
-        archiveSize: 1024,
-      },
-    },
   },
 } as unknown as DeviceTypeMap;
 
@@ -142,9 +144,7 @@ describe('Pro2ReleaseInfo startup resources', () => {
     expect(
       screen.queryByText('Select extracted folder')
     ).not.toBeInTheDocument();
-    expect(
-      screen.getByText(/exact hardware CI resource ZIP/i)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/RESC device path/i)).toBeInTheDocument();
   });
 
   test('passes the original local resource ZIP into the Plan workflow', async () => {

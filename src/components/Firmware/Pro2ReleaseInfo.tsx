@@ -97,10 +97,11 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
     (state: RootState) =>
       state.runtime.releaseMap[releaseDeviceType]?.['firmware-v1']?.[0]
   );
-  const resourceSource = useSelector(
+  const deviceResourceSource = useSelector(
     (state: RootState) =>
       state.runtime.releaseMap[releaseDeviceType]?.resources?.source
   );
+  const resourceSource = release?.resources?.source ?? deviceResourceSource;
   const [tab, setTab] = useState<Pro2Tab>('remote');
   const [selectedRemoteTargets, setSelectedRemoteTargets] = useState<
     FirmwareUpdateV4Target[]
@@ -413,7 +414,7 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
                     ? `${resourceArchiveFile.name} · ${formatFileSize(
                         resourceArchiveFile.size
                       )}`
-                    : 'Select the exact hardware CI resource ZIP referenced by the firmware Plan.'}
+                    : 'Select the Protocol V2 resource ZIP. Each .okpkg must carry its own RESC device path.'}
                 </div>
               </div>
               <div className="flex gap-2">

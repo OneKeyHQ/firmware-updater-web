@@ -285,6 +285,6 @@
   "TR_PRO2_RESOURCE_FOLDER": "资源包文件夹",
   "TR_PRO2_SELECT_RESOURCE_FOLDER": "选择资源文件夹",
   "TR_PRO2_RESELECT_RESOURCE_FOLDER": "重新选择资源文件夹",
-  "TR_PRO2_RESOURCE_FOLDER_HINT": "自动匹配全部 9 个 .okpkg 文件，无需 manifest.json。",
+  "TR_PRO2_RESOURCE_FOLDER_HINT": "自动匹配带 RESC 设备路径的 .okpkg 资源包。",
   "TR_PRO2_RESOURCE_FOLDER_MATCHED": "{folder}：已匹配全部 9 个资源包"
 }

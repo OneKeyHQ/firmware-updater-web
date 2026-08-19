@@ -285,6 +285,6 @@
   "TR_PRO2_RESOURCE_FOLDER": "Resource package folder",
   "TR_PRO2_SELECT_RESOURCE_FOLDER": "Choose resource folder",
   "TR_PRO2_RESELECT_RESOURCE_FOLDER": "Replace resource folder",
-  "TR_PRO2_RESOURCE_FOLDER_HINT": "Automatically matches all 9 .okpkg files; manifest.json is not required.",
+  "TR_PRO2_RESOURCE_FOLDER_HINT": "Automatically matches .okpkg files whose RESC headers carry the device path.",
   "TR_PRO2_RESOURCE_FOLDER_MATCHED": "{folder}: all 9 packages matched"
 }
