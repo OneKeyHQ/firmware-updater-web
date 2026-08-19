@@ -43,7 +43,7 @@ import {
 import { formatMessage } from '@/locales';
 import { getHardwareSDKInstance } from './instance';
 import { fetchHardwareConfig } from './config';
-import { prepareFirmwareUpdatePlanMemoryHost } from '../utils/firmwareUpdatePlanHost';
+import { loadFirmwareUpdatePlanBinaries } from '../utils/firmwareUpdatePlanHost';
 
 type FirmwareUpdateV4ComponentBinaryField =
   | 'bootloaderBinary'
@@ -692,22 +692,14 @@ class ServiceHardware {
         if (!plan || plan.executor !== 'v4') {
           throw new Error('Protocol V2 firmware update Plan is unavailable');
         }
-        const memoryHost = await prepareFirmwareUpdatePlanMemoryHost({
-          hardwareSDK,
-          plan,
-        });
-        try {
-          response = await hardwareSDK.firmwareUpdateV4(
-            device.connectId ?? undefined,
-            {
-              platform: 'web',
-              preparedPlan: memoryHost.preparedPlan,
-              hostBindingGeneration: memoryHost.hostBindingGeneration,
-            }
-          );
-        } finally {
-          memoryHost.release();
-        }
+        const binaries = await loadFirmwareUpdatePlanBinaries({ plan });
+        response = await hardwareSDK.firmwareUpdateV4(
+          device.connectId ?? undefined,
+          {
+            platform: 'web',
+            ...binaries,
+          }
+        );
       }
 
       if (!response.success) {

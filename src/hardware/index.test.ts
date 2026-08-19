@@ -2,10 +2,7 @@ import JSZip from 'jszip';
 import { sha256 } from '@noble/hashes/sha256';
 import { bytesToHex } from '@noble/hashes/utils';
 
-import {
-  prepareFirmwareUpdateV4MemoryHost,
-  UI_RESPONSE,
-} from '@onekeyfe/hd-core';
+import { UI_RESPONSE } from '@onekeyfe/hd-core';
 import { EFirmwareType } from '@onekeyfe/hd-shared';
 import type {
   CoreApi,
@@ -22,17 +19,8 @@ jest.mock('./instance', () => ({
   getHardwareSDKInstance: jest.fn(),
 }));
 
-jest.mock('@onekeyfe/hd-core', () => ({
-  ...jest.requireActual('@onekeyfe/hd-core'),
-  prepareFirmwareUpdateV4MemoryHost: jest.fn(),
-}));
-
 const mockedGetHardwareSDKInstance =
   getHardwareSDKInstance as jest.MockedFunction<typeof getHardwareSDKInstance>;
-const mockedPrepareFirmwareUpdateV4MemoryHost =
-  prepareFirmwareUpdateV4MemoryHost as jest.MockedFunction<
-    typeof prepareFirmwareUpdateV4MemoryHost
-  >;
 
 const pro2Device = {
   connectId: 'pro2-connect-id',
@@ -65,7 +53,6 @@ let resourceArchive: {
   archiveSize: number;
 };
 let firmwareUpdatePlan: FirmwareUpdatePlan;
-let releaseMemoryHost: jest.Mock;
 
 function mockRemoteResourceDownloads() {
   return jest.spyOn(global, 'fetch').mockImplementation((url) => {
@@ -114,12 +101,6 @@ describe('ServiceHardware Pro2 firmware update', () => {
         },
       ],
     } as FirmwareUpdatePlan;
-    releaseMemoryHost = jest.fn();
-    mockedPrepareFirmwareUpdateV4MemoryHost.mockReturnValue({
-      preparedPlan: { preparedPlanDigest: 'b'.repeat(64) },
-      hostBindingGeneration: 7,
-      release: releaseMemoryHost,
-    } as unknown as ReturnType<typeof prepareFirmwareUpdateV4MemoryHost>);
     store.dispatch(setDevice(pro2Device));
     store.dispatch(
       setReleaseMap({
@@ -284,8 +265,8 @@ describe('ServiceHardware Pro2 firmware update', () => {
 
     expect(firmwareUpdateV4).toHaveBeenCalledWith('pro2-connect-id', {
       platform: 'web',
-      preparedPlan: { preparedPlanDigest: 'b'.repeat(64) },
-      hostBindingGeneration: 7,
+      targetsToUpdate: ['resource'],
+      resourceArchiveBinary,
     });
     expect(checkAllFirmwareRelease).toHaveBeenCalledWith('pro2-connect-id', {
       platform: 'web',
@@ -303,22 +284,6 @@ describe('ServiceHardware Pro2 firmware update', () => {
     });
     expect(fetchSpy).toHaveBeenCalledTimes(1);
     expect(fetchSpy).toHaveBeenCalledWith(archiveUrl);
-    expect(mockedPrepareFirmwareUpdateV4MemoryHost).toHaveBeenCalledWith({
-      sdk: expect.any(Object),
-      plan: firmwareUpdatePlan,
-      artifacts: [
-        {
-          artifactId: 'resource:archive',
-          binary: resourceArchiveBinary,
-          materializedEntries: expect.arrayContaining([
-            expect.objectContaining({
-              entryName: resourceManifest.files[0].archive_path,
-            }),
-          ]),
-        },
-      ],
-    });
-    expect(releaseMemoryHost).toHaveBeenCalledTimes(1);
     expect(store.getState().firmware.resultType).toBe('success');
   });
 
@@ -374,7 +339,6 @@ describe('ServiceHardware Pro2 firmware update', () => {
 
     expect(checkAllFirmwareRelease).not.toHaveBeenCalled();
     expect(fetchSpy).not.toHaveBeenCalled();
-    expect(mockedPrepareFirmwareUpdateV4MemoryHost).not.toHaveBeenCalled();
     expect(firmwareUpdateV4).toHaveBeenCalledWith('pro2-connect-id', {
       platform: 'web',
       targetsToUpdate: ['resource'],
@@ -408,7 +372,6 @@ describe('ServiceHardware Pro2 firmware update', () => {
 
     expect(checkAllFirmwareRelease).not.toHaveBeenCalled();
     expect(fetchSpy).not.toHaveBeenCalled();
-    expect(mockedPrepareFirmwareUpdateV4MemoryHost).not.toHaveBeenCalled();
     expect(firmwareUpdateV4).toHaveBeenCalledWith('pro2-connect-id', {
       platform: 'web',
       targetsToUpdate: ['app_v1'],

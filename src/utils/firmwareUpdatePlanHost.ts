@@ -1,19 +1,47 @@
-import JSZip from 'jszip';
 import { sha256 } from '@noble/hashes/sha256';
 import { bytesToHex } from '@noble/hashes/utils';
-import { prepareFirmwareUpdateV4MemoryHost } from '@onekeyfe/hd-core';
 
 import type {
-  CoreApi,
-  FirmwareMemoryArtifact,
   FirmwareUpdatePlan,
-  FirmwareUpdateV4MemoryHost,
+  FirmwareUpdateV4Params,
   FirmwareUpdateV4Target,
 } from '@onekeyfe/hd-core';
 
 export type FirmwarePlanArtifactOverrides = Partial<
   Record<FirmwareUpdateV4Target, ArrayBuffer>
 >;
+
+export type FirmwareUpdatePlanBinaryParams = Pick<
+  FirmwareUpdateV4Params,
+  | 'targetsToUpdate'
+  | 'bootloaderBinary'
+  | 'applicationP1Binary'
+  | 'applicationP2Binary'
+  | 'coprocessorBinary'
+  | 'se01Binary'
+  | 'se02Binary'
+  | 'se03Binary'
+  | 'se04Binary'
+  | 'resourceArchiveBinary'
+>;
+
+const PLAN_TARGET_BINARY_FIELDS = {
+  boot: 'bootloaderBinary',
+  app_v1: 'applicationP1Binary',
+  app_v2: 'applicationP2Binary',
+  coprocessor: 'coprocessorBinary',
+  se01: 'se01Binary',
+  se02: 'se02Binary',
+  se03: 'se03Binary',
+  se04: 'se04Binary',
+  resource: 'resourceArchiveBinary',
+} as const;
+
+type PlanBinaryTarget = keyof typeof PLAN_TARGET_BINARY_FIELDS;
+type PlanBinaryField = typeof PLAN_TARGET_BINARY_FIELDS[PlanBinaryTarget];
+
+const isPlanBinaryTarget = (target: string): target is PlanBinaryTarget =>
+  Object.prototype.hasOwnProperty.call(PLAN_TARGET_BINARY_FIELDS, target);
 
 const verifyArtifact = (
   artifact: FirmwareUpdatePlan['artifacts'][number],
@@ -36,30 +64,26 @@ const verifyArtifact = (
   }
 };
 
-const materializeZipEntries = async (binary: ArrayBuffer) => {
-  const zip = await JSZip.loadAsync(binary);
-  const entries = Object.values(zip.files).filter((entry) => !entry.dir);
-  if (entries.length === 0 || entries.length > 512) {
-    throw new Error('Firmware ZIP entry set is invalid');
-  }
-  return Promise.all(
-    entries.map(async (entry) => ({
-      entryName: entry.name,
-      binary: await entry.async('arraybuffer'),
-    }))
-  );
-};
-
-async function downloadFirmwareUpdatePlanArtifacts({
+export async function loadFirmwareUpdatePlanBinaries({
   plan,
   overrides = {},
 }: {
   plan: FirmwareUpdatePlan;
   overrides?: FirmwarePlanArtifactOverrides;
-}): Promise<FirmwareMemoryArtifact[]> {
-  return Promise.all(
+}): Promise<FirmwareUpdatePlanBinaryParams> {
+  if (plan.artifacts.length === 0) {
+    throw new Error('Firmware update Plan has no artifacts');
+  }
+
+  const loaded = await Promise.all(
     plan.artifacts.map(async (artifact) => {
-      const override = overrides[artifact.target as FirmwareUpdateV4Target];
+      if (!isPlanBinaryTarget(artifact.target)) {
+        throw new Error(
+          `Firmware update Plan target is not a V4 binary: ${artifact.target}`
+        );
+      }
+      const field: PlanBinaryField = PLAN_TARGET_BINARY_FIELDS[artifact.target];
+      const override = overrides[artifact.target];
       let binary: ArrayBuffer;
       if (override) {
         binary = override;
@@ -73,33 +97,24 @@ async function downloadFirmwareUpdatePlanArtifacts({
         binary = await response.arrayBuffer();
       }
       verifyArtifact(artifact, binary);
-      return {
-        artifactId: artifact.artifactId,
-        binary,
-        ...(artifact.container === 'zip'
-          ? { materializedEntries: await materializeZipEntries(binary) }
-          : {}),
-      };
+      return { target: artifact.target, field, binary };
     })
   );
-}
 
-export async function prepareFirmwareUpdatePlanMemoryHost({
-  hardwareSDK,
-  plan,
-  overrides = {},
-}: {
-  hardwareSDK: CoreApi;
-  plan: FirmwareUpdatePlan;
-  overrides?: FirmwarePlanArtifactOverrides;
-}): Promise<FirmwareUpdateV4MemoryHost> {
-  const artifacts = await downloadFirmwareUpdatePlanArtifacts({
-    plan,
-    overrides,
-  });
-  return prepareFirmwareUpdateV4MemoryHost({
-    sdk: hardwareSDK,
-    plan,
-    artifacts,
-  });
+  const binaries: FirmwareUpdatePlanBinaryParams = {
+    targetsToUpdate: [],
+  };
+  const loadedTargets: FirmwareUpdateV4Target[] = [];
+  for (const item of loaded) {
+    if (binaries[item.field]) {
+      throw new Error(
+        `Firmware update Plan has duplicate target ${item.target}`
+      );
+    }
+    binaries[item.field] = item.binary;
+    loadedTargets.push(item.target);
+  }
+
+  binaries.targetsToUpdate = [...new Set(loadedTargets)];
+  return binaries;
 }
