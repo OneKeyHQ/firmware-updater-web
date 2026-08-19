@@ -115,6 +115,6 @@ export async function loadFirmwareUpdatePlanBinaries({
     loadedTargets.push(item.target);
   }
 
-  binaries.targetsToUpdate = [...new Set(loadedTargets)];
+  binaries.targetsToUpdate = Array.from(new Set(loadedTargets));
   return binaries;
 }
