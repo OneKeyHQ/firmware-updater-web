@@ -72,6 +72,7 @@
     "memoizee": "^0.4.15",
     "mini-css-extract-plugin": "^2.4.5",
     "os-browserify": "^0.3.0",
+    "patch-package": "^8.0.0",
     "path-browserify": "^1.0.1",
     "postcss": "^8.4.16",
     "postcss-flexbugs-fixes": "^5.0.2",
@@ -111,7 +112,8 @@
     "build": "node scripts/build.js",
     "test": "node scripts/test.js",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "postinstall": "patch-package"
   },
   "browserslist": {
     "production": [
