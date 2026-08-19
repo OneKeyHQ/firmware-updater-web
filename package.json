@@ -9,9 +9,9 @@
     "@headlessui/react": "^1.7.2",
     "@heroicons/react": "^2.0.11",
     "@noble/hashes": "^1.1.3",
-    "@onekeyfe/hd-common-connect-sdk": "1.2.0-alpha.153",
-    "@onekeyfe/hd-core": "file:vendor/onekeyfe-hd-core-v1.2.0-alpha.152.tgz",
-    "@onekeyfe/hd-shared": "1.2.0-alpha.153",
+    "@onekeyfe/hd-common-connect-sdk": "1.2.0-alpha.154",
+    "@onekeyfe/hd-core": "1.2.0-alpha.154",
+    "@onekeyfe/hd-shared": "1.2.0-alpha.154",
     "@onekeyfe/ui-components": "^1.0.0",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.3",
     "@reduxjs/toolkit": "^1.8.5",
@@ -196,7 +196,6 @@
     "cross-spawn": "7.0.6",
     "shell-quote": "1.8.4",
     "webpack-dev-middleware": "5.3.4",
-    "axios": "1.15.2",
-    "@onekeyfe/hd-core": "file:vendor/onekeyfe-hd-core-v1.2.0-alpha.152.tgz"
+    "axios": "1.15.2"
   }
 }
