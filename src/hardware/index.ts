@@ -33,9 +33,11 @@ import {
   setShowProgressBar,
   setShowErrorAlert,
   setProgress,
+  setUseSdkProgress,
 } from '@/store/reducers/firmware';
 import type { IFirmwareReleaseInfo } from '@/types';
 import { arrayBufferToBuffer, wait } from '@/utils';
+import { mapFirmwareUpdateProgress } from '@/utils/firmwareUpdateProgress';
 import {
   downloadBootloaderFirmware,
   downloadLegacyTouchFirmware,
@@ -238,75 +240,37 @@ class ServiceHardware {
               store.dispatch(setShowButtonAlert(false));
             }
             const { progress: payloadProgress, progressType } = payload;
+            const mappedProgress = mapFirmwareUpdateProgress({
+              currentProgress: progress,
+              payloadProgress,
+              progressType,
+            });
 
-            // Define progress configuration based on progressType
-            const progressConfig: Record<
-              string,
-              { maxProgress: number; tipId: string }
-            > = {
-              transferData: {
-                maxProgress: 50,
-                tipId: 'TR_TRANSFER_DATA',
-              },
-              installingFirmware: {
-                maxProgress: 99,
-                tipId: 'TR_INSTALLING',
-              },
-              default: {
-                maxProgress: 99,
-                tipId: 'TR_INSTALLING',
-              },
-            };
+            if (mappedProgress) {
+              store.dispatch(setMaxProgress(mappedProgress.maxProgress));
+              store.dispatch(setProgress(mappedProgress.progress));
+              store.dispatch(setUseSdkProgress(true));
+              store.dispatch(
+                setUpdateTip(
+                  formatMessage({
+                    id:
+                      progressType === 'transferData'
+                        ? 'TR_TRANSFER_DATA'
+                        : 'TR_INSTALLING',
+                  }) ?? ''
+                )
+              );
+              return;
+            }
 
-            // Select the right configuration
-            const config = progressType
-              ? progressConfig[progressType]
-              : progressConfig.default;
-
-            // Set max progress value
-            store.dispatch(setMaxProgress(config.maxProgress));
-
-            // Update progress and tip based on current stage
-            if (
-              progress < config.maxProgress &&
-              payloadProgress >= 0 &&
-              payloadProgress <= 100
-            ) {
-              // For V3 update with specific progressType, calculate the actual progress
-              if (progressType) {
-                let actualProgress = 0;
-
-                if (progressType === 'transferData') {
-                  // transferData stage: 0-50%
-                  actualProgress = Math.floor(payloadProgress * 0.5);
-                } else if (progressType === 'installingFirmware') {
-                  // installingFirmware stage: 50-99%
-                  actualProgress = 50 + Math.floor(payloadProgress * 0.49);
-                }
-
-                // Set the calculated progress
-                store.dispatch(setProgress(actualProgress));
-
-                // Update tip if needed
-                if (payloadProgress < 100) {
-                  store.dispatch(
-                    setUpdateTip(formatMessage({ id: config.tipId }) ?? '')
-                  );
-                } else {
-                  store.dispatch(setUpdateTip(''));
-                }
-              } else {
-                // For non-V3 updates, use the old behavior
-                if (payloadProgress < 100) {
-                  store.dispatch(
-                    setUpdateTip(formatMessage({ id: config.tipId }) ?? '')
-                  );
-                  return;
-                }
-                // For 100% progress, set maxProgress to 100
-                store.dispatch(setMaxProgress(100));
-                store.dispatch(setUpdateTip(''));
-              }
+            if (payloadProgress >= 0 && payloadProgress < 100) {
+              store.dispatch(
+                setUpdateTip(formatMessage({ id: 'TR_INSTALLING' }) ?? '')
+              );
+              return;
+            }
+            if (payloadProgress === 100) {
+              store.dispatch(setMaxProgress(100));
             }
           }
         });
