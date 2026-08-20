@@ -152,6 +152,8 @@ class ServiceHardware {
 
   file: File | undefined;
 
+  firmwareUpdateInProgress = false;
+
   async getSDKInstance() {
     return getHardwareSDKInstance().then((instance) => {
       if (!this.registeredEvents) {
@@ -282,6 +284,13 @@ class ServiceHardware {
   }
 
   async searchDevices() {
+    if (this.firmwareUpdateInProgress) {
+      console.log('skip searchDevices during firmware update');
+      return {
+        success: false,
+        payload: { error: 'firmware update in progress' },
+      } as Unsuccessful;
+    }
     const hardwareSDK = await this.getSDKInstance();
     return hardwareSDK?.searchDevices();
   }
@@ -580,25 +589,11 @@ class ServiceHardware {
     }
 
     const hardwareSDK = await this.getSDKInstance();
-    const defaultTargets: FirmwareUpdateV4Params['targetsToUpdate'] = [
-      'boot',
-      'app_v1',
-      'app_v2',
-      'coprocessor',
-      'se01',
-      'se02',
-      'resource',
-    ];
-    if (deviceType === 'pro2') {
-      defaultTargets.splice(6, 0, 'se03', 'se04');
-    }
     const updateParams: FirmwareUpdateV4Request = params
       ? { ...params }
-      : {
-          platform: 'web',
-          targetsToUpdate: defaultTargets,
-        };
+      : { platform: 'web' };
 
+    this.firmwareUpdateInProgress = true;
     try {
       store.dispatch(setInstallType('firmware'));
       store.dispatch(setProgress(0));
@@ -616,12 +611,13 @@ class ServiceHardware {
         localTargets.length > 0
           ? Array.from(new Set<FirmwareUpdateV4Target>(localTargets))
           : updateParams.targetsToUpdate ?? [];
-      if (requestedTargets.length === 0) {
-        throw new Error('Protocol V2 firmware update has no selected targets');
-      }
 
       let response;
       if (localTargets.length > 0) {
+        console.log(
+          'Protocol V2 local firmwareUpdateV4 targets:',
+          requestedTargets
+        );
         response = await hardwareSDK.firmwareUpdateV4(
           device.connectId ?? undefined,
           {
@@ -642,21 +638,68 @@ class ServiceHardware {
           }
         );
       } else {
+        // Match expo-playground: detect what actually needs updating.
+        // Do not force-reinstall every checked remote component — that was
+        // starting an install against already-current SE/boot targets and
+        // surfacing leftover FAILED status before the on-device confirm.
         const releaseResponse = await hardwareSDK.checkAllFirmwareRelease(
           device.connectId ?? undefined,
           {
             platform: 'web',
-            protocolV2ForceUpdateTargets: requestedTargets,
           }
         );
         if (!releaseResponse.success) {
           throw new Error(releaseResponse.payload.error);
         }
         const plan = releaseResponse.payload.firmwareUpdatePlan;
+        const releaseTargets =
+          releaseResponse.payload.targetsToUpdate ??
+          plan?.targetsToUpdate ??
+          [];
         if (!plan || plan.executor !== 'v4') {
+          if (releaseTargets.length === 0) {
+            store.dispatch(
+              setShowErrorAlert({
+                type: 'success',
+                message:
+                  formatMessage({ id: 'TR_FIRMWARE_INSTALLED' }) ||
+                  'Firmware is already current',
+              })
+            );
+            return;
+          }
           throw new Error('Protocol V2 firmware update Plan is unavailable');
         }
         const binaries = await loadFirmwareUpdatePlanBinaries({ plan });
+        if (requestedTargets.length > 0) {
+          const selected = new Set(requestedTargets);
+          binaries.targetsToUpdate = (binaries.targetsToUpdate ?? []).filter(
+            (target) => selected.has(target)
+          );
+          LOCAL_COMPONENT_BINARY_FIELDS.forEach(([target, field]) => {
+            if (!selected.has(target)) {
+              delete binaries[field];
+            }
+          });
+          if (!selected.has('resource')) {
+            delete binaries.resourceArchiveBinary;
+          }
+        }
+        if (!binaries.targetsToUpdate?.length) {
+          store.dispatch(
+            setShowErrorAlert({
+              type: 'success',
+              message:
+                formatMessage({ id: 'TR_FIRMWARE_INSTALLED' }) ||
+                'Firmware is already current',
+            })
+          );
+          return;
+        }
+        console.log(
+          'Protocol V2 remote firmwareUpdateV4 plan targets:',
+          binaries.targetsToUpdate
+        );
         response = await hardwareSDK.firmwareUpdateV4(
           device.connectId ?? undefined,
           {
@@ -667,6 +710,10 @@ class ServiceHardware {
       }
 
       if (!response.success) {
+        console.error(
+          'Protocol V2 firmwareUpdateV4 failed payload:',
+          response.payload
+        );
         throw new Error(response.payload.error);
       }
 
@@ -689,6 +736,8 @@ class ServiceHardware {
               : formatMessage({ id: 'TR_FIRMWARE_INSTALLED_FAILED' }) || '',
         })
       );
+    } finally {
+      this.firmwareUpdateInProgress = false;
     }
   }
 

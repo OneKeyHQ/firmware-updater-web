@@ -270,17 +270,6 @@ describe('ServiceHardware Pro2 firmware update', () => {
     });
     expect(checkAllFirmwareRelease).toHaveBeenCalledWith('pro2-connect-id', {
       platform: 'web',
-      protocolV2ForceUpdateTargets: [
-        'boot',
-        'app_v1',
-        'app_v2',
-        'coprocessor',
-        'se01',
-        'se02',
-        'se03',
-        'se04',
-        'resource',
-      ],
     });
     expect(fetchSpy).toHaveBeenCalledTimes(1);
     expect(fetchSpy).toHaveBeenCalledWith(archiveUrl);
@@ -310,7 +299,11 @@ describe('ServiceHardware Pro2 firmware update', () => {
 
     expect(checkAllFirmwareRelease).toHaveBeenCalledWith('pro2-connect-id', {
       platform: 'web',
-      protocolV2ForceUpdateTargets: ['app_v1', 'resource'],
+    });
+    expect(firmwareUpdateV4).toHaveBeenCalledWith('pro2-connect-id', {
+      platform: 'web',
+      targetsToUpdate: ['resource'],
+      resourceArchiveBinary,
     });
   });
 
@@ -400,15 +393,6 @@ describe('ServiceHardware Pro2 firmware update', () => {
 
     expect(checkAllFirmwareRelease).toHaveBeenCalledWith('neo-connect-id', {
       platform: 'web',
-      protocolV2ForceUpdateTargets: [
-        'boot',
-        'app_v1',
-        'app_v2',
-        'coprocessor',
-        'se01',
-        'se02',
-        'resource',
-      ],
     });
   });
 });
