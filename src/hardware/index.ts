@@ -646,6 +646,9 @@ class ServiceHardware {
           device.connectId ?? undefined,
           {
             platform: 'web',
+            ...(requestedTargets.length > 0
+              ? { protocolV2ForceUpdateTargets: requestedTargets }
+              : {}),
           }
         );
         if (!releaseResponse.success) {
@@ -705,6 +708,9 @@ class ServiceHardware {
           {
             platform: 'web',
             ...binaries,
+            ...(requestedTargets.includes('resource')
+              ? { forcedUpdateRes: true }
+              : {}),
           }
         );
       }

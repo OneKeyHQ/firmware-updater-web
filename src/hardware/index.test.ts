@@ -276,7 +276,7 @@ describe('ServiceHardware Pro2 firmware update', () => {
     expect(store.getState().firmware.resultType).toBe('success');
   });
 
-  test('passes selected Protocol V2 targets to the release Plan request', async () => {
+  test('forces selected Protocol V2 targets through the release Plan', async () => {
     mockRemoteResourceDownloads();
     const checkAllFirmwareRelease = jest.fn().mockResolvedValue({
       success: true,
@@ -299,11 +299,13 @@ describe('ServiceHardware Pro2 firmware update', () => {
 
     expect(checkAllFirmwareRelease).toHaveBeenCalledWith('pro2-connect-id', {
       platform: 'web',
+      protocolV2ForceUpdateTargets: ['app_v1', 'resource'],
     });
     expect(firmwareUpdateV4).toHaveBeenCalledWith('pro2-connect-id', {
       platform: 'web',
       targetsToUpdate: ['resource'],
       resourceArchiveBinary,
+      forcedUpdateRes: true,
     });
   });
 
