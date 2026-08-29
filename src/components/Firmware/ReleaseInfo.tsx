@@ -28,14 +28,14 @@ export default function ReleaseInfo() {
       ]);
     } else if (device?.deviceType === 'pro' || device?.deviceType === 'touch') {
       setTabs([
+        {
+          name: intl.formatMessage({ id: 'TR_BOOTLOADER' }),
+          key: 'bootloader',
+        },
         { name: intl.formatMessage({ id: 'TR_FIRMWARE' }), key: 'firmware' },
         {
           name: intl.formatMessage({ id: 'TR_BLUETOOTH_FIRMWARE' }),
           key: 'ble',
-        },
-        {
-          name: intl.formatMessage({ id: 'TR_BOOTLOADER' }),
-          key: 'bootloader',
         },
       ]);
     } else {

@@ -10,6 +10,7 @@ import {
   FirmwareUpdateV3Params,
   FirmwareUpdateV4Params,
   FirmwareUpdateV4Target,
+  getDeviceBootloaderVersion,
   getDeviceType,
 } from '@onekeyfe/hd-core';
 import type { IFirmwareField } from '@onekeyfe/hd-core';
@@ -37,7 +38,10 @@ import {
 } from '@/store/reducers/firmware';
 import type { IFirmwareReleaseInfo } from '@/types';
 import { arrayBufferToBuffer, wait } from '@/utils';
-import { mapFirmwareUpdateProgress } from '@/utils/firmwareUpdateProgress';
+import {
+  mapFirmwareUpdateProgress,
+  isProBootloaderReadyForCurrentMcu,
+} from '@/utils/firmwareUpdateProgress';
 import {
   downloadBootloaderFirmware,
   downloadLegacyTouchFirmware,
@@ -428,6 +432,66 @@ class ServiceHardware {
     }
   }
 
+  /**
+   * Pro MCU packages from 4.14.0 onward exceed the pre-2.8.0 bootloader size
+   * limit and fail with "Update file header invalid". Update boot first.
+   */
+  async checkUpdateBootloaderForPro() {
+    const state = store.getState();
+    const { device, selectedUploadType, selectedReleaseInfo } = state.runtime;
+
+    if (device?.deviceType !== 'pro' || !device.features) {
+      return true;
+    }
+    if (selectedUploadType === 'ble') {
+      return true;
+    }
+
+    const bootloaderVersion = getDeviceBootloaderVersion(device.features).join(
+      '.'
+    );
+    if (isProBootloaderReadyForCurrentMcu(bootloaderVersion)) {
+      return true;
+    }
+
+    try {
+      store.dispatch(setInstallType('bootloader'));
+      store.dispatch(setProgress(0));
+      store.dispatch(setMaxProgress(0));
+      store.dispatch(setShowProgressBar(true));
+
+      const selectedFirmwareField =
+        selectedReleaseInfo?.firmwareField ?? 'firmware-v8';
+      const firmwareField =
+        selectedFirmwareField === 'ble' ? 'firmware-v8' : selectedFirmwareField;
+      const resource = await downloadBootloaderFirmware('pro', firmwareField);
+      const hardwareSDK = await this.getSDKInstance();
+      const response = await hardwareSDK.deviceUpdateBootloader('', {
+        binary: resource,
+      });
+      if (!response.success) {
+        const message =
+          response.payload.code === 413
+            ? formatMessage({ id: 'TR_USE_DESKTOP_CLIENT_TO_INSTALL' }) ?? ''
+            : response.payload.error;
+        store.dispatch(setShowErrorAlert({ type: 'error', message }));
+        return false;
+      }
+      await wait(15000);
+      return true;
+    } catch (e) {
+      console.log(e);
+      store.dispatch(
+        setShowErrorAlert({
+          type: 'error',
+          message:
+            formatMessage({ id: 'TR_BOOTLOADER_INSTALLED_FAILED' }) ?? '',
+        })
+      );
+      return false;
+    }
+  }
+
   async bootloaderUpdate() {
     const state = store.getState();
     const hardwareSDK = await this.getSDKInstance();
@@ -494,6 +558,11 @@ class ServiceHardware {
       (deviceType === 'pro2' || deviceType === 'neo')
     ) {
       await this.firmwareUpdateV4();
+      return;
+    }
+
+    const updateProBootloader = await this.checkUpdateBootloaderForPro();
+    if (!updateProBootloader) {
       return;
     }
 

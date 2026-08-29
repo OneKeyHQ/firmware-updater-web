@@ -3,6 +3,17 @@ import semver from 'semver';
 
 export const FIRMWARE_TRANSFER_PROGRESS_MAX = 50;
 export const FIRMWARE_INSTALL_PROGRESS_MAX = 99;
+export const PRO_MCU_MIN_BOOTLOADER_VERSION = '2.8.0';
+
+export function isProBootloaderReadyForCurrentMcu(
+  bootloaderVersion?: string
+): boolean {
+  return (
+    !!bootloaderVersion &&
+    !!semver.valid(bootloaderVersion) &&
+    semver.gte(bootloaderVersion, PRO_MCU_MIN_BOOTLOADER_VERSION)
+  );
+}
 
 export function mapFirmwareUpdateProgress({
   currentProgress,
@@ -54,8 +65,6 @@ export function shouldUseReportedFirmwareProgress({
   }
   return (
     deviceType === EDeviceType.Pro &&
-    !!bootloaderVersion &&
-    !!semver.valid(bootloaderVersion) &&
-    semver.gte(bootloaderVersion, '2.8.0')
+    isProBootloaderReadyForCurrentMcu(bootloaderVersion)
   );
 }

@@ -1,5 +1,6 @@
 import { EDeviceType } from '@onekeyfe/hd-shared';
 import {
+  isProBootloaderReadyForCurrentMcu,
   mapFirmwareUpdateProgress,
   shouldUseReportedFirmwareProgress,
 } from './firmwareUpdateProgress';
@@ -84,5 +85,14 @@ describe('shouldUseReportedFirmwareProgress', () => {
         bootloaderVersion: '2.7.0',
       })
     ).toBe(false);
+  });
+});
+
+describe('isProBootloaderReadyForCurrentMcu', () => {
+  test('requires bootloader 2.8.0 or newer', () => {
+    expect(isProBootloaderReadyForCurrentMcu('2.7.0')).toBe(false);
+    expect(isProBootloaderReadyForCurrentMcu('2.8.0')).toBe(true);
+    expect(isProBootloaderReadyForCurrentMcu('2.8.4')).toBe(true);
+    expect(isProBootloaderReadyForCurrentMcu(undefined)).toBe(false);
   });
 });
