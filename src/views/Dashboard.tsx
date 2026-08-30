@@ -46,6 +46,7 @@ export default function Dashboard() {
           return;
         }
         if (response.payload.length > 0) {
+          setNeedUserAction(false);
           if (!device) {
             dispatch(setDevice(response.payload?.[0] as KnownDevice));
           } else {
@@ -88,20 +89,11 @@ export default function Dashboard() {
 
     setIsConnecting(true);
     try {
-      const hardwareSDK = await serviceHardware.getSDKInstance();
-      // This call requires user gesture and will prompt device selection dialog
-      const result = await hardwareSDK.promptWebDeviceAccess();
-
-      if (result.success && result.payload?.device) {
-        // After user authorizes device, start searching
-        console.log('Device authorized successfully:', result.payload.device);
-        setNeedUserAction(false);
-        await searchDevice();
-      } else if (!result.success) {
-        // User cancelled or error occurred
-        console.log('Device access denied or cancelled:', result.payload);
-        // Keep needUserAction true so user can retry
-      }
+      // WebUSB authorization and protocol identification are intentionally
+      // separate: the SDK scan actively probes both Protocol V1 and V2.
+      await serviceHardware.promptWebDeviceAccess();
+      console.log('USB device authorized');
+      await searchDevice();
     } catch (error: any) {
       console.error('Failed to prompt device access:', error);
 
@@ -123,23 +115,34 @@ export default function Dashboard() {
   // Initialize and check if we need user action
   useEffect(() => {
     const initProcess = async () => {
-      // Try to search for already authorized devices first
-      await serviceHardware.getSDKInstance();
-      const response = await serviceHardware.searchDevices();
+      try {
+        // Try to search for already authorized devices first
+        await serviceHardware.getSDKInstance();
+        const response = await serviceHardware.searchDevices();
 
-      if (response.success && response.payload.length > 0) {
-        // Found authorized devices, start normal search
-        setNeedUserAction(false);
-        await searchDevice();
-      } else {
-        // No authorized devices, need user to click connect button
+        if (response.success && response.payload.length > 0) {
+          // Found authorized devices, start normal search
+          setNeedUserAction(false);
+          await searchDevice();
+        } else {
+          // No authorized devices, need user to click connect button
+          setNeedUserAction(true);
+          dispatch(setPageStatus('searching'));
+        }
+      } catch (error) {
+        // Initialization failures must still leave the user with a usable page.
+        console.error('Failed to initialize hardware:', error);
         setNeedUserAction(true);
         dispatch(setPageStatus('searching'));
       }
     };
 
     initProcess();
-    serviceHardware.getReleaseInfo();
+    serviceHardware
+      .getReleaseInfo()
+      .catch((error) =>
+        console.error('Failed to load firmware release info:', error)
+      );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

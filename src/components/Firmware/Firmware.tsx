@@ -8,7 +8,9 @@ import { Button, Alert, Link } from '@onekeyfe/ui-components';
 import {
   getDeviceType,
   KnownDevice,
+  getDeviceBLEFirmwareVersion,
   getDeviceBootloaderVersion,
+  getDeviceFirmwareVersion,
 } from '@onekeyfe/hd-core';
 import { serviceHardware } from '@/hardware';
 import { setDevice, setPageStatus } from '@/store/reducers/runtime';
@@ -21,6 +23,7 @@ import BootloaderTips from './BootloaderTips';
 import ProgressBar from './ProgressBar';
 import V3FirmwareConfirmUpdate from './V3FirmwareConfirmUpdate';
 import V3ReleaseInfo from './V3ReleaseInfo';
+import Pro2ReleaseInfo from './Pro2ReleaseInfo';
 
 let timer: ReturnType<typeof setInterval>;
 let isPollingUpdateDevice = false;
@@ -101,6 +104,9 @@ const Description: FC<{ text: string; value: any }> = ({ text, value }) => (
     <span>{value}</span>
   </div>
 );
+
+const formatDeviceVersion = (version: number[]) =>
+  version.some((part) => part !== 0) ? version.join('.') : '-';
 
 const BootloaderStatusAlert: FC = () => {
   const intl = useIntl();
@@ -369,6 +375,12 @@ export default function Firmware() {
       case 'pro':
         typeFlag = 'OneKey Pro';
         break;
+      case 'pro2':
+        typeFlag = 'OneKey Pro 2';
+        break;
+      case 'neo':
+        typeFlag = 'OneKey Neo';
+        break;
       case 'unknown':
         typeFlag = 'Unknown';
         break;
@@ -397,6 +409,11 @@ export default function Firmware() {
 
   // Check if we're in V3 mode
   const isV3Update = tabType === 'v3-remote' || tabType === 'v3-local';
+  const currentDeviceType =
+    device?.deviceType ?? getDeviceType(device?.features);
+  const isProtocolV2FirmwareDevice =
+    device?.connectProtocol === 'V2' &&
+    ['pro2', 'neo'].includes(currentDeviceType);
 
   const isV3Compatible = () => {
     if (!device?.features) return false;
@@ -435,19 +452,25 @@ export default function Firmware() {
                 text={intl.formatMessage({
                   id: 'TR_FIRMWARE_BOOTLOADER_VERSION',
                 })}
-                value={device?.features.bootloader_version ?? '-'}
+                value={formatDeviceVersion(
+                  getDeviceBootloaderVersion(device?.features)
+                )}
               />
               <Description
                 text={intl.formatMessage({
                   id: 'TR_FIRMWARE_VERSION',
                 })}
-                value={device?.features.onekey_version ?? '-'}
+                value={formatDeviceVersion(
+                  getDeviceFirmwareVersion(device?.features)
+                )}
               />
               <Description
                 text={intl.formatMessage({
                   id: 'TR_BLUETOOTH_FIRMWARE_VERSION',
                 })}
-                value={device?.features.ble_ver ?? '-'}
+                value={formatDeviceVersion(
+                  getDeviceBLEFirmwareVersion(device?.features)
+                )}
               />
               <Description
                 text={intl.formatMessage({
@@ -509,10 +532,20 @@ export default function Firmware() {
               />
             </div>
           )}
-          {isV3Compatible() ? <V3ReleaseInfo /> : <ReleaseInfo />}
+          {isProtocolV2FirmwareDevice ? (
+            <Pro2ReleaseInfo clearTimer={clearTimer} />
+          ) : isV3Compatible() ? (
+            <V3ReleaseInfo />
+          ) : (
+            <ReleaseInfo />
+          )}
           {(() => {
             if (isMiniAndNotInBootloader) {
               return <BootloaderTips />;
+            }
+
+            if (isProtocolV2FirmwareDevice) {
+              return null;
             }
 
             if (isV3Update && isV3Compatible()) {

@@ -4,8 +4,7 @@ import { getDeviceType, getDeviceBootloaderVersion } from '@onekeyfe/hd-core';
 import { Progress } from '@onekeyfe/ui-components';
 import { RootState } from '@/store';
 import { setProgress } from '@/store/reducers/firmware';
-import semver from 'semver';
-import { EDeviceType } from '@onekeyfe/hd-shared';
+import { shouldUseReportedFirmwareProgress } from '@/utils/firmwareUpdateProgress';
 
 export default function ProgressBar() {
   const dispatch = useDispatch();
@@ -18,33 +17,40 @@ export default function ProgressBar() {
     (state: RootState) => state.firmware.maxProgress
   );
   const updateTip = useSelector((state: RootState) => state.firmware.updateTip);
+  const useSdkProgress = useSelector(
+    (state: RootState) => state.firmware.useSdkProgress
+  );
 
   const getIntervalTime = useCallback(() => {
-    const deviceType = getDeviceType(device?.features);
+    const deviceType = device?.deviceType ?? getDeviceType(device?.features);
     const isBle = uploadType === 'ble';
     let time = 100;
     if (deviceType === 'classic' || deviceType === 'classic1s') {
       time = isBle ? 100 : 300;
     } else if (deviceType === 'mini') {
       time = 500;
-    } else if (deviceType === 'touch' || deviceType === 'pro') {
+    } else if (
+      deviceType === 'touch' ||
+      deviceType === 'pro' ||
+      deviceType === 'pro2'
+    ) {
       time = isBle ? 100 : 1000;
     }
     return time;
   }, [device, uploadType]);
 
   const shouldUseActualProgress = useCallback(() => {
-    if (!device?.features) return false;
+    const deviceType = device?.deviceType ?? getDeviceType(device?.features);
+    const bootloaderVersion = device?.features
+      ? getDeviceBootloaderVersion(device.features).join('.')
+      : undefined;
 
-    const bootloaderVersion = getDeviceBootloaderVersion(device.features).join(
-      '.'
-    );
-    const deviceType = getDeviceType(device.features);
-
-    return (
-      semver.gte(bootloaderVersion, '2.8.0') && deviceType === EDeviceType.Pro
-    );
-  }, [device]);
+    return shouldUseReportedFirmwareProgress({
+      useSdkProgress,
+      deviceType,
+      bootloaderVersion,
+    });
+  }, [device, useSdkProgress]);
 
   useEffect(() => {
     if (shouldUseActualProgress()) return;

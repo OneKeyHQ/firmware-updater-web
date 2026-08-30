@@ -1,5 +1,4 @@
 /* eslint-disable class-methods-use-this */
-import axios from 'axios';
 import {
   SearchDevice,
   Success,
@@ -9,12 +8,17 @@ import {
   UI_REQUEST,
   UI_RESPONSE,
   FirmwareUpdateV3Params,
+  FirmwareUpdateV4Params,
+  FirmwareUpdateV4Target,
+  getDeviceBootloaderVersion,
+  getDeviceType,
 } from '@onekeyfe/hd-core';
 import type { IFirmwareField } from '@onekeyfe/hd-core';
 import {
   createDeferred,
   Deferred,
   ONEKEY_WEBUSB_FILTER,
+  resolveOneKeyUsbDevicePath,
 } from '@onekeyfe/hd-shared';
 import { store } from '@/store';
 import {
@@ -30,15 +34,114 @@ import {
   setShowProgressBar,
   setShowErrorAlert,
   setProgress,
+  setUseSdkProgress,
 } from '@/store/reducers/firmware';
-import type { RemoteConfigResponse, IFirmwareReleaseInfo } from '@/types';
+import type { IFirmwareReleaseInfo } from '@/types';
 import { arrayBufferToBuffer, wait } from '@/utils';
+import {
+  mapFirmwareUpdateProgress,
+  isProBootloaderReadyForCurrentMcu,
+} from '@/utils/firmwareUpdateProgress';
 import {
   downloadBootloaderFirmware,
   downloadLegacyTouchFirmware,
 } from '@/utils/touchFirmware';
 import { formatMessage } from '@/locales';
 import { getHardwareSDKInstance } from './instance';
+import { fetchHardwareConfig } from './config';
+import { loadFirmwareUpdatePlanBinaries } from '../utils/firmwareUpdatePlanHost';
+
+type FirmwareUpdateV4ComponentBinaryField =
+  | 'bootloaderBinary'
+  | 'applicationP1Binary'
+  | 'applicationP2Binary'
+  | 'coprocessorBinary'
+  | 'se01Binary'
+  | 'se02Binary'
+  | 'se03Binary'
+  | 'se04Binary';
+
+export type FirmwareUpdateV4Request = Pick<
+  FirmwareUpdateV4Params,
+  'platform' | 'targetsToUpdate' | FirmwareUpdateV4ComponentBinaryField
+> & {
+  localResourceArchiveBinary?: ArrayBuffer;
+};
+
+type UsbDeviceRequestFilter = {
+  vendorId?: number;
+  productId?: number;
+};
+
+type UsbDeviceLike = {
+  vendorId: number;
+  productId: number;
+  serialNumber?: string | null;
+  productName?: string | null;
+};
+
+type USBNavigator = Navigator & {
+  usb?: {
+    getDevices: () => Promise<UsbDeviceLike[]>;
+    requestDevice: (options: {
+      filters: UsbDeviceRequestFilter[];
+    }) => Promise<UsbDeviceLike>;
+  };
+};
+
+const getWebUsb = () => {
+  const usbNavigator = navigator as USBNavigator;
+  if (!usbNavigator.usb) {
+    throw new Error('WebUSB is not supported in this browser');
+  }
+  return usbNavigator.usb;
+};
+
+const isAuthorizedOneKeyUsbDevice = (device: UsbDeviceLike) =>
+  ONEKEY_WEBUSB_FILTER.some(
+    (filter) =>
+      filter.vendorId === device.vendorId &&
+      filter.productId === device.productId
+  );
+
+const resolveAuthorizedWebUsbDeviceId = (device: UsbDeviceLike) => {
+  const deviceId = resolveOneKeyUsbDevicePath(device);
+  if (!deviceId) {
+    throw new Error('Unable to resolve WebUSB device identity');
+  }
+  return deviceId;
+};
+
+const requestOrReuseOneKeyWebUsbDevice = async () => {
+  const usb = getWebUsb();
+  const authorizedDevices = await usb.getDevices();
+  const authorizedOneKeyDevice = authorizedDevices.find(
+    isAuthorizedOneKeyUsbDevice
+  );
+  if (authorizedOneKeyDevice) {
+    return authorizedOneKeyDevice;
+  }
+
+  return usb.requestDevice({
+    filters: ONEKEY_WEBUSB_FILTER as unknown as UsbDeviceRequestFilter[],
+  });
+};
+
+const LOCAL_COMPONENT_BINARY_FIELDS: Array<
+  [
+    Exclude<FirmwareUpdateV4Target, 'resource'>,
+    FirmwareUpdateV4ComponentBinaryField
+  ]
+> = [
+  ['boot', 'bootloaderBinary'],
+  ['app_v1', 'applicationP1Binary'],
+  ['app_v2', 'applicationP2Binary'],
+  ['coprocessor', 'coprocessorBinary'],
+  ['se01', 'se01Binary'],
+  ['se02', 'se02Binary'],
+  ['se03', 'se03Binary'],
+  ['se04', 'se04Binary'],
+];
 
 let searchPromise: Deferred<void> | null = null;
 
@@ -52,6 +155,8 @@ class ServiceHardware {
   timer: ReturnType<typeof setInterval> | null = null;
 
   file: File | undefined;
+
+  firmwareUpdateInProgress = false;
 
   async getSDKInstance() {
     return getHardwareSDKInstance().then((instance) => {
@@ -125,10 +230,11 @@ class ServiceHardware {
           } else if (
             type === 'ui-request_select_device_in_bootloader_for_web_device'
           ) {
-            // When device enters bootloader mode, it re-enumerates with different PID
-            // WebUSB requires user action to authorize this "new" device
+            // Reboot re-enumerates the USB device. Latest Pro2/Neo firmware keeps
+            // VID/PID 1209:4f4c in every mode, so reuse an already-authorized
+            // handle when possible instead of assuming a new PID.
             console.log(
-              'Device entered bootloader mode, prompting for USB access...'
+              'Device reconnected after reboot, prompting for USB access...'
             );
             store.dispatch(setShowPinAlert(false));
             store.dispatch(setShowButtonAlert(false));
@@ -140,75 +246,37 @@ class ServiceHardware {
               store.dispatch(setShowButtonAlert(false));
             }
             const { progress: payloadProgress, progressType } = payload;
+            const mappedProgress = mapFirmwareUpdateProgress({
+              currentProgress: progress,
+              payloadProgress,
+              progressType,
+            });
 
-            // Define progress configuration based on progressType
-            const progressConfig: Record<
-              string,
-              { maxProgress: number; tipId: string }
-            > = {
-              transferData: {
-                maxProgress: 50,
-                tipId: 'TR_TRANSFER_DATA',
-              },
-              installingFirmware: {
-                maxProgress: 99,
-                tipId: 'TR_INSTALLING',
-              },
-              default: {
-                maxProgress: 99,
-                tipId: 'TR_INSTALLING',
-              },
-            };
+            if (mappedProgress) {
+              store.dispatch(setMaxProgress(mappedProgress.maxProgress));
+              store.dispatch(setProgress(mappedProgress.progress));
+              store.dispatch(setUseSdkProgress(true));
+              store.dispatch(
+                setUpdateTip(
+                  formatMessage({
+                    id:
+                      progressType === 'transferData'
+                        ? 'TR_TRANSFER_DATA'
+                        : 'TR_INSTALLING',
+                  }) ?? ''
+                )
+              );
+              return;
+            }
 
-            // Select the right configuration
-            const config = progressType
-              ? progressConfig[progressType]
-              : progressConfig.default;
-
-            // Set max progress value
-            store.dispatch(setMaxProgress(config.maxProgress));
-
-            // Update progress and tip based on current stage
-            if (
-              progress < config.maxProgress &&
-              payloadProgress >= 0 &&
-              payloadProgress <= 100
-            ) {
-              // For V3 update with specific progressType, calculate the actual progress
-              if (progressType) {
-                let actualProgress = 0;
-
-                if (progressType === 'transferData') {
-                  // transferData stage: 0-50%
-                  actualProgress = Math.floor(payloadProgress * 0.5);
-                } else if (progressType === 'installingFirmware') {
-                  // installingFirmware stage: 50-99%
-                  actualProgress = 50 + Math.floor(payloadProgress * 0.49);
-                }
-
-                // Set the calculated progress
-                store.dispatch(setProgress(actualProgress));
-
-                // Update tip if needed
-                if (payloadProgress < 100) {
-                  store.dispatch(
-                    setUpdateTip(formatMessage({ id: config.tipId }) ?? '')
-                  );
-                } else {
-                  store.dispatch(setUpdateTip(''));
-                }
-              } else {
-                // For non-V3 updates, use the old behavior
-                if (payloadProgress < 100) {
-                  store.dispatch(
-                    setUpdateTip(formatMessage({ id: config.tipId }) ?? '')
-                  );
-                  return;
-                }
-                // For 100% progress, set maxProgress to 100
-                store.dispatch(setMaxProgress(100));
-                store.dispatch(setUpdateTip(''));
-              }
+            if (payloadProgress >= 0 && payloadProgress < 100) {
+              store.dispatch(
+                setUpdateTip(formatMessage({ id: 'TR_INSTALLING' }) ?? '')
+              );
+              return;
+            }
+            if (payloadProgress === 100) {
+              store.dispatch(setMaxProgress(100));
             }
           }
         });
@@ -220,8 +288,19 @@ class ServiceHardware {
   }
 
   async searchDevices() {
+    if (this.firmwareUpdateInProgress) {
+      console.log('skip searchDevices during firmware update');
+      return {
+        success: false,
+        payload: { error: 'firmware update in progress' },
+      } as Unsuccessful;
+    }
     const hardwareSDK = await this.getSDKInstance();
     return hardwareSDK?.searchDevices();
+  }
+
+  async promptWebDeviceAccess() {
+    return requestOrReuseOneKeyWebUsbDevice();
   }
 
   async startDeviceScan(
@@ -281,9 +360,7 @@ class ServiceHardware {
   }
 
   async getReleaseInfo() {
-    const { data } = await axios.get<RemoteConfigResponse>(
-      `https://data.onekey.so/config.json?noCache=${new Date().getTime()}`
-    );
+    const data = await fetchHardwareConfig();
 
     const deviceMap = {
       classic: data.classic,
@@ -293,6 +370,8 @@ class ServiceHardware {
       pro: data.pro,
       unknown: data.unknown,
       classicpure: data.classicpure,
+      pro2: data.pro2,
+      neo: data.neo,
     };
     store.dispatch(setReleaseMap(deviceMap));
   }
@@ -350,6 +429,66 @@ class ServiceHardware {
       return true;
     } catch (e) {
       console.log(e);
+    }
+  }
+
+  /**
+   * Pro MCU packages from 4.14.0 onward exceed the pre-2.8.0 bootloader size
+   * limit and fail with "Update file header invalid". Update boot first.
+   */
+  async checkUpdateBootloaderForPro() {
+    const state = store.getState();
+    const { device, selectedUploadType, selectedReleaseInfo } = state.runtime;
+
+    if (device?.deviceType !== 'pro' || !device.features) {
+      return true;
+    }
+    if (selectedUploadType === 'ble') {
+      return true;
+    }
+
+    const bootloaderVersion = getDeviceBootloaderVersion(device.features).join(
+      '.'
+    );
+    if (isProBootloaderReadyForCurrentMcu(bootloaderVersion)) {
+      return true;
+    }
+
+    try {
+      store.dispatch(setInstallType('bootloader'));
+      store.dispatch(setProgress(0));
+      store.dispatch(setMaxProgress(0));
+      store.dispatch(setShowProgressBar(true));
+
+      const selectedFirmwareField =
+        selectedReleaseInfo?.firmwareField ?? 'firmware-v8';
+      const firmwareField =
+        selectedFirmwareField === 'ble' ? 'firmware-v8' : selectedFirmwareField;
+      const resource = await downloadBootloaderFirmware('pro', firmwareField);
+      const hardwareSDK = await this.getSDKInstance();
+      const response = await hardwareSDK.deviceUpdateBootloader('', {
+        binary: resource,
+      });
+      if (!response.success) {
+        const message =
+          response.payload.code === 413
+            ? formatMessage({ id: 'TR_USE_DESKTOP_CLIENT_TO_INSTALL' }) ?? ''
+            : response.payload.error;
+        store.dispatch(setShowErrorAlert({ type: 'error', message }));
+        return false;
+      }
+      await wait(15000);
+      return true;
+    } catch (e) {
+      console.log(e);
+      store.dispatch(
+        setShowErrorAlert({
+          type: 'error',
+          message:
+            formatMessage({ id: 'TR_BOOTLOADER_INSTALLED_FAILED' }) ?? '',
+        })
+      );
+      return false;
     }
   }
 
@@ -411,14 +550,25 @@ class ServiceHardware {
 
   async firmwareUpdate() {
     const state = store.getState();
+    const { device } = state.runtime;
+    const deviceType = device?.deviceType ?? getDeviceType(device?.features);
+
+    if (
+      device?.connectProtocol === 'V2' &&
+      (deviceType === 'pro2' || deviceType === 'neo')
+    ) {
+      await this.firmwareUpdateV4();
+      return;
+    }
+
+    const updateProBootloader = await this.checkUpdateBootloaderForPro();
+    if (!updateProBootloader) {
+      return;
+    }
+
     const hardwareSDK = await this.getSDKInstance();
-    const {
-      device,
-      releaseMap,
-      selectedUploadType,
-      selectedReleaseInfo,
-      currentTab,
-    } = state.runtime;
+    const { releaseMap, selectedUploadType, selectedReleaseInfo, currentTab } =
+      state.runtime;
     const params: any = {
       platform: 'web',
     };
@@ -482,6 +632,187 @@ class ServiceHardware {
           message: formatMessage({ id: 'TR_FIRMWARE_INSTALLED_FAILED' }) ?? '',
         })
       );
+    }
+  }
+
+  /**
+   * Performs the standard Protocol V2 update for OneKey Pro 2 or Neo.
+   * With no explicit binaries, the SDK resolves compatible firmware-v1 components remotely.
+   */
+  async firmwareUpdateV4(params?: FirmwareUpdateV4Request) {
+    const state = store.getState();
+    const { device } = state.runtime;
+    const deviceType = device?.deviceType ?? getDeviceType(device?.features);
+
+    if (
+      device?.connectProtocol !== 'V2' ||
+      (deviceType !== 'pro2' && deviceType !== 'neo')
+    ) {
+      store.dispatch(
+        setShowErrorAlert({
+          type: 'error',
+          message: '当前设备不支持 Protocol V2 固件更新',
+        })
+      );
+      return;
+    }
+
+    const hardwareSDK = await this.getSDKInstance();
+    const updateParams: FirmwareUpdateV4Request = params
+      ? { ...params }
+      : { platform: 'web' };
+
+    this.firmwareUpdateInProgress = true;
+    try {
+      store.dispatch(setInstallType('firmware'));
+      store.dispatch(setProgress(0));
+      store.dispatch(setMaxProgress(0));
+      store.dispatch(setShowProgressBar(true));
+      window.scrollTo({ top: 0, behavior: 'auto' });
+
+      const localTargets: FirmwareUpdateV4Target[] =
+        LOCAL_COMPONENT_BINARY_FIELDS.flatMap(([target, field]) =>
+          updateParams[field] instanceof ArrayBuffer ? [target] : []
+        );
+      if (updateParams.localResourceArchiveBinary)
+        localTargets.push('resource');
+      const requestedTargets =
+        localTargets.length > 0
+          ? Array.from(new Set<FirmwareUpdateV4Target>(localTargets))
+          : updateParams.targetsToUpdate ?? [];
+
+      let response;
+      if (localTargets.length > 0) {
+        console.log(
+          'Protocol V2 local firmwareUpdateV4 targets:',
+          requestedTargets
+        );
+        response = await hardwareSDK.firmwareUpdateV4(
+          device.connectId ?? undefined,
+          {
+            platform: 'web',
+            targetsToUpdate: requestedTargets,
+            ...Object.fromEntries(
+              LOCAL_COMPONENT_BINARY_FIELDS.flatMap(([, field]) => {
+                const binary = updateParams[field];
+                return binary instanceof ArrayBuffer ? [[field, binary]] : [];
+              })
+            ),
+            ...(updateParams.localResourceArchiveBinary
+              ? {
+                  resourceArchiveBinary:
+                    updateParams.localResourceArchiveBinary,
+                }
+              : {}),
+          }
+        );
+      } else {
+        // Match expo-playground: detect what actually needs updating.
+        // Do not force-reinstall every checked remote component — that was
+        // starting an install against already-current SE/boot targets and
+        // surfacing leftover FAILED status before the on-device confirm.
+        const releaseResponse = await hardwareSDK.checkAllFirmwareRelease(
+          device.connectId ?? undefined,
+          {
+            platform: 'web',
+            ...(requestedTargets.length > 0
+              ? { protocolV2ForceUpdateTargets: requestedTargets }
+              : {}),
+          }
+        );
+        if (!releaseResponse.success) {
+          throw new Error(releaseResponse.payload.error);
+        }
+        const plan = releaseResponse.payload.firmwareUpdatePlan;
+        const releaseTargets =
+          releaseResponse.payload.targetsToUpdate ??
+          plan?.targetsToUpdate ??
+          [];
+        if (!plan || plan.executor !== 'v4') {
+          if (releaseTargets.length === 0) {
+            store.dispatch(
+              setShowErrorAlert({
+                type: 'success',
+                message:
+                  formatMessage({ id: 'TR_FIRMWARE_INSTALLED' }) ||
+                  'Firmware is already current',
+              })
+            );
+            return;
+          }
+          throw new Error('Protocol V2 firmware update Plan is unavailable');
+        }
+        const binaries = await loadFirmwareUpdatePlanBinaries({ plan });
+        if (requestedTargets.length > 0) {
+          const selected = new Set(requestedTargets);
+          binaries.targetsToUpdate = (binaries.targetsToUpdate ?? []).filter(
+            (target) => selected.has(target)
+          );
+          LOCAL_COMPONENT_BINARY_FIELDS.forEach(([target, field]) => {
+            if (!selected.has(target)) {
+              delete binaries[field];
+            }
+          });
+          if (!selected.has('resource')) {
+            delete binaries.resourceArchiveBinary;
+          }
+        }
+        if (!binaries.targetsToUpdate?.length) {
+          store.dispatch(
+            setShowErrorAlert({
+              type: 'success',
+              message:
+                formatMessage({ id: 'TR_FIRMWARE_INSTALLED' }) ||
+                'Firmware is already current',
+            })
+          );
+          return;
+        }
+        console.log(
+          'Protocol V2 remote firmwareUpdateV4 plan targets:',
+          binaries.targetsToUpdate
+        );
+        response = await hardwareSDK.firmwareUpdateV4(
+          device.connectId ?? undefined,
+          {
+            platform: 'web',
+            ...binaries,
+            ...(requestedTargets.includes('resource')
+              ? { forcedUpdateRes: true }
+              : {}),
+          }
+        );
+      }
+
+      if (!response.success) {
+        console.error(
+          'Protocol V2 firmwareUpdateV4 failed payload:',
+          response.payload
+        );
+        throw new Error(response.payload.error);
+      }
+
+      store.dispatch(
+        setShowErrorAlert({
+          type: 'success',
+          message:
+            formatMessage({ id: 'TR_FIRMWARE_INSTALLED_SUCCESS' }) ||
+            '固件更新成功',
+        })
+      );
+    } catch (error) {
+      console.error('Protocol V2 firmware update error:', error);
+      store.dispatch(
+        setShowErrorAlert({
+          type: 'error',
+          message:
+            error instanceof Error
+              ? error.message
+              : formatMessage({ id: 'TR_FIRMWARE_INSTALLED_FAILED' }) || '',
+        })
+      );
+    } finally {
+      this.firmwareUpdateInProgress = false;
     }
   }
 
@@ -735,58 +1066,27 @@ class ServiceHardware {
   }
 
   /**
-   * Prompts user to grant USB access to bootloader device
-   * This is needed because when device enters bootloader mode, it re-enumerates
-   * with a different PID, and WebUSB requires user action to authorize it
+   * Re-authorize the USB device after a firmware reboot.
+   * Latest Pro2/Neo firmware keeps VID/PID 1209:4f4c in every mode and may omit
+   * iSerialNumber, so reuse an already-granted WebUSB handle and report the
+   * same synthesized path the SDK uses for empty serials.
    */
   async promptBootloaderDeviceAccess() {
     let authorized = false;
     try {
-      type UsbDeviceRequestFilter = {
-        vendorId?: number;
-        productId?: number;
-        classCode?: number;
-        subclassCode?: number;
-        protocolCode?: number;
-        serialNumber?: string;
-      };
-      type UsbDeviceRequestOptions = {
-        filters: UsbDeviceRequestFilter[];
-      };
-      type UsbDeviceLike = {
-        serialNumber?: string | null;
-      };
-      type USBNavigator = Navigator & {
-        usb?: {
-          requestDevice: (
-            options: UsbDeviceRequestOptions
-          ) => Promise<UsbDeviceLike>;
-        };
-      };
-
-      const usbNavigator = navigator as USBNavigator;
-
-      if (!usbNavigator.usb) {
-        console.error('WebUSB API not available.');
-        return false;
-      }
-
-      const device = await usbNavigator.usb.requestDevice({
-        filters: ONEKEY_WEBUSB_FILTER as unknown as UsbDeviceRequestFilter[],
-      });
-
-      const serialNumber = device.serialNumber ?? '';
+      const device = await requestOrReuseOneKeyWebUsbDevice();
+      const deviceId = resolveAuthorizedWebUsbDeviceId(device);
 
       console.log(
         'Bootloader device authorized:',
-        serialNumber,
+        deviceId,
         'Sending response to SDK...'
       );
 
       await this.sendUiResponse({
         type: UI_RESPONSE.SELECT_DEVICE_IN_BOOTLOADER_FOR_WEB_DEVICE,
         payload: {
-          deviceId: serialNumber,
+          deviceId,
         },
       });
 
