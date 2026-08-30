@@ -11,7 +11,14 @@ import type {
 } from '@onekeyfe/hd-core';
 import type { DeviceTypeMap } from '@/types';
 import { store } from '@/store';
-import { setDevice, setReleaseMap } from '@/store/reducers/runtime';
+import {
+  setDevice,
+  setReleaseMap,
+  setSelectedReleaseInfo,
+  setSelectedUploadType,
+} from '@/store/reducers/runtime';
+import * as utils from '@/utils';
+import * as touchFirmware from '@/utils/touchFirmware';
 import { getHardwareSDKInstance } from './instance';
 import { serviceHardware } from '.';
 
@@ -396,5 +403,150 @@ describe('ServiceHardware Pro2 firmware update', () => {
     expect(checkAllFirmwareRelease).toHaveBeenCalledWith('neo-connect-id', {
       platform: 'web',
     });
+  });
+});
+
+describe('ServiceHardware Pro firmware update', () => {
+  const bootloaderBinary = new ArrayBuffer(8);
+  const proDevice = (bootloaderVersion: string) =>
+    ({
+      connectId: 'pro-connect-id',
+      deviceType: 'pro',
+      features: {
+        deviceType: 'pro',
+        bootloaderVersion,
+      },
+    } as unknown as KnownDevice);
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    store.dispatch(setDevice(proDevice('2.7.0')));
+    store.dispatch(setSelectedUploadType('firmware'));
+    store.dispatch(
+      setSelectedReleaseInfo({
+        version: [4, 21, 0],
+        firmwareField: 'firmware-v8',
+      } as any)
+    );
+    store.dispatch(
+      setReleaseMap({
+        pro: {
+          'firmware-v8': [
+            {
+              version: [4, 21, 0],
+              url: 'https://example.com/pro-firmware.bin',
+              bootloaderResource: 'https://example.com/pro-boot.bin',
+            },
+          ],
+        },
+      } as unknown as DeviceTypeMap)
+    );
+    jest.spyOn(utils, 'wait').mockResolvedValue(undefined as never);
+    jest
+      .spyOn(touchFirmware, 'downloadBootloaderFirmware')
+      .mockResolvedValue(bootloaderBinary as never);
+  });
+
+  afterEach(() => {
+    store.dispatch(setDevice(null));
+    store.dispatch(setSelectedUploadType(null));
+    store.dispatch(setSelectedReleaseInfo(null));
+    jest.restoreAllMocks();
+  });
+
+  test('updates bootloader before MCU when Pro bootloader is older than 2.8.0', async () => {
+    const deviceUpdateBootloader = jest.fn().mockResolvedValue({
+      success: true,
+      payload: {},
+    });
+    const firmwareUpdateV2 = jest.fn().mockResolvedValue({
+      success: true,
+      payload: {},
+    });
+    mockedGetHardwareSDKInstance.mockResolvedValue({
+      deviceUpdateBootloader,
+      firmwareUpdateV2,
+      on: jest.fn(),
+    } as unknown as CoreApi);
+
+    await serviceHardware.firmwareUpdate();
+
+    expect(touchFirmware.downloadBootloaderFirmware).toHaveBeenCalledWith(
+      'pro',
+      'firmware-v8'
+    );
+    expect(deviceUpdateBootloader).toHaveBeenCalledWith('', {
+      binary: bootloaderBinary,
+    });
+    expect(utils.wait).toHaveBeenCalledWith(15000);
+    expect(firmwareUpdateV2).toHaveBeenCalledWith(undefined, {
+      platform: 'web',
+      version: [4, 21, 0],
+      updateType: 'firmware',
+    });
+    expect(deviceUpdateBootloader.mock.invocationCallOrder[0]).toBeLessThan(
+      firmwareUpdateV2.mock.invocationCallOrder[0]
+    );
+  });
+
+  test('skips bootloader update when Pro bootloader is already 2.8.0+', async () => {
+    store.dispatch(setDevice(proDevice('2.8.4')));
+    const deviceUpdateBootloader = jest.fn();
+    const firmwareUpdateV2 = jest.fn().mockResolvedValue({
+      success: true,
+      payload: {},
+    });
+    mockedGetHardwareSDKInstance.mockResolvedValue({
+      deviceUpdateBootloader,
+      firmwareUpdateV2,
+      on: jest.fn(),
+    } as unknown as CoreApi);
+
+    await serviceHardware.firmwareUpdate();
+
+    expect(deviceUpdateBootloader).not.toHaveBeenCalled();
+    expect(touchFirmware.downloadBootloaderFirmware).not.toHaveBeenCalled();
+    expect(firmwareUpdateV2).toHaveBeenCalledTimes(1);
+  });
+
+  test('does not update bootloader when only BLE firmware is selected', async () => {
+    store.dispatch(setSelectedUploadType('ble'));
+    const deviceUpdateBootloader = jest.fn();
+    const firmwareUpdateV2 = jest.fn().mockResolvedValue({
+      success: true,
+      payload: {},
+    });
+    mockedGetHardwareSDKInstance.mockResolvedValue({
+      deviceUpdateBootloader,
+      firmwareUpdateV2,
+      on: jest.fn(),
+    } as unknown as CoreApi);
+
+    await serviceHardware.firmwareUpdate();
+
+    expect(deviceUpdateBootloader).not.toHaveBeenCalled();
+    expect(firmwareUpdateV2).toHaveBeenCalledWith(undefined, {
+      platform: 'web',
+      version: [4, 21, 0],
+      updateType: 'ble',
+    });
+  });
+
+  test('stops MCU update if the required Pro bootloader update fails', async () => {
+    const deviceUpdateBootloader = jest.fn().mockResolvedValue({
+      success: false,
+      payload: { error: 'bootloader update failed' },
+    });
+    const firmwareUpdateV2 = jest.fn();
+    mockedGetHardwareSDKInstance.mockResolvedValue({
+      deviceUpdateBootloader,
+      firmwareUpdateV2,
+      on: jest.fn(),
+    } as unknown as CoreApi);
+
+    await serviceHardware.firmwareUpdate();
+
+    expect(deviceUpdateBootloader).toHaveBeenCalledTimes(1);
+    expect(firmwareUpdateV2).not.toHaveBeenCalled();
   });
 });
