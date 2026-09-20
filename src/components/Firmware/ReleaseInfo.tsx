@@ -20,24 +20,40 @@ export default function ReleaseInfo() {
     (state: RootState) => state.runtime.selectedUploadType
   );
   const device = useSelector((state: RootState) => state.runtime.device);
+  const deviceType = device?.deviceType;
+  const devicePath = device?.path;
   const [tabs, setTabs] = useState<{ name: string; key: string }[]>([]);
+
+  useEffect(() => {
+    if (deviceType === 'pro') {
+      dispatch(setCurrentTab('bootloader'));
+      dispatch(setSelectedUploadType(null));
+    }
+  }, [deviceType, devicePath, dispatch]);
+
   useEffect(() => {
     if (device?.deviceType === 'mini') {
       setTabs([
         { name: intl.formatMessage({ id: 'TR_FIRMWARE' }), key: 'firmware' },
       ]);
     } else if (device?.deviceType === 'pro' || device?.deviceType === 'touch') {
-      setTabs([
-        {
-          name: intl.formatMessage({ id: 'TR_BOOTLOADER' }),
-          key: 'bootloader',
-        },
-        { name: intl.formatMessage({ id: 'TR_FIRMWARE' }), key: 'firmware' },
-        {
-          name: intl.formatMessage({ id: 'TR_BLUETOOTH_FIRMWARE' }),
-          key: 'ble',
-        },
-      ]);
+      const firmwareTab = {
+        name: intl.formatMessage({ id: 'TR_FIRMWARE' }),
+        key: 'firmware',
+      };
+      const bleTab = {
+        name: intl.formatMessage({ id: 'TR_BLUETOOTH_FIRMWARE' }),
+        key: 'ble',
+      };
+      const bootloaderTab = {
+        name: intl.formatMessage({ id: 'TR_BOOTLOADER' }),
+        key: 'bootloader',
+      };
+      setTabs(
+        device?.deviceType === 'pro'
+          ? [bootloaderTab, firmwareTab, bleTab]
+          : [firmwareTab, bleTab, bootloaderTab]
+      );
     } else {
       setTabs([
         { name: intl.formatMessage({ id: 'TR_FIRMWARE' }), key: 'firmware' },
