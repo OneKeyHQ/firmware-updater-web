@@ -17,6 +17,7 @@ import type { IFirmwareField } from '@onekeyfe/hd-core';
 import {
   createDeferred,
   Deferred,
+  isKnownTrezorWebUsbDevice,
   ONEKEY_WEBUSB_FILTER,
   resolveOneKeyUsbDevicePath,
 } from '@onekeyfe/hd-shared';
@@ -76,6 +77,7 @@ type UsbDeviceRequestFilter = {
 type UsbDeviceLike = {
   vendorId: number;
   productId: number;
+  manufacturerName?: string | null;
   serialNumber?: string | null;
   productName?: string | null;
 };
@@ -102,7 +104,11 @@ const isAuthorizedOneKeyUsbDevice = (device: UsbDeviceLike) =>
     (filter) =>
       filter.vendorId === device.vendorId &&
       filter.productId === device.productId
-  );
+  ) && !isKnownTrezorWebUsbDevice(device);
+
+// The SDK routes by this path, so identical serial-less handles are unsafe.
+const AMBIGUOUS_WEBUSB_DEVICE_MESSAGE =
+  'Multiple connected OneKey devices share the same USB identity. Disconnect other devices and retry.';
 
 const resolveAuthorizedWebUsbDeviceId = (device: UsbDeviceLike) => {
   const deviceId = resolveOneKeyUsbDevicePath(device);
@@ -112,19 +118,45 @@ const resolveAuthorizedWebUsbDeviceId = (device: UsbDeviceLike) => {
   return deviceId;
 };
 
-const requestOrReuseOneKeyWebUsbDevice = async () => {
+const requestOrReuseOneKeyWebUsbDevice = async (preferredPath?: string) => {
   const usb = getWebUsb();
-  const authorizedDevices = await usb.getDevices();
-  const authorizedOneKeyDevice = authorizedDevices.find(
+  const authorizedDevices = (await usb.getDevices()).filter(
     isAuthorizedOneKeyUsbDevice
   );
-  if (authorizedOneKeyDevice) {
-    return authorizedOneKeyDevice;
+  const preferredDevices = preferredPath
+    ? authorizedDevices.filter(
+        (device) => resolveOneKeyUsbDevicePath(device) === preferredPath
+      )
+    : [];
+  if (preferredDevices.length > 1) {
+    throw new Error(AMBIGUOUS_WEBUSB_DEVICE_MESSAGE);
+  }
+  if (
+    preferredDevices.length === 1 ||
+    (!preferredPath && authorizedDevices.length === 1)
+  ) {
+    return preferredDevices[0] ?? authorizedDevices[0];
   }
 
-  return usb.requestDevice({
+  const selectedDevice = await usb.requestDevice({
     filters: ONEKEY_WEBUSB_FILTER as unknown as UsbDeviceRequestFilter[],
   });
+  if (!isAuthorizedOneKeyUsbDevice(selectedDevice)) {
+    throw new Error('Selected USB device is not a OneKey device');
+  }
+
+  const selectedPath = resolveAuthorizedWebUsbDeviceId(selectedDevice);
+  const currentDevices = (await usb.getDevices()).filter(
+    isAuthorizedOneKeyUsbDevice
+  );
+  if (
+    currentDevices.filter(
+      (device) => resolveOneKeyUsbDevicePath(device) === selectedPath
+    ).length !== 1
+  ) {
+    throw new Error(AMBIGUOUS_WEBUSB_DEVICE_MESSAGE);
+  }
+  return selectedDevice;
 };
 
 const LOCAL_COMPONENT_BINARY_FIELDS: Array<
@@ -294,6 +326,18 @@ class ServiceHardware {
         success: false,
         payload: { error: 'firmware update in progress' },
       } as Unsuccessful;
+    }
+    const usb = (navigator as USBNavigator).usb;
+    if (usb) {
+      const authorizedPaths = (await usb.getDevices())
+        .filter(isAuthorizedOneKeyUsbDevice)
+        .map(resolveAuthorizedWebUsbDeviceId);
+      if (new Set(authorizedPaths).size !== authorizedPaths.length) {
+        return {
+          success: false,
+          payload: { error: AMBIGUOUS_WEBUSB_DEVICE_MESSAGE },
+        } as Unsuccessful;
+      }
     }
     const hardwareSDK = await this.getSDKInstance();
     return hardwareSDK?.searchDevices();
@@ -1071,7 +1115,9 @@ class ServiceHardware {
   async promptBootloaderDeviceAccess() {
     let authorized = false;
     try {
-      const device = await requestOrReuseOneKeyWebUsbDevice();
+      const device = await requestOrReuseOneKeyWebUsbDevice(
+        store.getState().runtime.device?.path
+      );
       const deviceId = resolveAuthorizedWebUsbDeviceId(device);
 
       console.log(
@@ -1092,6 +1138,14 @@ class ServiceHardware {
       authorized = true;
     } catch (error) {
       console.error('Error prompting bootloader device access:', error);
+      if (
+        error instanceof Error &&
+        error.message === AMBIGUOUS_WEBUSB_DEVICE_MESSAGE
+      ) {
+        store.dispatch(
+          setShowErrorAlert({ type: 'error', message: error.message })
+        );
+      }
       // Don't throw - let the SDK handle timeout
     }
     return authorized;

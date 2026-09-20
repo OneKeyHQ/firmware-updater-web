@@ -184,6 +184,44 @@ describe('ServiceHardware Pro2 firmware update', () => {
     });
   });
 
+  test('does not scan indistinguishable authorized USB devices', async () => {
+    const firstDevice = {
+      vendorId: 0x1209,
+      productId: 0x4f4c,
+      productName: 'OneKey Pro 2',
+      serialNumber: '',
+    };
+    const getDevices = jest
+      .fn()
+      .mockResolvedValue([firstDevice, { ...firstDevice }]);
+    const previousUsb = Object.getOwnPropertyDescriptor(navigator, 'usb');
+    Object.defineProperty(navigator, 'usb', {
+      configurable: true,
+      value: { getDevices },
+    });
+    const searchDevices = jest.fn();
+    mockedGetHardwareSDKInstance.mockResolvedValue({
+      searchDevices,
+      on: jest.fn(),
+    } as unknown as CoreApi);
+
+    try {
+      await expect(serviceHardware.searchDevices()).resolves.toEqual({
+        success: false,
+        payload: {
+          error: expect.stringContaining('Disconnect other devices'),
+        },
+      });
+      expect(searchDevices).not.toHaveBeenCalled();
+    } finally {
+      if (previousUsb) {
+        Object.defineProperty(navigator, 'usb', previousUsb);
+      } else {
+        delete (navigator as { usb?: unknown }).usb;
+      }
+    }
+  });
+
   test('reuses an authorized OneKey WebUSB device before opening the picker', async () => {
     const authorizedDevice = {
       vendorId: 0x1209,
@@ -203,6 +241,41 @@ describe('ServiceHardware Pro2 firmware update', () => {
       );
       expect(getDevices).toHaveBeenCalledTimes(1);
       expect(requestDevice).not.toHaveBeenCalled();
+    } finally {
+      if (previousUsb) {
+        Object.defineProperty(navigator, 'usb', previousUsb);
+      } else {
+        delete (navigator as { usb?: unknown }).usb;
+      }
+    }
+  });
+
+  test('asks which authorized WebUSB device to connect when several are present', async () => {
+    const firstDevice = {
+      vendorId: 0x1209,
+      productId: 0x4f4c,
+      serialNumber: 'first-device',
+    };
+    const selectedDevice = {
+      vendorId: 0x1209,
+      productId: 0x4f4c,
+      serialNumber: 'selected-device',
+    };
+    const getDevices = jest
+      .fn()
+      .mockResolvedValue([firstDevice, selectedDevice]);
+    const requestDevice = jest.fn().mockResolvedValue(selectedDevice);
+    const previousUsb = Object.getOwnPropertyDescriptor(navigator, 'usb');
+    Object.defineProperty(navigator, 'usb', {
+      configurable: true,
+      value: { getDevices, requestDevice },
+    });
+
+    try {
+      await expect(serviceHardware.promptWebDeviceAccess()).resolves.toBe(
+        selectedDevice
+      );
+      expect(requestDevice).toHaveBeenCalledTimes(1);
     } finally {
       if (previousUsb) {
         Object.defineProperty(navigator, 'usb', previousUsb);
@@ -243,6 +316,144 @@ describe('ServiceHardware Pro2 firmware update', () => {
         },
       });
     } finally {
+      sendUiResponse.mockRestore();
+      if (previousUsb) {
+        Object.defineProperty(navigator, 'usb', previousUsb);
+      } else {
+        delete (navigator as { usb?: unknown }).usb;
+      }
+    }
+  });
+
+  test('reuses the connected device instead of the first authorized bootloader handle', async () => {
+    const otherDevice = {
+      vendorId: 0x1209,
+      productId: 0x4f4c,
+      serialNumber: 'other-device',
+    };
+    const connectedDevice = {
+      vendorId: 0x1209,
+      productId: 0x4f4c,
+      serialNumber: 'connected-device',
+    };
+    store.dispatch(
+      setDevice({ ...pro2Device, path: 'connected-device' } as KnownDevice)
+    );
+    const getDevices = jest
+      .fn()
+      .mockResolvedValue([otherDevice, connectedDevice]);
+    const requestDevice = jest.fn();
+    const previousUsb = Object.getOwnPropertyDescriptor(navigator, 'usb');
+    Object.defineProperty(navigator, 'usb', {
+      configurable: true,
+      value: { getDevices, requestDevice },
+    });
+    const sendUiResponse = jest
+      .spyOn(serviceHardware, 'sendUiResponse')
+      .mockResolvedValue(undefined as never);
+
+    try {
+      await expect(
+        serviceHardware.promptBootloaderDeviceAccess()
+      ).resolves.toBe(true);
+      expect(requestDevice).not.toHaveBeenCalled();
+      expect(sendUiResponse).toHaveBeenCalledWith({
+        type: UI_RESPONSE.SELECT_DEVICE_IN_BOOTLOADER_FOR_WEB_DEVICE,
+        payload: { deviceId: 'connected-device' },
+      });
+    } finally {
+      sendUiResponse.mockRestore();
+      if (previousUsb) {
+        Object.defineProperty(navigator, 'usb', previousUsb);
+      } else {
+        delete (navigator as { usb?: unknown }).usb;
+      }
+    }
+  });
+
+  test('asks for the rebooted device when the only authorized handle is not the connected one', async () => {
+    const otherDevice = {
+      vendorId: 0x1209,
+      productId: 0x4f4c,
+      serialNumber: 'other-device',
+    };
+    const rebootedDevice = {
+      vendorId: 0x1209,
+      productId: 0x4f4a,
+      serialNumber: 'rebooted-device',
+    };
+    store.dispatch(
+      setDevice({ ...pro2Device, path: 'connected-device' } as KnownDevice)
+    );
+    const getDevices = jest
+      .fn()
+      .mockResolvedValueOnce([otherDevice])
+      .mockResolvedValueOnce([otherDevice, rebootedDevice]);
+    const requestDevice = jest.fn().mockResolvedValue(rebootedDevice);
+    const previousUsb = Object.getOwnPropertyDescriptor(navigator, 'usb');
+    Object.defineProperty(navigator, 'usb', {
+      configurable: true,
+      value: { getDevices, requestDevice },
+    });
+    const sendUiResponse = jest
+      .spyOn(serviceHardware, 'sendUiResponse')
+      .mockResolvedValue(undefined as never);
+
+    try {
+      await expect(
+        serviceHardware.promptBootloaderDeviceAccess()
+      ).resolves.toBe(true);
+      expect(requestDevice).toHaveBeenCalledTimes(1);
+      expect(sendUiResponse).toHaveBeenCalledWith({
+        type: UI_RESPONSE.SELECT_DEVICE_IN_BOOTLOADER_FOR_WEB_DEVICE,
+        payload: { deviceId: 'rebooted-device' },
+      });
+    } finally {
+      sendUiResponse.mockRestore();
+      if (previousUsb) {
+        Object.defineProperty(navigator, 'usb', previousUsb);
+      } else {
+        delete (navigator as { usb?: unknown }).usb;
+      }
+    }
+  });
+
+  test('does not select an indistinguishable serial-less bootloader handle', async () => {
+    const firstDevice = {
+      vendorId: 0x1209,
+      productId: 0x4f4c,
+      productName: 'OneKey Pro 2',
+      serialNumber: '',
+    };
+    const secondDevice = { ...firstDevice };
+    const getDevices = jest.fn().mockResolvedValue([firstDevice, secondDevice]);
+    const requestDevice = jest.fn().mockResolvedValue(secondDevice);
+    const previousUsb = Object.getOwnPropertyDescriptor(navigator, 'usb');
+    Object.defineProperty(navigator, 'usb', {
+      configurable: true,
+      value: { getDevices, requestDevice },
+    });
+    const sendUiResponse = jest
+      .spyOn(serviceHardware, 'sendUiResponse')
+      .mockResolvedValue(undefined as never);
+    const consoleError = jest.spyOn(console, 'error').mockImplementation();
+
+    try {
+      await expect(
+        serviceHardware.promptBootloaderDeviceAccess()
+      ).resolves.toBe(false);
+      expect(sendUiResponse).not.toHaveBeenCalled();
+      expect(store.getState().firmware.resultTip).toContain(
+        'Disconnect other devices'
+      );
+      expect(consoleError).toHaveBeenCalledWith(
+        'Error prompting bootloader device access:',
+        expect.objectContaining({
+          message: expect.stringContaining('Disconnect other devices'),
+        })
+      );
+    } finally {
+      consoleError.mockRestore();
       sendUiResponse.mockRestore();
       if (previousUsb) {
         Object.defineProperty(navigator, 'usb', previousUsb);

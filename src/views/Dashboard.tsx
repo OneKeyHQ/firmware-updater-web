@@ -2,6 +2,7 @@ import { useEffect, useCallback, FC, useState } from 'react';
 import { useIntl } from 'react-intl';
 import { useSelector, useDispatch } from 'react-redux';
 import type { KnownDevice } from '@onekeyfe/hd-core';
+import { resolveOneKeyUsbDevicePath } from '@onekeyfe/hd-shared';
 import { Steps, SearchDevice, Firmware } from '@/components';
 import { serviceHardware } from '@/hardware';
 import { RootState } from '@/store';
@@ -36,48 +37,67 @@ export default function Dashboard() {
   const dispatch = useDispatch();
   const [needUserAction, setNeedUserAction] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [connectionError, setConnectionError] = useState('');
 
-  const searchDevice = useCallback(async () => {
-    await serviceHardware.getSDKInstance();
-    dispatch(setPageStatus('searching'));
-    serviceHardware.startDeviceScan(
-      (response) => {
-        if (!response.success) {
-          return;
-        }
-        if (response.payload.length > 0) {
-          setNeedUserAction(false);
-          if (!device) {
-            dispatch(setDevice(response.payload?.[0] as KnownDevice));
-          } else {
-            const existDevice = response.payload.find(
-              (d) => (d as any).path === device.path
-            );
-            if (existDevice) {
-              dispatch(setDevice(existDevice as KnownDevice));
-            } else {
-              dispatch(setDevice(response.payload?.[0] as KnownDevice));
+  const searchDevice = useCallback(
+    async (preferredPath?: string) => {
+      await serviceHardware.getSDKInstance();
+      dispatch(setPageStatus('searching'));
+      serviceHardware.startDeviceScan(
+        (response) => {
+          if (!response.success) {
+            if (response.payload.error?.includes('Disconnect other devices')) {
+              setConnectionError(response.payload.error);
+              setNeedUserAction(true);
+              serviceHardware.stopScan();
             }
+            return;
           }
-          serviceHardware.stopScan();
-        } else if (device) {
-          // No devices found - device was disconnected
-          // Reset to allow user to connect a new device
-          console.log('Device disconnected, resetting state');
-          dispatch(setDevice(null));
-          dispatch(setPageStatus('searching'));
-          setNeedUserAction(true);
-          serviceHardware.stopScan();
+          if (response.payload.length > 0) {
+            const targetPath = preferredPath ?? device?.path;
+            const matchingDevices = targetPath
+              ? response.payload.filter(
+                  (foundDevice) =>
+                    (foundDevice as KnownDevice).path === targetPath ||
+                    foundDevice.connectId === targetPath
+                )
+              : [];
+            if (preferredPath && matchingDevices.length !== 1) {
+              return;
+            }
+            let selectedDevice =
+              matchingDevices.length === 1 ? matchingDevices[0] : undefined;
+            if (!selectedDevice && response.payload.length === 1) {
+              [selectedDevice] = response.payload;
+            }
+            if (!selectedDevice) {
+              setNeedUserAction(true);
+              serviceHardware.stopScan();
+              return;
+            }
+            setNeedUserAction(false);
+            dispatch(setDevice(selectedDevice as KnownDevice));
+            serviceHardware.stopScan();
+          } else if (device) {
+            // No devices found - device was disconnected
+            // Reset to allow user to connect a new device
+            console.log('Device disconnected, resetting state');
+            dispatch(setDevice(null));
+            dispatch(setPageStatus('searching'));
+            setNeedUserAction(true);
+            serviceHardware.stopScan();
+          }
+        },
+        () => {}
+      );
+      setTimeout(() => {
+        if (serviceHardware.isSearch) {
+          dispatch(setPageStatus('search-timeout'));
         }
-      },
-      () => {}
-    );
-    setTimeout(() => {
-      if (serviceHardware.isSearch) {
-        dispatch(setPageStatus('search-timeout'));
-      }
-    }, 30000);
-  }, [device, dispatch]);
+      }, 30000);
+    },
+    [device, dispatch]
+  );
 
   // Prompt user to connect device (WebUSB requires user gesture)
   const handleConnectDevice = useCallback(async () => {
@@ -88,12 +108,17 @@ export default function Dashboard() {
     }
 
     setIsConnecting(true);
+    setConnectionError('');
     try {
       // WebUSB authorization and protocol identification are intentionally
       // separate: the SDK scan actively probes both Protocol V1 and V2.
-      await serviceHardware.promptWebDeviceAccess();
+      const selectedDevice = await serviceHardware.promptWebDeviceAccess();
+      const selectedPath = resolveOneKeyUsbDevicePath(selectedDevice);
+      if (!selectedPath) {
+        throw new Error('Unable to resolve the selected USB device');
+      }
       console.log('USB device authorized');
-      await searchDevice();
+      await searchDevice(selectedPath);
     } catch (error: any) {
       console.error('Failed to prompt device access:', error);
 
@@ -104,6 +129,12 @@ export default function Dashboard() {
         console.log('No device was selected by user');
       } else {
         console.error('Unexpected error during device connection:', error);
+        if (
+          error instanceof Error &&
+          error.message.includes('Disconnect other devices')
+        ) {
+          setConnectionError(error.message);
+        }
       }
 
       // Keep needUserAction true so user can retry
@@ -120,14 +151,20 @@ export default function Dashboard() {
         await serviceHardware.getSDKInstance();
         const response = await serviceHardware.searchDevices();
 
-        if (response.success && response.payload.length > 0) {
+        if (response.success && response.payload.length === 1) {
           // Found authorized devices, start normal search
           setNeedUserAction(false);
           await searchDevice();
         } else {
-          // No authorized devices, need user to click connect button
+          // No unique authorized device: let the user choose one.
           setNeedUserAction(true);
           dispatch(setPageStatus('searching'));
+          if (
+            !response.success &&
+            response.payload.error?.includes('Disconnect other devices')
+          ) {
+            setConnectionError(response.payload.error);
+          }
         }
       } catch (error) {
         // Initialization failures must still leave the user with a usable page.
@@ -193,6 +230,11 @@ export default function Dashboard() {
         onConnectDevice={needUserAction ? handleConnectDevice : undefined}
         isConnecting={isConnecting}
       />
+      {connectionError && (
+        <p role="alert" className="text-center text-red-600">
+          {connectionError}
+        </p>
+      )}
     </>
   );
 }
