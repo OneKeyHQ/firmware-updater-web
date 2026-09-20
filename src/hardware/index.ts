@@ -460,10 +460,7 @@ class ServiceHardware {
       store.dispatch(setMaxProgress(0));
       store.dispatch(setShowProgressBar(true));
 
-      const selectedFirmwareField =
-        selectedReleaseInfo?.firmwareField ?? 'firmware-v8';
-      const firmwareField =
-        selectedFirmwareField === 'ble' ? 'firmware-v8' : selectedFirmwareField;
+      const firmwareField = selectedReleaseInfo?.firmwareField ?? 'firmware-v8';
       const resource = await downloadBootloaderFirmware('pro', firmwareField);
       const hardwareSDK = await this.getSDKInstance();
       const response = await hardwareSDK.deviceUpdateBootloader('', {
