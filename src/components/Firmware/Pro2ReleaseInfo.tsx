@@ -107,6 +107,14 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
       state.runtime.releaseMap[releaseDeviceType]?.resources?.source
   );
   const resourceSource = release?.resources?.source ?? deviceResourceSource;
+  const releaseNotes = useMemo(() => {
+    const releaseVersion = formatVersion(release?.version);
+    const notes = [release?.changelog?.[locale], release?.changelog?.['en-US']]
+      .map((item) => item?.trim())
+      .find((item) => item && item !== releaseVersion);
+
+    return notes ?? '';
+  }, [locale, release]);
   const [tab, setTab] = useState<Pro2Tab>('remote');
   const [selectedRemoteTargets, setSelectedRemoteTargets] = useState<
     FirmwareUpdateV4Target[]
@@ -311,18 +319,29 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
                       : ''}
                   </div>
                 </div>
-                {release.changelog?.[locale] && (
-                  <div
-                    className="changelog-content mt-4 text-sm text-gray-700"
-                    // eslint-disable-next-line react/no-danger
-                    dangerouslySetInnerHTML={{
-                      __html: marked.parse(
-                        release.changelog[locale],
-                        SAFE_MARKDOWN_OPTIONS
-                      ),
-                    }}
-                  />
-                )}
+                <div className="mt-4 border-t border-gray-100 pt-4">
+                  <h3 className="text-sm font-semibold text-gray-900">
+                    {intl.formatMessage({ id: 'TR_PRO2_RELEASE_NOTES' })}
+                  </h3>
+                  {releaseNotes ? (
+                    <div
+                      className="changelog-content mt-2 text-sm text-gray-700"
+                      // eslint-disable-next-line react/no-danger
+                      dangerouslySetInnerHTML={{
+                        __html: marked.parse(
+                          releaseNotes,
+                          SAFE_MARKDOWN_OPTIONS
+                        ),
+                      }}
+                    />
+                  ) : (
+                    <p className="mt-2 text-sm text-gray-500">
+                      {intl.formatMessage({
+                        id: 'TR_PRO2_RELEASE_NOTES_UNAVAILABLE',
+                      })}
+                    </p>
+                  )}
+                </div>
               </div>
 
               <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
@@ -347,6 +366,9 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
                     </button>
                   </div>
                 </div>
+                <p className="border-b border-gray-100 px-4 py-3 text-sm text-gray-600">
+                  {intl.formatMessage({ id: 'TR_PRO2_FIRMWARE_UPDATE_DESC' })}
+                </p>
                 {[
                   ...remoteComponents,
                   ...(resourceSource?.archiveUrl

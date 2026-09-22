@@ -8,7 +8,7 @@ import { serviceHardware } from '@/hardware';
 import LOCALES from '@/locales';
 import { store } from '@/store';
 import type { DeviceTypeMap } from '@/types';
-import { setDevice, setReleaseMap } from '@/store/reducers/runtime';
+import { setDevice, setLocale, setReleaseMap } from '@/store/reducers/runtime';
 import Pro2ReleaseInfo from './Pro2ReleaseInfo';
 
 jest.mock('@onekeyfe/ui-components', () => ({
@@ -78,6 +78,7 @@ describe('Pro2ReleaseInfo startup resources', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockedFirmwareUpdateV4.mockResolvedValue(undefined);
+    store.dispatch(setLocale('en-US'));
     store.dispatch(setReleaseMap(releaseMap));
     store.dispatch(
       setDevice({
@@ -94,7 +95,7 @@ describe('Pro2ReleaseInfo startup resources', () => {
     store.dispatch(setReleaseMap({} as DeviceTypeMap));
   });
 
-  test('installs all nine resource packages through one resource target', async () => {
+  test('installs resources through one resource target', async () => {
     render(
       <Provider store={store}>
         <IntlProvider locale="en-US" messages={LOCALES['en-US']}>
@@ -104,9 +105,12 @@ describe('Pro2ReleaseInfo startup resources', () => {
     );
 
     const resources = screen.getByRole('checkbox', {
-      name: /9 resource packages/i,
+      name: /^Resources\b/i,
     });
     expect(resources).toBeChecked();
+    expect(
+      screen.getByText(/download and install the latest compatible signed/i)
+    ).toBeInTheDocument();
     expect(
       screen.queryByText(/not installed by default/i)
     ).not.toBeInTheDocument();
@@ -296,7 +300,7 @@ describe('Pro2ReleaseInfo startup resources', () => {
 
     expect(
       screen.getByRole('checkbox', {
-        name: /9 resource packages/i,
+        name: /^Resources\b/i,
       })
     ).toBeInTheDocument();
     expect(
@@ -434,5 +438,69 @@ describe('Pro2ReleaseInfo startup resources', () => {
         expect(attribute.value).not.toMatch(/^\s*javascript:/i);
       }
     }
+  });
+
+  test('uses English release notes when the localized content is only the version', () => {
+    store.dispatch(setLocale('zh-CN'));
+    store.dispatch(
+      setReleaseMap({
+        pro2: {
+          ...releaseMap.pro2,
+          'firmware-v1': [
+            {
+              ...baseProtocolV2Release,
+              changelog: {
+                'zh-CN': '1.0.0',
+                'en-US': 'English fallback notes',
+              },
+            },
+          ],
+        },
+      } as unknown as DeviceTypeMap)
+    );
+
+    render(
+      <Provider store={store}>
+        <IntlProvider locale="zh-CN" messages={LOCALES['zh-CN']}>
+          <Pro2ReleaseInfo />
+        </IntlProvider>
+      </Provider>
+    );
+
+    expect(screen.getByText('更新内容')).toBeInTheDocument();
+    expect(screen.getByText('English fallback notes')).toBeInTheDocument();
+  });
+
+  test('shows an empty state for a version-only changelog', () => {
+    store.dispatch(
+      setReleaseMap({
+        pro2: {
+          ...releaseMap.pro2,
+          'firmware-v1': [
+            {
+              ...baseProtocolV2Release,
+              changelog: {
+                'zh-CN': '1.0.0',
+                'en-US': '1.0.0',
+              },
+            },
+          ],
+        },
+      } as unknown as DeviceTypeMap)
+    );
+
+    render(
+      <Provider store={store}>
+        <IntlProvider locale="en-US" messages={LOCALES['en-US']}>
+          <Pro2ReleaseInfo />
+        </IntlProvider>
+      </Provider>
+    );
+
+    expect(screen.getByText("What's new")).toBeInTheDocument();
+    expect(
+      screen.getByText('Release notes are not available for this version.')
+    ).toBeInTheDocument();
+    expect(document.querySelector('.changelog-content')).toBeNull();
   });
 });
