@@ -2,6 +2,7 @@ import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
 import { Alert, Button } from '@onekeyfe/ui-components';
+import { ChevronDownIcon } from '@heroicons/react/20/solid';
 import { marked } from 'marked';
 import { getDeviceType } from '@onekeyfe/hd-core';
 import type {
@@ -296,61 +297,30 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
       </div>
 
       {tab === 'remote' ? (
-        <div className="mt-4 space-y-4">
+        <div className="mt-6">
           {release ? (
-            <>
-              <div className="rounded-lg border border-gray-200 bg-white p-5">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <div className="text-sm text-gray-500">
-                      {intl.formatMessage({ id: 'TR_PRO2_REMOTE_VERSION' })}
+            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+              <div className="p-5 sm:p-6">
+                <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0">
+                    <div className="inline-flex rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold uppercase text-brand-700">
+                      {intl.formatMessage({ id: 'TR_PRO2_NEW_VERSION' })}
                     </div>
-                    <div className="mt-1 text-xl font-semibold text-gray-900">
-                      {formatVersion(release.version)}
-                    </div>
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    {remoteComponents.length}{' '}
-                    {intl.formatMessage({ id: 'TR_PRO2_COMPONENT_COUNT' })}
-                    {resourceSource?.archiveUrl
-                      ? ` · ${intl.formatMessage({
-                          id: 'TR_PRO2_RESOURCE_COUNT',
-                        })}`
-                      : ''}
-                  </div>
-                </div>
-                <div className="mt-4 border-t border-gray-100 pt-4">
-                  <h3 className="text-sm font-semibold text-gray-900">
-                    {intl.formatMessage({ id: 'TR_PRO2_RELEASE_NOTES' })}
-                  </h3>
-                  {releaseNotes ? (
-                    <div
-                      className="changelog-content mt-2 text-sm text-gray-700"
-                      // eslint-disable-next-line react/no-danger
-                      dangerouslySetInnerHTML={{
-                        __html: marked.parse(
-                          releaseNotes,
-                          SAFE_MARKDOWN_OPTIONS
-                        ),
-                      }}
-                    />
-                  ) : (
-                    <p className="mt-2 text-sm text-gray-500">
-                      {intl.formatMessage({
-                        id: 'TR_PRO2_RELEASE_NOTES_UNAVAILABLE',
-                      })}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
-                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 bg-gray-50 px-4 py-3">
-                  <div>
-                    <div className="text-sm font-semibold text-gray-900">
-                      {intl.formatMessage({ id: 'TR_PRO2_SELECT_COMPONENTS' })}
-                    </div>
-                    <div className="mt-0.5 text-xs text-gray-500">
+                    <h2 className="mt-3 text-3xl font-semibold tracking-tight text-gray-900">
+                      safeOS {formatVersion(release.version)}
+                    </h2>
+                    <div className="mt-2 text-sm text-gray-500 sm:text-base">
+                      {remoteComponents.length}{' '}
+                      {intl.formatMessage({ id: 'TR_PRO2_COMPONENT_COUNT' })}
+                      {resourceSource?.archiveUrl && (
+                        <>
+                          {' · '}
+                          {intl.formatMessage({
+                            id: 'TR_PRO2_RESOURCE_COUNT',
+                          })}
+                        </>
+                      )}
+                      {' · '}
                       {intl.formatMessage(
                         { id: 'TR_PRO2_SELECTED_COMPONENT_COUNT' },
                         {
@@ -359,53 +329,81 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
                         }
                       )}
                     </div>
-                  </div>
-                  <div className="flex items-center gap-3 text-sm">
-                    {isComponentListOpen && (
-                      <>
-                        <button
-                          type="button"
-                          className="text-brand-600 hover:text-brand-500"
-                          onClick={() =>
-                            setSelectedRemoteTargets(remoteTargets)
-                          }
-                        >
-                          {intl.formatMessage({ id: 'TR_PRO2_SELECT_ALL' })}
-                        </button>
-                        <button
-                          type="button"
-                          className="text-gray-500 hover:text-gray-700"
-                          onClick={() => setSelectedRemoteTargets([])}
-                        >
-                          {intl.formatMessage({ id: 'TR_PRO2_CLEAR_ALL' })}
-                        </button>
-                      </>
-                    )}
-                    <button
-                      type="button"
-                      className="rounded-md px-2 py-1 font-medium text-brand-600 hover:bg-brand-50 hover:text-brand-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
-                      aria-expanded={isComponentListOpen}
-                      aria-controls="pro2-component-list"
-                      onClick={() =>
-                        setIsComponentListOpen((current) => !current)
-                      }
-                    >
+                    <p className="mt-4 max-w-2xl text-sm leading-6 text-gray-600">
                       {intl.formatMessage({
-                        id: isComponentListOpen
-                          ? 'TR_PRO2_HIDE_COMPONENTS'
-                          : 'TR_PRO2_CUSTOMIZE_COMPONENTS',
+                        id: 'TR_PRO2_FIRMWARE_UPDATE_DESC',
                       })}
-                    </button>
+                    </p>
+                  </div>
+                  <div className="w-full shrink-0 sm:w-48">
+                    <Button
+                      block
+                      type="primary"
+                      size="xl"
+                      loading={isUpdating}
+                      disabled={
+                        !device ||
+                        !confirmed ||
+                        selectedCount === 0 ||
+                        isUpdating
+                      }
+                      onClick={handleInstall}
+                    >
+                      {intl.formatMessage({ id: 'TR_PRO2_UPDATE_DEVICE' })}
+                    </Button>
                   </div>
                 </div>
-                <p
-                  className={`px-4 py-3 text-sm text-gray-600 ${
-                    isComponentListOpen ? 'border-b border-gray-100' : ''
-                  }`}
-                >
-                  {intl.formatMessage({ id: 'TR_PRO2_FIRMWARE_UPDATE_DESC' })}
-                </p>
+              </div>
+
+              <div className="border-t border-gray-200">
+                <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 sm:px-6">
+                  <div className="flex items-center gap-3">
+                    <h3 className="text-sm font-semibold text-gray-900 sm:text-base">
+                      {intl.formatMessage({ id: 'TR_PRO2_SELECT_COMPONENTS' })}
+                    </h3>
+                    <span className="rounded-full bg-brand-50 px-2 py-0.5 text-xs font-semibold text-brand-700">
+                      {selectedRemoteTargets.length}/{remoteTargets.length}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    className="flex items-center gap-1 rounded-md px-2 py-1 text-sm font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+                    aria-expanded={isComponentListOpen}
+                    aria-controls="pro2-component-list"
+                    onClick={() =>
+                      setIsComponentListOpen((current) => !current)
+                    }
+                  >
+                    {intl.formatMessage({
+                      id: isComponentListOpen
+                        ? 'TR_PRO2_HIDE_COMPONENTS'
+                        : 'TR_PRO2_CUSTOMIZE_COMPONENTS',
+                    })}
+                    <ChevronDownIcon
+                      aria-hidden="true"
+                      className={`h-4 w-4 transition-transform motion-reduce:transition-none ${
+                        isComponentListOpen ? 'rotate-180' : ''
+                      }`}
+                    />
+                  </button>
+                </div>
                 <div id="pro2-component-list" hidden={!isComponentListOpen}>
+                  <div className="flex justify-end gap-3 border-t border-gray-100 bg-gray-50 px-5 py-2 text-sm sm:px-6">
+                    <button
+                      type="button"
+                      className="text-brand-600 hover:text-brand-500"
+                      onClick={() => setSelectedRemoteTargets(remoteTargets)}
+                    >
+                      {intl.formatMessage({ id: 'TR_PRO2_SELECT_ALL' })}
+                    </button>
+                    <button
+                      type="button"
+                      className="text-gray-500 hover:text-gray-700"
+                      onClick={() => setSelectedRemoteTargets([])}
+                    >
+                      {intl.formatMessage({ id: 'TR_PRO2_CLEAR_ALL' })}
+                    </button>
+                  </div>
                   {[
                     ...remoteComponents,
                     ...(resourceSource?.archiveUrl
@@ -423,7 +421,7 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
                   ].map((component) => (
                     <label
                       key={component.key}
-                      className="flex cursor-pointer items-center justify-between border-b border-gray-100 px-4 py-3 last:border-b-0 hover:bg-gray-50"
+                      className="flex cursor-pointer items-center justify-between border-t border-gray-100 px-5 py-3 hover:bg-gray-50 sm:px-6"
                     >
                       <div className="flex items-center gap-3">
                         <input
@@ -445,7 +443,51 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
                   ))}
                 </div>
               </div>
-            </>
+
+              <div
+                className="border-t border-gray-200 px-5 py-6 sm:px-6"
+                aria-labelledby="pro2-release-notes-title"
+              >
+                <h3
+                  id="pro2-release-notes-title"
+                  className="text-lg font-semibold text-gray-900"
+                >
+                  {intl.formatMessage(
+                    { id: 'TR_PRO2_RELEASE_NOTES' },
+                    { version: formatVersion(release.version) }
+                  )}
+                </h3>
+                {releaseNotes ? (
+                  <div
+                    className="changelog-content mt-3 text-sm leading-6 text-gray-700"
+                    // eslint-disable-next-line react/no-danger
+                    dangerouslySetInnerHTML={{
+                      __html: marked.parse(releaseNotes, SAFE_MARKDOWN_OPTIONS),
+                    }}
+                  />
+                ) : (
+                  <p className="mt-3 text-sm text-gray-500">
+                    {intl.formatMessage({
+                      id: 'TR_PRO2_RELEASE_NOTES_UNAVAILABLE',
+                    })}
+                  </p>
+                )}
+              </div>
+
+              <div className="border-t border-gray-200 bg-gray-50 px-5 py-5 sm:px-6">
+                <label className="flex items-start gap-3 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5 h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+                    checked={confirmed}
+                    onChange={(event) => setConfirmed(event.target.checked)}
+                  />
+                  <span>
+                    {intl.formatMessage({ id: 'TR_FIRMWARE_USER_ENSURE' })}
+                  </span>
+                </label>
+              </div>
+            </div>
           ) : (
             <Alert
               type="warning"
@@ -516,30 +558,32 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
         </div>
       )}
 
-      <div className="mt-6 flex flex-col items-center">
-        <label className="flex items-start gap-3 text-sm text-gray-700">
-          <input
-            type="checkbox"
-            className="mt-0.5 h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
-            checked={confirmed}
-            onChange={(event) => setConfirmed(event.target.checked)}
-          />
-          <span>{intl.formatMessage({ id: 'TR_FIRMWARE_USER_ENSURE' })}</span>
-        </label>
-        <div className="mt-4">
-          <Button
-            type="primary"
-            size="xl"
-            loading={isUpdating}
-            disabled={
-              !device || !confirmed || selectedCount === 0 || isUpdating
-            }
-            onClick={handleInstall}
-          >
-            {intl.formatMessage({ id: 'TR_FIRMWARE_HEADING' })}
-          </Button>
+      {tab === 'local' && (
+        <div className="mt-6 flex flex-col items-center">
+          <label className="flex items-start gap-3 text-sm text-gray-700">
+            <input
+              type="checkbox"
+              className="mt-0.5 h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+              checked={confirmed}
+              onChange={(event) => setConfirmed(event.target.checked)}
+            />
+            <span>{intl.formatMessage({ id: 'TR_FIRMWARE_USER_ENSURE' })}</span>
+          </label>
+          <div className="mt-4">
+            <Button
+              type="primary"
+              size="xl"
+              loading={isUpdating}
+              disabled={
+                !device || !confirmed || selectedCount === 0 || isUpdating
+              }
+              onClick={handleInstall}
+            >
+              {intl.formatMessage({ id: 'TR_FIRMWARE_HEADING' })}
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

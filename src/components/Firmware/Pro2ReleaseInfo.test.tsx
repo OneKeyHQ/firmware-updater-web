@@ -104,9 +104,11 @@ describe('Pro2ReleaseInfo startup resources', () => {
       </Provider>
     );
 
-    const customizeButton = screen.getByRole('button', { name: 'Customize' });
+    const customizeButton = screen.getByRole('button', {
+      name: 'Show details',
+    });
     expect(customizeButton).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.getByText('1 of 1 selected')).toBeInTheDocument();
+    expect(screen.getByText('1/1')).toBeInTheDocument();
     expect(
       screen.queryByRole('checkbox', { name: /^Resources\b/i })
     ).not.toBeInTheDocument();
@@ -128,7 +130,7 @@ describe('Pro2ReleaseInfo startup resources', () => {
       })
     );
     const installButton = screen.getByRole('button', {
-      name: 'Install Firmware',
+      name: 'Update device',
     });
     userEvent.click(installButton);
 
@@ -231,8 +233,8 @@ describe('Pro2ReleaseInfo startup resources', () => {
           element.textContent?.startsWith('8 firmware components') === true
       )
     ).toBeInTheDocument();
-    expect(screen.getByText('9 of 9 selected')).toBeInTheDocument();
-    userEvent.click(screen.getByRole('button', { name: 'Customize' }));
+    expect(screen.getByText('9/9')).toBeInTheDocument();
+    userEvent.click(screen.getByRole('button', { name: 'Show details' }));
     for (const label of ['SE01', 'SE02', 'SE03', 'SE04']) {
       expect(
         screen.getByRole('checkbox', { name: new RegExp(`^${label}\\b`) })
@@ -245,7 +247,7 @@ describe('Pro2ReleaseInfo startup resources', () => {
       })
     );
     const installButton = screen.getByRole('button', {
-      name: 'Install Firmware',
+      name: 'Update device',
     });
     userEvent.click(installButton);
 
@@ -307,7 +309,7 @@ describe('Pro2ReleaseInfo startup resources', () => {
       </Provider>
     );
 
-    userEvent.click(screen.getByRole('button', { name: 'Customize' }));
+    userEvent.click(screen.getByRole('button', { name: 'Show details' }));
     expect(
       screen.getByRole('checkbox', {
         name: /^Resources\b/i,
@@ -477,7 +479,7 @@ describe('Pro2ReleaseInfo startup resources', () => {
       </Provider>
     );
 
-    expect(screen.getByText('更新内容')).toBeInTheDocument();
+    expect(screen.getByText('1.0.0 更新内容')).toBeInTheDocument();
     expect(screen.getByText('English fallback notes')).toBeInTheDocument();
   });
 
@@ -507,7 +509,7 @@ describe('Pro2ReleaseInfo startup resources', () => {
       </Provider>
     );
 
-    expect(screen.getByText("What's new")).toBeInTheDocument();
+    expect(screen.getByText("What's new in 1.0.0")).toBeInTheDocument();
     expect(document.querySelector('.changelog-content')).toHaveTextContent(
       '1.0.0'
     );
