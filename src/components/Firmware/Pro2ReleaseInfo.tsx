@@ -108,14 +108,14 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
   );
   const resourceSource = release?.resources?.source ?? deviceResourceSource;
   const releaseNotes = useMemo(() => {
-    const releaseVersion = formatVersion(release?.version);
     const notes = [release?.changelog?.[locale], release?.changelog?.['en-US']]
       .map((item) => item?.trim())
-      .find((item) => item && item !== releaseVersion);
+      .find(Boolean);
 
     return notes ?? '';
   }, [locale, release]);
   const [tab, setTab] = useState<Pro2Tab>('remote');
+  const [isComponentListOpen, setIsComponentListOpen] = useState(false);
   const [selectedRemoteTargets, setSelectedRemoteTargets] = useState<
     FirmwareUpdateV4Target[]
   >([]);
@@ -345,67 +345,105 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
               </div>
 
               <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
-                <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-4 py-3">
-                  <span className="text-sm font-semibold text-gray-900">
-                    {intl.formatMessage({ id: 'TR_PRO2_SELECT_COMPONENTS' })}
-                  </span>
-                  <div className="flex gap-3 text-sm">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 bg-gray-50 px-4 py-3">
+                  <div>
+                    <div className="text-sm font-semibold text-gray-900">
+                      {intl.formatMessage({ id: 'TR_PRO2_SELECT_COMPONENTS' })}
+                    </div>
+                    <div className="mt-0.5 text-xs text-gray-500">
+                      {intl.formatMessage(
+                        { id: 'TR_PRO2_SELECTED_COMPONENT_COUNT' },
+                        {
+                          selected: selectedRemoteTargets.length,
+                          total: remoteTargets.length,
+                        }
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm">
+                    {isComponentListOpen && (
+                      <>
+                        <button
+                          type="button"
+                          className="text-brand-600 hover:text-brand-500"
+                          onClick={() =>
+                            setSelectedRemoteTargets(remoteTargets)
+                          }
+                        >
+                          {intl.formatMessage({ id: 'TR_PRO2_SELECT_ALL' })}
+                        </button>
+                        <button
+                          type="button"
+                          className="text-gray-500 hover:text-gray-700"
+                          onClick={() => setSelectedRemoteTargets([])}
+                        >
+                          {intl.formatMessage({ id: 'TR_PRO2_CLEAR_ALL' })}
+                        </button>
+                      </>
+                    )}
                     <button
                       type="button"
-                      className="text-brand-600 hover:text-brand-500"
-                      onClick={() => setSelectedRemoteTargets(remoteTargets)}
+                      className="rounded-md px-2 py-1 font-medium text-brand-600 hover:bg-brand-50 hover:text-brand-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+                      aria-expanded={isComponentListOpen}
+                      aria-controls="pro2-component-list"
+                      onClick={() =>
+                        setIsComponentListOpen((current) => !current)
+                      }
                     >
-                      {intl.formatMessage({ id: 'TR_PRO2_SELECT_ALL' })}
-                    </button>
-                    <button
-                      type="button"
-                      className="text-gray-500 hover:text-gray-700"
-                      onClick={() => setSelectedRemoteTargets([])}
-                    >
-                      {intl.formatMessage({ id: 'TR_PRO2_CLEAR_ALL' })}
+                      {intl.formatMessage({
+                        id: isComponentListOpen
+                          ? 'TR_PRO2_HIDE_COMPONENTS'
+                          : 'TR_PRO2_CUSTOMIZE_COMPONENTS',
+                      })}
                     </button>
                   </div>
                 </div>
-                <p className="border-b border-gray-100 px-4 py-3 text-sm text-gray-600">
+                <p
+                  className={`px-4 py-3 text-sm text-gray-600 ${
+                    isComponentListOpen ? 'border-b border-gray-100' : ''
+                  }`}
+                >
                   {intl.formatMessage({ id: 'TR_PRO2_FIRMWARE_UPDATE_DESC' })}
                 </p>
-                {[
-                  ...remoteComponents,
-                  ...(resourceSource?.archiveUrl
-                    ? [
-                        {
-                          key: 'resource',
-                          label: intl.formatMessage({
-                            id: 'TR_PRO2_RESOURCES',
-                          }),
-                          target: 'resource' as const,
-                          version: release.version,
-                        },
-                      ]
-                    : []),
-                ].map((component) => (
-                  <label
-                    key={component.key}
-                    className="flex cursor-pointer items-center justify-between border-b border-gray-100 px-4 py-3 last:border-b-0 hover:bg-gray-50"
-                  >
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="checkbox"
-                        className="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
-                        checked={selectedRemoteTargets.includes(
-                          component.target
-                        )}
-                        onChange={() => toggleRemoteTarget(component.target)}
-                      />
-                      <span className="text-sm font-medium text-gray-900">
-                        {component.label}
+                <div id="pro2-component-list" hidden={!isComponentListOpen}>
+                  {[
+                    ...remoteComponents,
+                    ...(resourceSource?.archiveUrl
+                      ? [
+                          {
+                            key: 'resource',
+                            label: intl.formatMessage({
+                              id: 'TR_PRO2_RESOURCES',
+                            }),
+                            target: 'resource' as const,
+                            version: release.version,
+                          },
+                        ]
+                      : []),
+                  ].map((component) => (
+                    <label
+                      key={component.key}
+                      className="flex cursor-pointer items-center justify-between border-b border-gray-100 px-4 py-3 last:border-b-0 hover:bg-gray-50"
+                    >
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+                          checked={selectedRemoteTargets.includes(
+                            component.target
+                          )}
+                          onChange={() => toggleRemoteTarget(component.target)}
+                        />
+                        <span className="text-sm font-medium text-gray-900">
+                          {component.label}
+                        </span>
+                      </div>
+                      <span className="text-sm text-gray-500">
+                        {formatVersion(component.version)}
                       </span>
-                    </div>
-                    <span className="text-sm text-gray-500">
-                      {formatVersion(component.version)}
-                    </span>
-                  </label>
-                ))}
+                    </label>
+                  ))}
+                </div>
               </div>
             </>
           ) : (

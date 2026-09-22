@@ -104,9 +104,16 @@ describe('Pro2ReleaseInfo startup resources', () => {
       </Provider>
     );
 
-    const resources = screen.getByRole('checkbox', {
-      name: /^Resources\b/i,
-    });
+    const customizeButton = screen.getByRole('button', { name: 'Customize' });
+    expect(customizeButton).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByText('1 of 1 selected')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('checkbox', { name: /^Resources\b/i })
+    ).not.toBeInTheDocument();
+    userEvent.click(customizeButton);
+
+    expect(customizeButton).toHaveAttribute('aria-expanded', 'true');
+    const resources = screen.getByRole('checkbox', { name: /^Resources\b/i });
     expect(resources).toBeChecked();
     expect(
       screen.getByText(/download and install the latest compatible signed/i)
@@ -224,6 +231,8 @@ describe('Pro2ReleaseInfo startup resources', () => {
           element.textContent?.startsWith('8 firmware components') === true
       )
     ).toBeInTheDocument();
+    expect(screen.getByText('9 of 9 selected')).toBeInTheDocument();
+    userEvent.click(screen.getByRole('button', { name: 'Customize' }));
     for (const label of ['SE01', 'SE02', 'SE03', 'SE04']) {
       expect(
         screen.getByRole('checkbox', { name: new RegExp(`^${label}\\b`) })
@@ -298,6 +307,7 @@ describe('Pro2ReleaseInfo startup resources', () => {
       </Provider>
     );
 
+    userEvent.click(screen.getByRole('button', { name: 'Customize' }));
     expect(
       screen.getByRole('checkbox', {
         name: /^Resources\b/i,
@@ -440,7 +450,7 @@ describe('Pro2ReleaseInfo startup resources', () => {
     }
   });
 
-  test('uses English release notes when the localized content is only the version', () => {
+  test('uses English release notes when the localized content is empty', () => {
     store.dispatch(setLocale('zh-CN'));
     store.dispatch(
       setReleaseMap({
@@ -450,7 +460,7 @@ describe('Pro2ReleaseInfo startup resources', () => {
             {
               ...baseProtocolV2Release,
               changelog: {
-                'zh-CN': '1.0.0',
+                'zh-CN': '',
                 'en-US': 'English fallback notes',
               },
             },
@@ -471,7 +481,7 @@ describe('Pro2ReleaseInfo startup resources', () => {
     expect(screen.getByText('English fallback notes')).toBeInTheDocument();
   });
 
-  test('shows an empty state for a version-only changelog', () => {
+  test('renders a version-only changelog as provided', () => {
     store.dispatch(
       setReleaseMap({
         pro2: {
@@ -498,6 +508,23 @@ describe('Pro2ReleaseInfo startup resources', () => {
     );
 
     expect(screen.getByText("What's new")).toBeInTheDocument();
+    expect(document.querySelector('.changelog-content')).toHaveTextContent(
+      '1.0.0'
+    );
+    expect(
+      screen.queryByText('Release notes are not available for this version.')
+    ).not.toBeInTheDocument();
+  });
+
+  test('shows an empty state only when all release notes are empty', () => {
+    render(
+      <Provider store={store}>
+        <IntlProvider locale="en-US" messages={LOCALES['en-US']}>
+          <Pro2ReleaseInfo />
+        </IntlProvider>
+      </Provider>
+    );
+
     expect(
       screen.getByText('Release notes are not available for this version.')
     ).toBeInTheDocument();
