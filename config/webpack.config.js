@@ -345,7 +345,6 @@ module.exports = function (webpackEnv) {
         events: require.resolve('events'),
         os: require.resolve('os-browserify/browser'),
         path: require.resolve('path-browserify'),
-        process: require.resolve('process/browser.js'),
         util: require.resolve('util'),
         fs: false,
         net: false,

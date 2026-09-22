@@ -79,7 +79,6 @@
     "postcss-normalize": "^10.0.1",
     "postcss-preset-env": "^7.0.1",
     "prettier": "^2.7.1",
-    "process": "^0.11.10",
     "prompts": "^2.4.2",
     "react": "^18.2.0",
     "react-app-polyfill": "^3.0.0",
