@@ -107,6 +107,7 @@ describe('Pro2ReleaseInfo startup resources', () => {
     const customizeButton = screen.getByRole('button', {
       name: 'Show details',
     });
+    expect(screen.queryByText('New version')).not.toBeInTheDocument();
     expect(customizeButton).toHaveAttribute('aria-expanded', 'false');
     expect(screen.getByText('1/1')).toBeInTheDocument();
     expect(
@@ -479,7 +480,6 @@ describe('Pro2ReleaseInfo startup resources', () => {
       </Provider>
     );
 
-    expect(screen.getByText('1.0.0 更新内容')).toBeInTheDocument();
     expect(screen.getByText('English fallback notes')).toBeInTheDocument();
   });
 
@@ -509,7 +509,7 @@ describe('Pro2ReleaseInfo startup resources', () => {
       </Provider>
     );
 
-    expect(screen.getByText("What's new in 1.0.0")).toBeInTheDocument();
+    expect(screen.queryByText("What's new in 1.0.0")).not.toBeInTheDocument();
     expect(document.querySelector('.changelog-content')).toHaveTextContent(
       '1.0.0'
     );

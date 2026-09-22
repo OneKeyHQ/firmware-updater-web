@@ -303,13 +303,28 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
               <div className="p-5 sm:p-6">
                 <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">
-                    <div className="inline-flex rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold uppercase text-brand-700">
-                      {intl.formatMessage({ id: 'TR_PRO2_NEW_VERSION' })}
-                    </div>
-                    <h2 className="mt-3 text-3xl font-semibold tracking-tight text-gray-900">
+                    <h2 className="text-2xl font-semibold tracking-tight text-gray-900">
                       safeOS {formatVersion(release.version)}
                     </h2>
-                    <div className="mt-2 text-sm text-gray-500 sm:text-base">
+                    {releaseNotes ? (
+                      <div
+                        className="changelog-content mt-3 max-w-2xl text-sm leading-6 text-gray-700"
+                        // eslint-disable-next-line react/no-danger
+                        dangerouslySetInnerHTML={{
+                          __html: marked.parse(
+                            releaseNotes,
+                            SAFE_MARKDOWN_OPTIONS
+                          ),
+                        }}
+                      />
+                    ) : (
+                      <p className="mt-3 text-sm text-gray-500">
+                        {intl.formatMessage({
+                          id: 'TR_PRO2_RELEASE_NOTES_UNAVAILABLE',
+                        })}
+                      </p>
+                    )}
+                    <div className="mt-4 text-sm text-gray-500">
                       {remoteComponents.length}{' '}
                       {intl.formatMessage({ id: 'TR_PRO2_COMPONENT_COUNT' })}
                       {resourceSource?.archiveUrl && (
@@ -442,36 +457,6 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
                     </label>
                   ))}
                 </div>
-              </div>
-
-              <div
-                className="border-t border-gray-200 px-5 py-6 sm:px-6"
-                aria-labelledby="pro2-release-notes-title"
-              >
-                <h3
-                  id="pro2-release-notes-title"
-                  className="text-lg font-semibold text-gray-900"
-                >
-                  {intl.formatMessage(
-                    { id: 'TR_PRO2_RELEASE_NOTES' },
-                    { version: formatVersion(release.version) }
-                  )}
-                </h3>
-                {releaseNotes ? (
-                  <div
-                    className="changelog-content mt-3 text-sm leading-6 text-gray-700"
-                    // eslint-disable-next-line react/no-danger
-                    dangerouslySetInnerHTML={{
-                      __html: marked.parse(releaseNotes, SAFE_MARKDOWN_OPTIONS),
-                    }}
-                  />
-                ) : (
-                  <p className="mt-3 text-sm text-gray-500">
-                    {intl.formatMessage({
-                      id: 'TR_PRO2_RELEASE_NOTES_UNAVAILABLE',
-                    })}
-                  </p>
-                )}
               </div>
 
               <div className="border-t border-gray-200 bg-gray-50 px-5 py-5 sm:px-6">
