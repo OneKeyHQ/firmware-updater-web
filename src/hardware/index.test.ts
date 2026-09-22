@@ -184,6 +184,93 @@ describe('ServiceHardware Pro2 firmware update', () => {
     });
   });
 
+  test('reads a missing bootloader version from the firmware device state', async () => {
+    const getDeviceState = jest.fn().mockResolvedValue({
+      success: true,
+      payload: {
+        protocol: 'V1',
+        versions: { bootloader: '1.9.2' },
+      },
+    });
+    const getOnekeyFeatures = jest.fn();
+    mockedGetHardwareSDKInstance.mockResolvedValue({
+      getDeviceState,
+      getOnekeyFeatures,
+      on: jest.fn(),
+    } as unknown as CoreApi);
+    const pureDevice = {
+      connectId: 'pure-connect-id',
+      connectProtocol: 'V1',
+      path: 'pure-connect-id',
+      features: {
+        protocol: 'V1',
+        deviceType: 'classicpure',
+      },
+    } as unknown as KnownDevice;
+
+    await expect(
+      serviceHardware.resolveBootloaderVersion(pureDevice)
+    ).resolves.toEqual([1, 9, 2]);
+    expect(getDeviceState).toHaveBeenCalledWith('pure-connect-id', {
+      scope: 'firmware',
+      connectProtocol: 'V1',
+    });
+    expect(getOnekeyFeatures).not.toHaveBeenCalled();
+  });
+
+  test('falls back to OnekeyFeatures when Pure firmware state omits the bootloader version', async () => {
+    const getDeviceState = jest.fn().mockResolvedValue({
+      success: true,
+      payload: {
+        protocol: 'V1',
+        versions: { bootloader: null },
+      },
+    });
+    const getOnekeyFeatures = jest.fn().mockResolvedValue({
+      success: true,
+      payload: { onekey_boot_version: '1.9.2' },
+    });
+    mockedGetHardwareSDKInstance.mockResolvedValue({
+      getDeviceState,
+      getOnekeyFeatures,
+      on: jest.fn(),
+    } as unknown as CoreApi);
+    const pureDevice = {
+      connectId: 'pure-connect-id',
+      connectProtocol: 'V1',
+      path: 'pure-connect-id',
+      features: {
+        protocol: 'V1',
+        deviceType: 'classicpure',
+      },
+    } as unknown as KnownDevice;
+
+    await expect(
+      serviceHardware.resolveBootloaderVersion(pureDevice)
+    ).resolves.toEqual([1, 9, 2]);
+    expect(getOnekeyFeatures).toHaveBeenCalledWith('pure-connect-id', {
+      connectProtocol: 'V1',
+    });
+  });
+
+  test('does not make another request when the bootloader version is already present', async () => {
+    const pureDevice = {
+      connectId: 'pure-connect-id',
+      connectProtocol: 'V1',
+      path: 'pure-connect-id',
+      features: {
+        protocol: 'V1',
+        deviceType: 'classicpure',
+        bootloaderVersion: '1.9.2',
+      },
+    } as unknown as KnownDevice;
+
+    await expect(
+      serviceHardware.resolveBootloaderVersion(pureDevice)
+    ).resolves.toEqual([1, 9, 2]);
+    expect(mockedGetHardwareSDKInstance).not.toHaveBeenCalled();
+  });
+
   test('does not scan indistinguishable authorized USB devices', async () => {
     const firstDevice = {
       vendorId: 0x1209,

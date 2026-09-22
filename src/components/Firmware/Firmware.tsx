@@ -343,6 +343,38 @@ export default function Firmware() {
   const installType = useSelector((s: RootState) => s.runtime.installType);
   const [deviceType, setDeviceType] = useState('');
   const tabType = useSelector((state: RootState) => state.runtime.currentTab);
+  const currentBootloaderVersion = getDeviceBootloaderVersion(device?.features);
+  const currentBootloaderVersionKey = currentBootloaderVersion.join('.');
+  const [displayBootloaderVersion, setDisplayBootloaderVersion] = useState(
+    currentBootloaderVersion
+  );
+
+  useEffect(() => {
+    let disposed = false;
+    setDisplayBootloaderVersion(currentBootloaderVersion);
+    if (!device || currentBootloaderVersion.some((part) => part !== 0)) {
+      return undefined;
+    }
+
+    serviceHardware
+      .resolveBootloaderVersion(device)
+      .then((version) => {
+        if (!disposed) setDisplayBootloaderVersion(version);
+      })
+      .catch(() => undefined);
+
+    return () => {
+      disposed = true;
+    };
+    // Re-read only when the physical device or its reported version changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    device?.connectId,
+    device?.path,
+    device?.serialNo,
+    device?.uuid,
+    currentBootloaderVersionKey,
+  ]);
 
   const [isMiniAndNotInBootloader, setIsMiniAndNotInBootloader] =
     useState(false);
@@ -468,9 +500,7 @@ export default function Firmware() {
                 text={intl.formatMessage({
                   id: 'TR_FIRMWARE_BOOTLOADER_VERSION',
                 })}
-                value={formatDeviceVersion(
-                  getDeviceBootloaderVersion(device?.features)
-                )}
+                value={formatDeviceVersion(displayBootloaderVersion)}
               />
               <Description
                 text={intl.formatMessage({

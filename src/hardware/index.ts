@@ -13,7 +13,7 @@ import {
   getDeviceBootloaderVersion,
   getDeviceType,
 } from '@onekeyfe/hd-core';
-import type { IFirmwareField } from '@onekeyfe/hd-core';
+import type { IFirmwareField, KnownDevice } from '@onekeyfe/hd-core';
 import {
   createDeferred,
   Deferred,
@@ -397,6 +397,66 @@ class ServiceHardware {
     const response = await hardwareSDK?.getFeatures(connectId);
 
     return response;
+  }
+
+  async resolveBootloaderVersion(device: KnownDevice) {
+    const currentVersion = getDeviceBootloaderVersion(device.features);
+    if (currentVersion.some((part) => part !== 0)) {
+      return currentVersion;
+    }
+
+    const connectId = device.connectId ?? device.path;
+    if (!connectId) return currentVersion;
+
+    const hardwareSDK = await this.getSDKInstance().catch(() => undefined);
+    if (!hardwareSDK) return currentVersion;
+    let connectProtocol: 'V1' | 'V2' | undefined =
+      device.connectProtocol ??
+      (device.features?.protocol === 'V1' || device.features?.protocol === 'V2'
+        ? device.features.protocol
+        : undefined);
+
+    try {
+      const stateResponse = await hardwareSDK.getDeviceState(connectId, {
+        scope: 'firmware',
+        ...(connectProtocol ? { connectProtocol } : {}),
+      });
+      if (stateResponse.success) {
+        if (
+          stateResponse.payload.protocol === 'V1' ||
+          stateResponse.payload.protocol === 'V2'
+        ) {
+          connectProtocol = stateResponse.payload.protocol;
+        }
+        const stateVersion = getDeviceBootloaderVersion({
+          ...device.features,
+          bootloaderVersion: stateResponse.payload.versions.bootloader,
+        });
+        if (stateVersion.some((part) => part !== 0)) {
+          return stateVersion;
+        }
+      }
+    } catch {
+      // Fall through to the Protocol V1 compatibility request below.
+    }
+
+    if (connectProtocol === 'V2') return currentVersion;
+
+    try {
+      const legacyResponse = await hardwareSDK.getOnekeyFeatures(connectId, {
+        connectProtocol: 'V1',
+      });
+      if (legacyResponse.success) {
+        return getDeviceBootloaderVersion({
+          ...device.features,
+          onekey_boot_version: legacyResponse.payload.onekey_boot_version,
+        });
+      }
+    } catch {
+      // Older devices may not support OnekeyGetFeatures.
+    }
+
+    return currentVersion;
   }
 
   async sendUiResponse(response: UiResponseEvent) {
