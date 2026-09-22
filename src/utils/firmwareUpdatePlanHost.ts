@@ -67,16 +67,32 @@ const verifyArtifact = (
 export async function loadFirmwareUpdatePlanBinaries({
   plan,
   overrides = {},
+  targetsToLoad,
 }: {
   plan: FirmwareUpdatePlan;
   overrides?: FirmwarePlanArtifactOverrides;
+  targetsToLoad?: FirmwareUpdateV4Target[];
 }): Promise<FirmwareUpdatePlanBinaryParams> {
   if (plan.artifacts.length === 0) {
     throw new Error('Firmware update Plan has no artifacts');
   }
 
+  const selectedTargets = targetsToLoad
+    ? new Set<FirmwareUpdateV4Target>(targetsToLoad)
+    : undefined;
+  const artifacts = selectedTargets
+    ? plan.artifacts.filter(
+        (artifact) =>
+          isPlanBinaryTarget(artifact.target) &&
+          selectedTargets.has(artifact.target)
+      )
+    : plan.artifacts;
+  if (artifacts.length === 0) {
+    throw new Error('Firmware update Plan has no selected artifacts');
+  }
+
   const loaded = await Promise.all(
-    plan.artifacts.map(async (artifact) => {
+    artifacts.map(async (artifact) => {
       if (!isPlanBinaryTarget(artifact.target)) {
         throw new Error(
           `Firmware update Plan target is not a V4 binary: ${artifact.target}`

@@ -783,7 +783,12 @@ class ServiceHardware {
           }
           throw new Error('Protocol V2 firmware update Plan is unavailable');
         }
-        const binaries = await loadFirmwareUpdatePlanBinaries({ plan });
+        const binaries = await loadFirmwareUpdatePlanBinaries({
+          plan,
+          ...(requestedTargets.length > 0
+            ? { targetsToLoad: requestedTargets }
+            : {}),
+        });
         if (requestedTargets.length > 0) {
           const selected = new Set(requestedTargets);
           binaries.targetsToUpdate = (binaries.targetsToUpdate ?? []).filter(

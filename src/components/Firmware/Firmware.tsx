@@ -28,6 +28,32 @@ import Pro2ReleaseInfo from './Pro2ReleaseInfo';
 let timer: ReturnType<typeof setInterval>;
 let isPollingUpdateDevice = false;
 
+type DeviceIdentity = {
+  path?: string | null;
+  connectId?: string | null;
+  serialNo?: string | null;
+  uuid?: string | null;
+};
+
+export const findConnectedDevice = (
+  devices: DeviceIdentity[],
+  currentDevice?: DeviceIdentity | null
+) => {
+  const currentSerialNo = currentDevice?.serialNo || currentDevice?.uuid;
+  if (currentSerialNo) {
+    return devices.find(
+      (candidate) => (candidate.serialNo || candidate.uuid) === currentSerialNo
+    );
+  }
+
+  const currentPath = currentDevice?.path ?? currentDevice?.connectId;
+  if (!currentPath) return undefined;
+  return devices.find(
+    (candidate) =>
+      candidate.path === currentPath || candidate.connectId === currentPath
+  );
+};
+
 const DeviceEventAlert: FC = () => {
   const intl = useIntl();
   const needsPermission = useSelector(
@@ -336,19 +362,9 @@ export default function Firmware() {
       if (!response.success) {
         return;
       }
-      if (response.payload.length > 0) {
-        if (!device) {
-          dispatch(setDevice(response.payload?.[0] as KnownDevice));
-        } else {
-          const existDevice = response.payload.find(
-            (d) => (d as any).path === device.path
-          );
-          if (existDevice) {
-            dispatch(setDevice(existDevice as KnownDevice));
-          } else {
-            dispatch(setDevice(response.payload?.[0] as KnownDevice));
-          }
-        }
+      if (response.payload.length > 0 && device) {
+        const existDevice = findConnectedDevice(response.payload, device);
+        dispatch(setDevice((existDevice as KnownDevice) ?? null));
       }
     }, 5000);
     isPollingUpdateDevice = true;
@@ -533,7 +549,12 @@ export default function Firmware() {
             </div>
           )}
           {isProtocolV2FirmwareDevice ? (
-            <Pro2ReleaseInfo clearTimer={clearTimer} />
+            <Pro2ReleaseInfo
+              key={`${currentDeviceType}:${
+                device?.serialNo || device?.uuid || ''
+              }:${device?.connectId ?? ''}:${device?.path ?? ''}`}
+              clearTimer={clearTimer}
+            />
           ) : isV3Compatible() ? (
             <V3ReleaseInfo />
           ) : (

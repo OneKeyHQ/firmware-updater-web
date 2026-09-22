@@ -1,5 +1,5 @@
 import React from 'react';
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { IntlProvider } from 'react-intl';
 import { Provider } from 'react-redux';
@@ -321,5 +321,118 @@ describe('Pro2ReleaseInfo startup resources', () => {
     expect(screen.getByText('SE02')).toBeInTheDocument();
     expect(screen.queryByText('SE03')).not.toBeInTheDocument();
     expect(screen.queryByText('SE04')).not.toBeInTheDocument();
+  });
+
+  test('disables stale Pro2-only local files after switching to Neo', async () => {
+    store.dispatch(
+      setReleaseMap({
+        ...releaseMap,
+        neo: {
+          ...releaseMap.pro2,
+          'firmware-v1': [baseProtocolV2Release],
+        },
+      } as unknown as DeviceTypeMap)
+    );
+
+    render(
+      <Provider store={store}>
+        <IntlProvider locale="en-US" messages={LOCALES['en-US']}>
+          <Pro2ReleaseInfo />
+        </IntlProvider>
+      </Provider>
+    );
+
+    userEvent.click(screen.getByRole('button', { name: 'Local Firmware' }));
+    const firmwareInputs = Array.from(
+      document.querySelectorAll<HTMLInputElement>(
+        'input[type="file"][accept=".okpkg,.bin"]'
+      )
+    );
+    userEvent.upload(
+      firmwareInputs[6],
+      new File([new Uint8Array([1])], 'se03.okpkg')
+    );
+    userEvent.click(
+      screen.getByRole('checkbox', {
+        name: /I confirm that the device is empty/i,
+      })
+    );
+    const installButton = screen.getByRole('button', {
+      name: 'Install Firmware',
+    });
+    expect(installButton).toBeEnabled();
+
+    act(() => {
+      store.dispatch(
+        setDevice({
+          connectId: 'neo-connect-id',
+          deviceType: 'neo',
+          features: { deviceType: 'neo' },
+        } as unknown as KnownDevice)
+      );
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByText('SE03')).not.toBeInTheDocument();
+      expect(installButton).toBeDisabled();
+    });
+    userEvent.click(installButton);
+    expect(mockedFirmwareUpdateV4).not.toHaveBeenCalled();
+  });
+
+  test('renders safe Markdown without executable changelog HTML', () => {
+    store.dispatch(
+      setReleaseMap({
+        pro2: {
+          ...releaseMap.pro2,
+          'firmware-v1': [
+            {
+              ...baseProtocolV2Release,
+              changelog: {
+                'zh-CN': '',
+                'en-US': [
+                  '## Safe heading',
+                  '**Safe bold text**',
+                  '[Safe link](https://onekey.so)',
+                  '<img src=x onerror="window.__xss = true">',
+                  '<svg onload="window.__xss = true"></svg>',
+                  '<iframe srcdoc="<script>window.__xss = true</script>"></iframe>',
+                  '[Bad link](javascript:alert(1))',
+                  '[Encoded bad link](jav&#x61;script:alert(1))',
+                ].join('\n\n'),
+              },
+            },
+          ],
+        },
+      } as unknown as DeviceTypeMap)
+    );
+
+    render(
+      <Provider store={store}>
+        <IntlProvider locale="en-US" messages={LOCALES['en-US']}>
+          <Pro2ReleaseInfo />
+        </IntlProvider>
+      </Provider>
+    );
+
+    expect(
+      screen.getByRole('heading', { name: 'Safe heading' })
+    ).toBeInTheDocument();
+    expect(screen.getByText('Safe bold text').tagName).toBe('STRONG');
+    expect(screen.getByRole('link', { name: 'Safe link' })).toHaveAttribute(
+      'href',
+      'https://onekey.so'
+    );
+    expect(screen.queryByRole('link', { name: 'Bad link' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Encoded bad link' })).toBeNull();
+
+    const changelog = document.querySelector('.changelog-content');
+    expect(changelog?.querySelector('img, svg, iframe, script')).toBeNull();
+    for (const element of Array.from(changelog?.querySelectorAll('*') ?? [])) {
+      for (const attribute of Array.from(element.attributes)) {
+        expect(attribute.name).not.toMatch(/^on|^srcdoc$/i);
+        expect(attribute.value).not.toMatch(/^\s*javascript:/i);
+      }
+    }
   });
 });

@@ -63,6 +63,11 @@ const LOCAL_TARGETS: LocalTarget[] = [
 
 const formatVersion = (version?: number[]) => version?.join('.') || '-';
 
+const SAFE_MARKDOWN_OPTIONS = {
+  sanitize: true,
+  silent: true,
+} as const;
+
 const formatFileSize = (size: number) => {
   if (size < 1024) return `${size} B`;
   if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
@@ -169,7 +174,8 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
   const selectedCount =
     tab === 'remote'
       ? selectedRemoteTargets.length
-      : Object.keys(localFiles).length + (resourceArchiveFile ? 1 : 0);
+      : localTargets.filter((target) => localFiles[target.key]).length +
+        (resourceArchiveFile ? 1 : 0);
 
   const handleInstall = useCallback(async () => {
     if (!device || !confirmed || selectedCount === 0 || isUpdating) return;
@@ -310,7 +316,10 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
                     className="changelog-content mt-4 text-sm text-gray-700"
                     // eslint-disable-next-line react/no-danger
                     dangerouslySetInnerHTML={{
-                      __html: marked.parse(release.changelog[locale]),
+                      __html: marked.parse(
+                        release.changelog[locale],
+                        SAFE_MARKDOWN_OPTIONS
+                      ),
                     }}
                   />
                 )}

@@ -527,6 +527,50 @@ describe('ServiceHardware Pro2 firmware update', () => {
     });
   });
 
+  test('downloads only selected Protocol V2 Plan artifacts', async () => {
+    const fetchSpy = mockRemoteResourceDownloads();
+    const planWithUnselectedArtifact = {
+      ...firmwareUpdatePlan,
+      targetsToUpdate: ['app_v1', 'resource'],
+      artifacts: [
+        {
+          ...firmwareUpdatePlan.artifacts[0],
+          artifactId: 'component:app_v1',
+          target: 'app_v1',
+          url: 'https://example.com/application-p1.okpkg',
+        },
+        ...firmwareUpdatePlan.artifacts,
+      ],
+    } as FirmwareUpdatePlan;
+    const checkAllFirmwareRelease = jest.fn().mockResolvedValue({
+      success: true,
+      payload: { firmwareUpdatePlan: planWithUnselectedArtifact },
+    });
+    const firmwareUpdateV4 = jest.fn().mockResolvedValue({
+      success: true,
+      payload: {},
+    });
+    mockedGetHardwareSDKInstance.mockResolvedValue({
+      checkAllFirmwareRelease,
+      firmwareUpdateV4,
+      on: jest.fn(),
+    } as unknown as CoreApi);
+
+    await serviceHardware.firmwareUpdateV4({
+      platform: 'web',
+      targetsToUpdate: ['resource'],
+    });
+
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(fetchSpy).toHaveBeenCalledWith(archiveUrl);
+    expect(firmwareUpdateV4).toHaveBeenCalledWith('pro2-connect-id', {
+      platform: 'web',
+      targetsToUpdate: ['resource'],
+      resourceArchiveBinary,
+      forcedUpdateRes: true,
+    });
+  });
+
   test('uses a selected local resource ZIP without a remote Plan', async () => {
     const fetchSpy = jest
       .spyOn(global, 'fetch')
