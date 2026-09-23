@@ -105,16 +105,22 @@ describe('Pro2ReleaseInfo startup resources', () => {
     );
 
     const customizeButton = screen.getByRole('button', {
-      name: 'Hide details',
+      name: 'Show details',
     });
     expect(screen.queryByText('New version')).not.toBeInTheDocument();
-    expect(customizeButton).toHaveAttribute('aria-expanded', 'true');
+    expect(customizeButton).toHaveAttribute('aria-expanded', 'false');
     expect(screen.getByText('1/1')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('checkbox', { name: /^Resources\b/i })
+    ).not.toBeInTheDocument();
+    userEvent.click(customizeButton);
+
+    expect(customizeButton).toHaveAttribute('aria-expanded', 'true');
     const resources = screen.getByRole('checkbox', { name: /^Resources\b/i });
     expect(resources).toBeChecked();
     expect(
-      screen.getByText(/download and install the latest compatible signed/i)
-    ).toBeInTheDocument();
+      screen.queryByText(/download and install the latest compatible signed/i)
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByText(/not installed by default/i)
     ).not.toBeInTheDocument();
@@ -229,6 +235,7 @@ describe('Pro2ReleaseInfo startup resources', () => {
       )
     ).toBeInTheDocument();
     expect(screen.getByText('9/9')).toBeInTheDocument();
+    userEvent.click(screen.getByRole('button', { name: 'Show details' }));
     for (const label of ['SE01', 'SE02', 'SE03', 'SE04']) {
       expect(
         screen.getByRole('checkbox', { name: new RegExp(`^${label}\\b`) })
@@ -301,6 +308,7 @@ describe('Pro2ReleaseInfo startup resources', () => {
       </Provider>
     );
 
+    userEvent.click(screen.getByRole('button', { name: 'Show details' }));
     expect(
       screen.getByRole('checkbox', { name: /^APP P1\b/ }).closest('label')
     ).toHaveTextContent('0.9.0→1.0.0');
@@ -345,6 +353,7 @@ describe('Pro2ReleaseInfo startup resources', () => {
       </Provider>
     );
 
+    userEvent.click(screen.getByRole('button', { name: 'Show details' }));
     expect(
       screen.getByRole('checkbox', {
         name: /^Resources\b/i,

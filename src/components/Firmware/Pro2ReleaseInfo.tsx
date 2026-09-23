@@ -128,7 +128,7 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
   }, [locale, release]);
   const [tab, setTab] = useState<Pro2Tab>('remote');
   const [isReleaseNotesOpen, setIsReleaseNotesOpen] = useState(false);
-  const [isComponentListOpen, setIsComponentListOpen] = useState(true);
+  const [isComponentListOpen, setIsComponentListOpen] = useState(false);
   const [selectedRemoteTargets, setSelectedRemoteTargets] = useState<
     FirmwareUpdateV4Target[]
   >([]);
@@ -334,10 +334,10 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
                     safeOS {formatVersion(release.version)}
                   </h2>
                   {releaseNotes ? (
-                    <div className="mt-4 overflow-hidden rounded-lg border border-gray-200">
+                    <div className="mt-4 overflow-hidden rounded-lg bg-gray-50">
                       <button
                         type="button"
-                        className="flex w-full items-center justify-between gap-4 px-4 py-3 text-left text-sm font-semibold text-gray-900 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500"
+                        className="flex w-full items-center justify-between gap-4 px-4 py-3 text-left text-sm font-semibold text-gray-700 hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500"
                         aria-expanded={isReleaseNotesOpen}
                         aria-controls="pro2-release-notes"
                         onClick={() =>
@@ -347,7 +347,7 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
                         {intl.formatMessage({ id: 'TR_CHANGE_LOG' })}
                         <ChevronDownIcon
                           aria-hidden="true"
-                          className={`h-4 w-4 text-gray-500 transition-transform motion-reduce:transition-none ${
+                          className={`h-4 w-4 text-gray-400 transition-transform motion-reduce:transition-none ${
                             isReleaseNotesOpen ? 'rotate-180' : ''
                           }`}
                         />
@@ -392,11 +392,6 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
                       }
                     )}
                   </div>
-                  <p className="mt-4 max-w-2xl text-sm leading-6 text-gray-600">
-                    {intl.formatMessage({
-                      id: 'TR_PRO2_FIRMWARE_UPDATE_DESC',
-                    })}
-                  </p>
                 </div>
               </div>
 
