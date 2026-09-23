@@ -8,7 +8,9 @@ import { Button, Alert, Link } from '@onekeyfe/ui-components';
 import {
   getDeviceType,
   KnownDevice,
+  getDeviceBLEFirmwareVersion,
   getDeviceBootloaderVersion,
+  getDeviceFirmwareVersion,
 } from '@onekeyfe/hd-core';
 import { serviceHardware } from '@/hardware';
 import { setDevice, setPageStatus } from '@/store/reducers/runtime';
@@ -21,9 +23,36 @@ import BootloaderTips from './BootloaderTips';
 import ProgressBar from './ProgressBar';
 import V3FirmwareConfirmUpdate from './V3FirmwareConfirmUpdate';
 import V3ReleaseInfo from './V3ReleaseInfo';
+import Pro2ReleaseInfo from './Pro2ReleaseInfo';
 
 let timer: ReturnType<typeof setInterval>;
 let isPollingUpdateDevice = false;
+
+type DeviceIdentity = {
+  path?: string | null;
+  connectId?: string | null;
+  serialNo?: string | null;
+  uuid?: string | null;
+};
+
+export const findConnectedDevice = (
+  devices: DeviceIdentity[],
+  currentDevice?: DeviceIdentity | null
+) => {
+  const currentSerialNo = currentDevice?.serialNo || currentDevice?.uuid;
+  if (currentSerialNo) {
+    return devices.find(
+      (candidate) => (candidate.serialNo || candidate.uuid) === currentSerialNo
+    );
+  }
+
+  const currentPath = currentDevice?.path ?? currentDevice?.connectId;
+  if (!currentPath) return undefined;
+  return devices.find(
+    (candidate) =>
+      candidate.path === currentPath || candidate.connectId === currentPath
+  );
+};
 
 const DeviceEventAlert: FC = () => {
   const intl = useIntl();
@@ -101,6 +130,9 @@ const Description: FC<{ text: string; value: any }> = ({ text, value }) => (
     <span>{value}</span>
   </div>
 );
+
+const formatDeviceVersion = (version: number[]) =>
+  version.some((part) => part !== 0) ? version.join('.') : '-';
 
 const BootloaderStatusAlert: FC = () => {
   const intl = useIntl();
@@ -311,6 +343,38 @@ export default function Firmware() {
   const installType = useSelector((s: RootState) => s.runtime.installType);
   const [deviceType, setDeviceType] = useState('');
   const tabType = useSelector((state: RootState) => state.runtime.currentTab);
+  const currentBootloaderVersion = getDeviceBootloaderVersion(device?.features);
+  const currentBootloaderVersionKey = currentBootloaderVersion.join('.');
+  const [displayBootloaderVersion, setDisplayBootloaderVersion] = useState(
+    currentBootloaderVersion
+  );
+
+  useEffect(() => {
+    let disposed = false;
+    setDisplayBootloaderVersion(currentBootloaderVersion);
+    if (!device || currentBootloaderVersion.some((part) => part !== 0)) {
+      return undefined;
+    }
+
+    serviceHardware
+      .resolveBootloaderVersion(device)
+      .then((version) => {
+        if (!disposed) setDisplayBootloaderVersion(version);
+      })
+      .catch(() => undefined);
+
+    return () => {
+      disposed = true;
+    };
+    // Re-read only when the physical device or its reported version changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    device?.connectId,
+    device?.path,
+    device?.serialNo,
+    device?.uuid,
+    currentBootloaderVersionKey,
+  ]);
 
   const [isMiniAndNotInBootloader, setIsMiniAndNotInBootloader] =
     useState(false);
@@ -330,19 +394,9 @@ export default function Firmware() {
       if (!response.success) {
         return;
       }
-      if (response.payload.length > 0) {
-        if (!device) {
-          dispatch(setDevice(response.payload?.[0] as KnownDevice));
-        } else {
-          const existDevice = response.payload.find(
-            (d) => (d as any).path === device.path
-          );
-          if (existDevice) {
-            dispatch(setDevice(existDevice as KnownDevice));
-          } else {
-            dispatch(setDevice(response.payload?.[0] as KnownDevice));
-          }
-        }
+      if (response.payload.length > 0 && device) {
+        const existDevice = findConnectedDevice(response.payload, device);
+        dispatch(setDevice((existDevice as KnownDevice) ?? null));
       }
     }, 5000);
     isPollingUpdateDevice = true;
@@ -368,6 +422,12 @@ export default function Firmware() {
         break;
       case 'pro':
         typeFlag = 'OneKey Pro';
+        break;
+      case 'pro2':
+        typeFlag = 'OneKey Pro 2';
+        break;
+      case 'neo':
+        typeFlag = 'OneKey Neo';
         break;
       case 'unknown':
         typeFlag = 'Unknown';
@@ -397,6 +457,11 @@ export default function Firmware() {
 
   // Check if we're in V3 mode
   const isV3Update = tabType === 'v3-remote' || tabType === 'v3-local';
+  const currentDeviceType =
+    device?.deviceType ?? getDeviceType(device?.features);
+  const isProtocolV2FirmwareDevice =
+    device?.connectProtocol === 'V2' &&
+    ['pro2', 'neo'].includes(currentDeviceType);
 
   const isV3Compatible = () => {
     if (!device?.features) return false;
@@ -435,19 +500,23 @@ export default function Firmware() {
                 text={intl.formatMessage({
                   id: 'TR_FIRMWARE_BOOTLOADER_VERSION',
                 })}
-                value={device?.features.bootloader_version ?? '-'}
+                value={formatDeviceVersion(displayBootloaderVersion)}
               />
               <Description
                 text={intl.formatMessage({
                   id: 'TR_FIRMWARE_VERSION',
                 })}
-                value={device?.features.onekey_version ?? '-'}
+                value={formatDeviceVersion(
+                  getDeviceFirmwareVersion(device?.features)
+                )}
               />
               <Description
                 text={intl.formatMessage({
                   id: 'TR_BLUETOOTH_FIRMWARE_VERSION',
                 })}
-                value={device?.features.ble_ver ?? '-'}
+                value={formatDeviceVersion(
+                  getDeviceBLEFirmwareVersion(device?.features)
+                )}
               />
               <Description
                 text={intl.formatMessage({
@@ -509,10 +578,25 @@ export default function Firmware() {
               />
             </div>
           )}
-          {isV3Compatible() ? <V3ReleaseInfo /> : <ReleaseInfo />}
+          {isProtocolV2FirmwareDevice ? (
+            <Pro2ReleaseInfo
+              key={`${currentDeviceType}:${
+                device?.serialNo || device?.uuid || ''
+              }:${device?.connectId ?? ''}:${device?.path ?? ''}`}
+              clearTimer={clearTimer}
+            />
+          ) : isV3Compatible() ? (
+            <V3ReleaseInfo />
+          ) : (
+            <ReleaseInfo />
+          )}
           {(() => {
             if (isMiniAndNotInBootloader) {
               return <BootloaderTips />;
+            }
+
+            if (isProtocolV2FirmwareDevice) {
+              return null;
             }
 
             if (isV3Update && isV3Compatible()) {

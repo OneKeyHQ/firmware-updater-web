@@ -4,6 +4,7 @@ type InitialState = {
   progress: number;
   maxProgress: number;
   updateTip: string;
+  useSdkProgress: boolean;
   showFirmwareUpdate: boolean;
   showPinAlert: boolean;
   showButtonAlert: boolean;
@@ -18,6 +19,7 @@ const initialState: InitialState = {
   progress: 0,
   maxProgress: 0,
   updateTip: '',
+  useSdkProgress: false,
   showFirmwareUpdate: false,
   showPinAlert: false,
   showButtonAlert: false,
@@ -33,7 +35,20 @@ export const firmwareSlice = createSlice({
   initialState,
   reducers: {
     setProgress(state, action: PayloadAction<InitialState['progress']>) {
-      state.progress = action.payload;
+      if (action.payload === 0) {
+        state.progress = 0;
+        state.useSdkProgress = false;
+        return;
+      }
+      if (action.payload > state.progress) {
+        state.progress = action.payload;
+      }
+    },
+    setUseSdkProgress(
+      state,
+      action: PayloadAction<InitialState['useSdkProgress']>
+    ) {
+      state.useSdkProgress = action.payload;
     },
     setMaxProgress(state, action: PayloadAction<InitialState['maxProgress']>) {
       state.maxProgress = action.payload;
@@ -81,6 +96,7 @@ export const firmwareSlice = createSlice({
 
 export const {
   setProgress,
+  setUseSdkProgress,
   setMaxProgress,
   setUpdateTip,
   setShowPinAlert,
