@@ -105,17 +105,11 @@ describe('Pro2ReleaseInfo startup resources', () => {
     );
 
     const customizeButton = screen.getByRole('button', {
-      name: 'Show details',
+      name: 'Hide details',
     });
     expect(screen.queryByText('New version')).not.toBeInTheDocument();
-    expect(customizeButton).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.getByText('1/1')).toBeInTheDocument();
-    expect(
-      screen.queryByRole('checkbox', { name: /^Resources\b/i })
-    ).not.toBeInTheDocument();
-    userEvent.click(customizeButton);
-
     expect(customizeButton).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByText('1/1')).toBeInTheDocument();
     const resources = screen.getByRole('checkbox', { name: /^Resources\b/i });
     expect(resources).toBeChecked();
     expect(
@@ -235,7 +229,6 @@ describe('Pro2ReleaseInfo startup resources', () => {
       )
     ).toBeInTheDocument();
     expect(screen.getByText('9/9')).toBeInTheDocument();
-    userEvent.click(screen.getByRole('button', { name: 'Show details' }));
     for (const label of ['SE01', 'SE02', 'SE03', 'SE04']) {
       expect(
         screen.getByRole('checkbox', { name: new RegExp(`^${label}\\b`) })
@@ -269,6 +262,48 @@ describe('Pro2ReleaseInfo startup resources', () => {
       });
       expect(installButton).toBeEnabled();
     });
+  });
+
+  test('shows current and target component versions', () => {
+    store.dispatch(
+      setReleaseMap({
+        pro2: {
+          ...releaseMap.pro2,
+          'firmware-v1': [
+            {
+              ...baseProtocolV2Release,
+              components: protocolV2Components,
+              installOrder: protocolV2InstallOrder,
+            },
+          ],
+        },
+      } as unknown as DeviceTypeMap)
+    );
+    store.dispatch(
+      setDevice({
+        connectId: 'pro2-connect-id',
+        deviceType: 'pro2',
+        features: {
+          deviceType: 'pro2',
+          firmwareVersion: '0.9.0',
+          bootloaderVersion: '0.8.0',
+          bleVersion: '0.7.0',
+          se01Version: '1.1.0',
+        },
+      } as unknown as KnownDevice)
+    );
+
+    render(
+      <Provider store={store}>
+        <IntlProvider locale="en-US" messages={LOCALES['en-US']}>
+          <Pro2ReleaseInfo />
+        </IntlProvider>
+      </Provider>
+    );
+
+    expect(
+      screen.getByRole('checkbox', { name: /^APP P1\b/ }).closest('label')
+    ).toHaveTextContent('0.9.0→1.0.0');
   });
 
   test('uses the Neo release and resource configuration for a Neo device', () => {
@@ -310,7 +345,6 @@ describe('Pro2ReleaseInfo startup resources', () => {
       </Provider>
     );
 
-    userEvent.click(screen.getByRole('button', { name: 'Show details' }));
     expect(
       screen.getByRole('checkbox', {
         name: /^Resources\b/i,
@@ -432,6 +466,15 @@ describe('Pro2ReleaseInfo startup resources', () => {
       </Provider>
     );
 
+    const changelogButton = screen.getByRole('button', {
+      name: /^changelog$/i,
+    });
+    expect(changelogButton).toHaveAttribute('aria-expanded', 'false');
+    expect(
+      screen.getByRole('heading', { name: 'Safe heading', hidden: true })
+    ).not.toBeVisible();
+    userEvent.click(changelogButton);
+
     expect(
       screen.getByRole('heading', { name: 'Safe heading' })
     ).toBeInTheDocument();
@@ -480,7 +523,9 @@ describe('Pro2ReleaseInfo startup resources', () => {
       </Provider>
     );
 
-    expect(screen.getByText('English fallback notes')).toBeInTheDocument();
+    expect(screen.getByText('English fallback notes')).not.toBeVisible();
+    userEvent.click(screen.getByRole('button', { name: /^更新日志$/ }));
+    expect(screen.getByText('English fallback notes')).toBeVisible();
   });
 
   test('renders a version-only changelog as provided', () => {
@@ -510,6 +555,9 @@ describe('Pro2ReleaseInfo startup resources', () => {
     );
 
     expect(screen.queryByText("What's new in 1.0.0")).not.toBeInTheDocument();
+    expect(document.querySelector('.changelog-content')).not.toBeVisible();
+    userEvent.click(screen.getByRole('button', { name: /^changelog$/i }));
+    expect(document.querySelector('.changelog-content')).toBeVisible();
     expect(document.querySelector('.changelog-content')).toHaveTextContent(
       '1.0.0'
     );

@@ -4,7 +4,12 @@ import { useIntl } from 'react-intl';
 import { Alert, Button } from '@onekeyfe/ui-components';
 import { ChevronDownIcon } from '@heroicons/react/20/solid';
 import { marked } from 'marked';
-import { getDeviceType } from '@onekeyfe/hd-core';
+import {
+  getDeviceBLEFirmwareVersion,
+  getDeviceBootloaderVersion,
+  getDeviceFirmwareVersion,
+  getDeviceType,
+} from '@onekeyfe/hd-core';
 import type {
   FirmwareUpdateV4Target,
   IProtocolV2FirmwareComponentTarget,
@@ -64,6 +69,12 @@ const LOCAL_TARGETS: LocalTarget[] = [
 
 const formatVersion = (version?: number[]) => version?.join('.') || '-';
 
+const formatDetectedVersion = (version?: number[] | string | null) => {
+  if (typeof version === 'string') return version || '-';
+  if (!version?.some((part) => part !== 0)) return '-';
+  return version.join('.');
+};
+
 const SAFE_MARKDOWN_OPTIONS = {
   sanitize: true,
   silent: true,
@@ -116,7 +127,8 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
     return notes ?? '';
   }, [locale, release]);
   const [tab, setTab] = useState<Pro2Tab>('remote');
-  const [isComponentListOpen, setIsComponentListOpen] = useState(false);
+  const [isReleaseNotesOpen, setIsReleaseNotesOpen] = useState(false);
+  const [isComponentListOpen, setIsComponentListOpen] = useState(true);
   const [selectedRemoteTargets, setSelectedRemoteTargets] = useState<
     FirmwareUpdateV4Target[]
   >([]);
@@ -126,6 +138,22 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
   const [resourceArchiveFile, setResourceArchiveFile] = useState<File>();
   const [confirmed, setConfirmed] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+
+  const currentTargetVersions = useMemo(() => {
+    const features = device?.features;
+    if (!features) return {};
+
+    return {
+      boot: formatDetectedVersion(getDeviceBootloaderVersion(features)),
+      app_v1: formatDetectedVersion(getDeviceFirmwareVersion(features)),
+      app_v2: formatDetectedVersion(getDeviceFirmwareVersion(features)),
+      coprocessor: formatDetectedVersion(getDeviceBLEFirmwareVersion(features)),
+      se01: formatDetectedVersion(features.se01Version),
+      se02: formatDetectedVersion(features.se02Version),
+      se03: formatDetectedVersion(features.se03Version),
+      se04: formatDetectedVersion(features.se04Version),
+    } as Partial<Record<FirmwareUpdateV4Target, string>>;
+  }, [device?.features]);
 
   const remoteComponents = useMemo(() => {
     if (!release?.components) return [];
@@ -301,14 +329,33 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
           {release ? (
             <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
               <div className="p-5 sm:p-6">
-                <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="min-w-0">
-                    <h2 className="text-2xl font-semibold tracking-tight text-gray-900">
-                      safeOS {formatVersion(release.version)}
-                    </h2>
-                    {releaseNotes ? (
+                <div className="min-w-0">
+                  <h2 className="text-2xl font-semibold tracking-tight text-gray-900">
+                    safeOS {formatVersion(release.version)}
+                  </h2>
+                  {releaseNotes ? (
+                    <div className="mt-4 overflow-hidden rounded-lg border border-gray-200">
+                      <button
+                        type="button"
+                        className="flex w-full items-center justify-between gap-4 px-4 py-3 text-left text-sm font-semibold text-gray-900 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500"
+                        aria-expanded={isReleaseNotesOpen}
+                        aria-controls="pro2-release-notes"
+                        onClick={() =>
+                          setIsReleaseNotesOpen((current) => !current)
+                        }
+                      >
+                        {intl.formatMessage({ id: 'TR_CHANGE_LOG' })}
+                        <ChevronDownIcon
+                          aria-hidden="true"
+                          className={`h-4 w-4 text-gray-500 transition-transform motion-reduce:transition-none ${
+                            isReleaseNotesOpen ? 'rotate-180' : ''
+                          }`}
+                        />
+                      </button>
                       <div
-                        className="changelog-content mt-3 max-w-2xl text-sm leading-6 text-gray-700"
+                        id="pro2-release-notes"
+                        hidden={!isReleaseNotesOpen}
+                        className="changelog-content border-t border-gray-200 px-4 py-3 text-sm leading-6 text-gray-700"
                         // eslint-disable-next-line react/no-danger
                         dangerouslySetInnerHTML={{
                           __html: marked.parse(
@@ -317,56 +364,39 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
                           ),
                         }}
                       />
-                    ) : (
-                      <p className="mt-3 text-sm text-gray-500">
-                        {intl.formatMessage({
-                          id: 'TR_PRO2_RELEASE_NOTES_UNAVAILABLE',
-                        })}
-                      </p>
-                    )}
-                    <div className="mt-4 text-sm text-gray-500">
-                      {remoteComponents.length}{' '}
-                      {intl.formatMessage({ id: 'TR_PRO2_COMPONENT_COUNT' })}
-                      {resourceSource?.archiveUrl && (
-                        <>
-                          {' · '}
-                          {intl.formatMessage({
-                            id: 'TR_PRO2_RESOURCE_COUNT',
-                          })}
-                        </>
-                      )}
-                      {' · '}
-                      {intl.formatMessage(
-                        { id: 'TR_PRO2_SELECTED_COMPONENT_COUNT' },
-                        {
-                          selected: selectedRemoteTargets.length,
-                          total: remoteTargets.length,
-                        }
-                      )}
                     </div>
-                    <p className="mt-4 max-w-2xl text-sm leading-6 text-gray-600">
+                  ) : (
+                    <p className="mt-3 text-sm text-gray-500">
                       {intl.formatMessage({
-                        id: 'TR_PRO2_FIRMWARE_UPDATE_DESC',
+                        id: 'TR_PRO2_RELEASE_NOTES_UNAVAILABLE',
                       })}
                     </p>
-                  </div>
-                  <div className="w-full shrink-0 sm:w-48">
-                    <Button
-                      block
-                      type="primary"
-                      size="xl"
-                      loading={isUpdating}
-                      disabled={
-                        !device ||
-                        !confirmed ||
-                        selectedCount === 0 ||
-                        isUpdating
+                  )}
+                  <div className="mt-4 text-sm text-gray-500">
+                    {remoteComponents.length}{' '}
+                    {intl.formatMessage({ id: 'TR_PRO2_COMPONENT_COUNT' })}
+                    {resourceSource?.archiveUrl && (
+                      <>
+                        {' · '}
+                        {intl.formatMessage({
+                          id: 'TR_PRO2_RESOURCE_COUNT',
+                        })}
+                      </>
+                    )}
+                    {' · '}
+                    {intl.formatMessage(
+                      { id: 'TR_PRO2_SELECTED_COMPONENT_COUNT' },
+                      {
+                        selected: selectedRemoteTargets.length,
+                        total: remoteTargets.length,
                       }
-                      onClick={handleInstall}
-                    >
-                      {intl.formatMessage({ id: 'TR_PRO2_UPDATE_DEVICE' })}
-                    </Button>
+                    )}
                   </div>
+                  <p className="mt-4 max-w-2xl text-sm leading-6 text-gray-600">
+                    {intl.formatMessage({
+                      id: 'TR_PRO2_FIRMWARE_UPDATE_DESC',
+                    })}
+                  </p>
                 </div>
               </div>
 
@@ -436,7 +466,7 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
                   ].map((component) => (
                     <label
                       key={component.key}
-                      className="flex cursor-pointer items-center justify-between border-t border-gray-100 px-5 py-3 hover:bg-gray-50 sm:px-6"
+                      className="flex cursor-pointer items-center justify-between gap-4 border-t border-gray-100 px-5 py-3 hover:bg-gray-50 sm:px-6"
                     >
                       <div className="flex items-center gap-3">
                         <input
@@ -451,8 +481,16 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
                           {component.label}
                         </span>
                       </div>
-                      <span className="text-sm text-gray-500">
-                        {formatVersion(component.version)}
+                      <span className="flex shrink-0 items-center gap-3 text-sm tabular-nums">
+                        <span className="text-gray-400">
+                          {currentTargetVersions[component.target] ?? '-'}
+                        </span>
+                        <span aria-hidden="true" className="text-gray-300">
+                          →
+                        </span>
+                        <span className="font-medium text-gray-900">
+                          {formatVersion(component.version)}
+                        </span>
                       </span>
                     </label>
                   ))}
@@ -471,6 +509,20 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
                     {intl.formatMessage({ id: 'TR_FIRMWARE_USER_ENSURE' })}
                   </span>
                 </label>
+                <div className="mt-3">
+                  <Button
+                    block
+                    type="primary"
+                    size="xl"
+                    loading={isUpdating}
+                    disabled={
+                      !device || !confirmed || selectedCount === 0 || isUpdating
+                    }
+                    onClick={handleInstall}
+                  >
+                    {intl.formatMessage({ id: 'TR_PRO2_UPDATE_DEVICE' })}
+                  </Button>
+                </div>
               </div>
             </div>
           ) : (
