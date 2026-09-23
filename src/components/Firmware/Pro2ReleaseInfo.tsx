@@ -333,45 +333,6 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
                   <h2 className="text-2xl font-semibold tracking-tight text-gray-900">
                     safeOS {formatVersion(release.version)}
                   </h2>
-                  {releaseNotes ? (
-                    <div className="mt-4 overflow-hidden rounded-lg bg-gray-50">
-                      <button
-                        type="button"
-                        className="flex w-full items-center justify-between gap-4 px-4 py-3 text-left text-sm font-semibold text-gray-700 hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500"
-                        aria-expanded={isReleaseNotesOpen}
-                        aria-controls="pro2-release-notes"
-                        onClick={() =>
-                          setIsReleaseNotesOpen((current) => !current)
-                        }
-                      >
-                        {intl.formatMessage({ id: 'TR_CHANGE_LOG' })}
-                        <ChevronDownIcon
-                          aria-hidden="true"
-                          className={`h-4 w-4 text-gray-400 transition-transform motion-reduce:transition-none ${
-                            isReleaseNotesOpen ? 'rotate-180' : ''
-                          }`}
-                        />
-                      </button>
-                      <div
-                        id="pro2-release-notes"
-                        hidden={!isReleaseNotesOpen}
-                        className="changelog-content border-t border-gray-200 px-4 py-3 text-sm leading-6 text-gray-700"
-                        // eslint-disable-next-line react/no-danger
-                        dangerouslySetInnerHTML={{
-                          __html: marked.parse(
-                            releaseNotes,
-                            SAFE_MARKDOWN_OPTIONS
-                          ),
-                        }}
-                      />
-                    </div>
-                  ) : (
-                    <p className="mt-3 text-sm text-gray-500">
-                      {intl.formatMessage({
-                        id: 'TR_PRO2_RELEASE_NOTES_UNAVAILABLE',
-                      })}
-                    </p>
-                  )}
                   <div className="mt-4 text-sm text-gray-500">
                     {remoteComponents.length}{' '}
                     {intl.formatMessage({ id: 'TR_PRO2_COMPONENT_COUNT' })}
@@ -491,6 +452,41 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
                   ))}
                 </div>
               </div>
+
+              {releaseNotes ? (
+                <div className="border-t border-gray-200">
+                  <button
+                    type="button"
+                    className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left text-sm font-semibold text-brand-600 hover:bg-brand-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500 sm:px-6"
+                    aria-expanded={isReleaseNotesOpen}
+                    aria-controls="pro2-release-notes"
+                    onClick={() => setIsReleaseNotesOpen((current) => !current)}
+                  >
+                    {intl.formatMessage({ id: 'TR_CHANGE_LOG' })}
+                    <ChevronDownIcon
+                      aria-hidden="true"
+                      className={`h-4 w-4 transition-transform motion-reduce:transition-none ${
+                        isReleaseNotesOpen ? 'rotate-180' : ''
+                      }`}
+                    />
+                  </button>
+                  <div
+                    id="pro2-release-notes"
+                    hidden={!isReleaseNotesOpen}
+                    className="changelog-content border-t border-gray-100 bg-gray-50 px-5 py-4 text-sm leading-6 text-gray-700 sm:px-6"
+                    // eslint-disable-next-line react/no-danger
+                    dangerouslySetInnerHTML={{
+                      __html: marked.parse(releaseNotes, SAFE_MARKDOWN_OPTIONS),
+                    }}
+                  />
+                </div>
+              ) : (
+                <p className="border-t border-gray-200 px-5 py-4 text-sm text-gray-500 sm:px-6">
+                  {intl.formatMessage({
+                    id: 'TR_PRO2_RELEASE_NOTES_UNAVAILABLE',
+                  })}
+                </p>
+              )}
 
               <div className="border-t border-gray-200 bg-gray-50 px-5 py-5 sm:px-6">
                 <label className="flex items-start gap-3 text-sm text-gray-700">
