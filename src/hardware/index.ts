@@ -69,6 +69,10 @@ export type FirmwareUpdateV4Request = Pick<
   localResourceArchiveBinary?: ArrayBuffer;
 };
 
+export type SecureElementFirmwareVersions = Partial<
+  Record<'se01' | 'se02' | 'se03' | 'se04', string | null>
+>;
+
 type UsbDeviceRequestFilter = {
   vendorId?: number;
   productId?: number;
@@ -397,6 +401,45 @@ class ServiceHardware {
     const response = await hardwareSDK?.getFeatures(connectId);
 
     return response;
+  }
+
+  async resolveSecureElementVersions(
+    device: KnownDevice
+  ): Promise<SecureElementFirmwareVersions> {
+    const currentVersions = {
+      se01: device.features?.se01Version,
+      se02: device.features?.se02Version,
+      se03: device.features?.se03Version,
+      se04: device.features?.se04Version,
+    };
+    const connectId = device.connectId ?? device.path;
+    if (!connectId) return currentVersions;
+
+    const connectProtocol =
+      device.connectProtocol ??
+      (device.features?.protocol === 'V1' || device.features?.protocol === 'V2'
+        ? device.features.protocol
+        : undefined);
+
+    try {
+      const hardwareSDK = await this.getSDKInstance();
+      const response = await hardwareSDK.getDeviceState(connectId, {
+        scope: 'firmware',
+        ...(connectProtocol ? { connectProtocol } : {}),
+      });
+      if (response.success) {
+        return {
+          se01: response.payload.versions.se01,
+          se02: response.payload.versions.se02,
+          se03: response.payload.versions.se03,
+          se04: response.payload.versions.se04,
+        };
+      }
+    } catch {
+      // Keep the versions already reported during device discovery.
+    }
+
+    return currentVersions;
   }
 
   async resolveBootloaderVersion(device: KnownDevice) {

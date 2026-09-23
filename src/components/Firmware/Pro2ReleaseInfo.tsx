@@ -16,7 +16,10 @@ import type {
 } from '@onekeyfe/hd-core';
 import { RootState } from '@/store';
 import { serviceHardware } from '@/hardware';
-import type { FirmwareUpdateV4Request } from '@/hardware';
+import type {
+  FirmwareUpdateV4Request,
+  SecureElementFirmwareVersions,
+} from '@/hardware';
 
 type Pro2Tab = 'remote' | 'local';
 type Pro2BinaryField =
@@ -138,6 +141,26 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
   const [resourceArchiveFile, setResourceArchiveFile] = useState<File>();
   const [confirmed, setConfirmed] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [secureElementVersions, setSecureElementVersions] =
+    useState<SecureElementFirmwareVersions>({});
+
+  useEffect(() => {
+    let disposed = false;
+    setSecureElementVersions({});
+    if (!device) return undefined;
+
+    serviceHardware.resolveSecureElementVersions(device).then((versions) => {
+      if (!disposed && Object.values(versions).some(Boolean)) {
+        setSecureElementVersions(versions);
+      }
+    });
+
+    return () => {
+      disposed = true;
+    };
+    // Re-read only when the physical device changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [device?.connectId, device?.path, device?.serialNo, device?.uuid]);
 
   const currentTargetVersions = useMemo(() => {
     const features = device?.features;
@@ -148,12 +171,20 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
       app_v1: formatDetectedVersion(getDeviceFirmwareVersion(features)),
       app_v2: formatDetectedVersion(getDeviceFirmwareVersion(features)),
       coprocessor: formatDetectedVersion(getDeviceBLEFirmwareVersion(features)),
-      se01: formatDetectedVersion(features.se01Version),
-      se02: formatDetectedVersion(features.se02Version),
-      se03: formatDetectedVersion(features.se03Version),
-      se04: formatDetectedVersion(features.se04Version),
+      se01: formatDetectedVersion(
+        secureElementVersions.se01 ?? features.se01Version
+      ),
+      se02: formatDetectedVersion(
+        secureElementVersions.se02 ?? features.se02Version
+      ),
+      se03: formatDetectedVersion(
+        secureElementVersions.se03 ?? features.se03Version
+      ),
+      se04: formatDetectedVersion(
+        secureElementVersions.se04 ?? features.se04Version
+      ),
     } as Partial<Record<FirmwareUpdateV4Target, string>>;
-  }, [device?.features]);
+  }, [device?.features, secureElementVersions]);
 
   const remoteComponents = useMemo(() => {
     if (!release?.components) return [];
@@ -511,9 +542,9 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
                     {intl.formatMessage({ id: 'TR_FIRMWARE_USER_ENSURE' })}
                   </span>
                 </label>
-                <div className="mt-3">
+                <div className="mt-3 flex justify-center">
                   <Button
-                    block
+                    className="w-full sm:w-1/2"
                     type="primary"
                     size="xl"
                     loading={isUpdating}

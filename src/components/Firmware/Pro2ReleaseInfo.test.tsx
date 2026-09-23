@@ -15,17 +15,23 @@ jest.mock('@onekeyfe/ui-components', () => ({
   Alert: () => null,
   Button: ({
     children,
+    className,
     disabled,
     onClick,
   }: React.ButtonHTMLAttributes<HTMLButtonElement>) =>
     jest
       .requireActual('react')
-      .createElement('button', { type: 'button', disabled, onClick }, children),
+      .createElement(
+        'button',
+        { type: 'button', className, disabled, onClick },
+        children
+      ),
 }));
 
 jest.mock('@/hardware', () => ({
   serviceHardware: {
     firmwareUpdateV4: jest.fn(),
+    resolveSecureElementVersions: jest.fn(),
   },
 }));
 
@@ -33,6 +39,11 @@ const mockedFirmwareUpdateV4 =
   // eslint-disable-next-line @typescript-eslint/unbound-method
   serviceHardware.firmwareUpdateV4 as jest.MockedFunction<
     typeof serviceHardware.firmwareUpdateV4
+  >;
+const mockedResolveSecureElementVersions =
+  // eslint-disable-next-line @typescript-eslint/unbound-method
+  serviceHardware.resolveSecureElementVersions as jest.MockedFunction<
+    typeof serviceHardware.resolveSecureElementVersions
   >;
 
 const protocolV2Components = {
@@ -78,6 +89,7 @@ describe('Pro2ReleaseInfo startup resources', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockedFirmwareUpdateV4.mockResolvedValue(undefined);
+    mockedResolveSecureElementVersions.mockResolvedValue({});
     store.dispatch(setLocale('en-US'));
     store.dispatch(setReleaseMap(releaseMap));
     store.dispatch(
@@ -107,6 +119,10 @@ describe('Pro2ReleaseInfo startup resources', () => {
     const customizeButton = screen.getByRole('button', {
       name: /Select components to install.*Show details/i,
     });
+    expect(screen.getByRole('button', { name: 'Update device' })).toHaveClass(
+      'w-full',
+      'sm:w-1/2'
+    );
     expect(screen.queryByText('New version')).not.toBeInTheDocument();
     expect(customizeButton).toHaveAttribute('aria-expanded', 'false');
     expect(screen.getByText('1/1')).toBeInTheDocument();
@@ -320,6 +336,52 @@ describe('Pro2ReleaseInfo startup resources', () => {
     expect(
       screen.getByRole('checkbox', { name: /^APP P1\b/ }).closest('label')
     ).toHaveTextContent('0.9.0→1.0.0');
+  });
+
+  test('loads secure element versions from the firmware device state', async () => {
+    mockedResolveSecureElementVersions.mockResolvedValue({
+      se01: '1.1.0',
+      se02: '1.1.1',
+      se03: '1.1.2',
+      se04: '1.1.3',
+    });
+    store.dispatch(
+      setReleaseMap({
+        pro2: {
+          ...releaseMap.pro2,
+          'firmware-v1': [
+            {
+              ...baseProtocolV2Release,
+              components: protocolV2Components,
+              installOrder: protocolV2InstallOrder,
+            },
+          ],
+        },
+      } as unknown as DeviceTypeMap)
+    );
+
+    render(
+      <Provider store={store}>
+        <IntlProvider locale="en-US" messages={LOCALES['en-US']}>
+          <Pro2ReleaseInfo />
+        </IntlProvider>
+      </Provider>
+    );
+
+    userEvent.click(
+      screen.getByRole('button', {
+        name: /Select components to install.*Show details/i,
+      })
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('checkbox', { name: /^SE04\b/ }).closest('label')
+      ).toHaveTextContent('1.1.3→1.1.7');
+    });
+    expect(mockedResolveSecureElementVersions).toHaveBeenCalledWith(
+      expect.objectContaining({ connectId: 'pro2-connect-id' })
+    );
   });
 
   test('uses the Neo release and resource configuration for a Neo device', () => {

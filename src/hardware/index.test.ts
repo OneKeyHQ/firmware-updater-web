@@ -271,6 +271,37 @@ describe('ServiceHardware Pro2 firmware update', () => {
     expect(mockedGetHardwareSDKInstance).not.toHaveBeenCalled();
   });
 
+  test('reads secure element versions from the firmware device state', async () => {
+    const getDeviceState = jest.fn().mockResolvedValue({
+      success: true,
+      payload: {
+        versions: {
+          se01: '1.1.0',
+          se02: '1.1.1',
+          se03: '1.1.2',
+          se04: '1.1.3',
+        },
+      },
+    });
+    mockedGetHardwareSDKInstance.mockResolvedValue({
+      getDeviceState,
+      on: jest.fn(),
+    } as unknown as CoreApi);
+
+    await expect(
+      serviceHardware.resolveSecureElementVersions(pro2Device)
+    ).resolves.toEqual({
+      se01: '1.1.0',
+      se02: '1.1.1',
+      se03: '1.1.2',
+      se04: '1.1.3',
+    });
+    expect(getDeviceState).toHaveBeenCalledWith('pro2-connect-id', {
+      scope: 'firmware',
+      connectProtocol: 'V2',
+    });
+  });
+
   test('does not scan indistinguishable authorized USB devices', async () => {
     const firstDevice = {
       vendorId: 0x1209,
