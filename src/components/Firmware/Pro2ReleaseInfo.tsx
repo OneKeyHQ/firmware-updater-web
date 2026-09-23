@@ -357,24 +357,22 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
               </div>
 
               <div className="border-t border-gray-200">
-                <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 sm:px-6">
-                  <div className="flex items-center gap-3">
-                    <h3 className="text-sm font-semibold text-gray-900 sm:text-base">
+                <button
+                  type="button"
+                  className="flex w-full flex-wrap items-center justify-between gap-3 px-5 py-4 text-left hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500 sm:px-6"
+                  aria-expanded={isComponentListOpen}
+                  aria-controls="pro2-component-list"
+                  onClick={() => setIsComponentListOpen((current) => !current)}
+                >
+                  <span className="flex items-center gap-3">
+                    <span className="text-sm font-semibold text-gray-900 sm:text-base">
                       {intl.formatMessage({ id: 'TR_PRO2_SELECT_COMPONENTS' })}
-                    </h3>
+                    </span>
                     <span className="rounded-full bg-brand-50 px-2 py-0.5 text-xs font-semibold text-brand-700">
                       {selectedRemoteTargets.length}/{remoteTargets.length}
                     </span>
-                  </div>
-                  <button
-                    type="button"
-                    className="flex items-center gap-1 rounded-md px-2 py-1 text-sm font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
-                    aria-expanded={isComponentListOpen}
-                    aria-controls="pro2-component-list"
-                    onClick={() =>
-                      setIsComponentListOpen((current) => !current)
-                    }
-                  >
+                  </span>
+                  <span className="flex items-center gap-1 text-sm font-medium text-gray-500">
                     {intl.formatMessage({
                       id: isComponentListOpen
                         ? 'TR_PRO2_HIDE_COMPONENTS'
@@ -386,10 +384,14 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
                         isComponentListOpen ? 'rotate-180' : ''
                       }`}
                     />
-                  </button>
-                </div>
-                <div id="pro2-component-list" hidden={!isComponentListOpen}>
-                  <div className="flex justify-end gap-3 border-t border-gray-100 bg-gray-50 px-5 py-2 text-sm sm:px-6">
+                  </span>
+                </button>
+                <div
+                  id="pro2-component-list"
+                  hidden={!isComponentListOpen}
+                  className="border-t border-gray-100 bg-gray-50"
+                >
+                  <div className="flex justify-end gap-3 px-5 py-2 text-sm sm:px-6">
                     <button
                       type="button"
                       className="text-brand-600 hover:text-brand-500"
@@ -422,7 +424,7 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
                   ].map((component) => (
                     <label
                       key={component.key}
-                      className="flex cursor-pointer items-center justify-between gap-4 border-t border-gray-100 px-5 py-3 hover:bg-gray-50 sm:px-6"
+                      className="flex cursor-pointer items-center justify-between gap-4 border-t border-gray-100 px-5 py-3 hover:bg-gray-100 sm:px-6"
                     >
                       <div className="flex items-center gap-3">
                         <input
@@ -457,18 +459,27 @@ const Pro2ReleaseInfo: FC<Pro2ReleaseInfoProps> = ({ clearTimer }) => {
                 <div className="border-t border-gray-200">
                   <button
                     type="button"
-                    className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left text-sm font-semibold text-brand-600 hover:bg-brand-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500 sm:px-6"
+                    className="flex w-full flex-wrap items-center justify-between gap-3 px-5 py-4 text-left hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500 sm:px-6"
                     aria-expanded={isReleaseNotesOpen}
                     aria-controls="pro2-release-notes"
                     onClick={() => setIsReleaseNotesOpen((current) => !current)}
                   >
-                    {intl.formatMessage({ id: 'TR_CHANGE_LOG' })}
-                    <ChevronDownIcon
-                      aria-hidden="true"
-                      className={`h-4 w-4 transition-transform motion-reduce:transition-none ${
-                        isReleaseNotesOpen ? 'rotate-180' : ''
-                      }`}
-                    />
+                    <span className="text-sm font-semibold text-brand-600 sm:text-base">
+                      {intl.formatMessage({ id: 'TR_CHANGE_LOG' })}
+                    </span>
+                    <span className="flex items-center gap-1 text-sm font-medium text-gray-500">
+                      {intl.formatMessage({
+                        id: isReleaseNotesOpen
+                          ? 'TR_PRO2_HIDE_COMPONENTS'
+                          : 'TR_PRO2_CUSTOMIZE_COMPONENTS',
+                      })}
+                      <ChevronDownIcon
+                        aria-hidden="true"
+                        className={`h-4 w-4 transition-transform motion-reduce:transition-none ${
+                          isReleaseNotesOpen ? 'rotate-180' : ''
+                        }`}
+                      />
+                    </span>
                   </button>
                   <div
                     id="pro2-release-notes"
