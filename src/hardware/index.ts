@@ -40,6 +40,7 @@ import {
 import type { IFirmwareReleaseInfo } from '@/types';
 import { arrayBufferToBuffer, wait } from '@/utils';
 import {
+  FIRMWARE_INSTALL_PROGRESS_MAX,
   mapFirmwareUpdateProgress,
   isProBootloaderReadyForCurrentMcu,
 } from '@/utils/firmwareUpdateProgress';
@@ -197,8 +198,12 @@ class ServiceHardware {
   async getSDKInstance() {
     return getHardwareSDKInstance().then((instance) => {
       if (!this.registeredEvents) {
+        let updatingTouchResources = false;
         instance.on(UI_EVENT, (e) => {
           const { type, payload } = e;
+          const { device } = store.getState().runtime;
+          const isTouch =
+            (device?.deviceType ?? getDeviceType(device?.features)) === 'touch';
           if (type === UI_REQUEST.REQUEST_PIN) {
             this.sendUiResponse({
               type: UI_RESPONSE.RECEIVE_PIN,
@@ -212,6 +217,7 @@ class ServiceHardware {
             store.dispatch(setShowButtonAlert(false));
           } else if (type === UI_REQUEST.FIRMWARE_TIP) {
             const { message = '' } = payload.data ?? {};
+            updatingTouchResources = isTouch && message === 'UpdateSysResource';
             switch (message) {
               case 'AutoRebootToBootloader':
                 // 5
@@ -260,6 +266,16 @@ class ServiceHardware {
                   setUpdateTip(formatMessage({ id: 'TR_ERASE_SUCCESS' }) ?? '')
                 );
                 break;
+              case 'InstallingFirmware':
+                if (isTouch) {
+                  // Touch reports transfer progress but not installation progress.
+                  store.dispatch(setMaxProgress(FIRMWARE_INSTALL_PROGRESS_MAX));
+                  store.dispatch(setUseSdkProgress(false));
+                  store.dispatch(
+                    setUpdateTip(formatMessage({ id: 'TR_INSTALLING' }) ?? '')
+                  );
+                }
+                break;
               default:
                 break;
             }
@@ -282,6 +298,25 @@ class ServiceHardware {
               store.dispatch(setShowButtonAlert(false));
             }
             const { progress: payloadProgress, progressType } = payload;
+            if (
+              updatingTouchResources &&
+              progressType === 'installingFirmware' &&
+              payloadProgress >= 0 &&
+              payloadProgress <= 100
+            ) {
+              // Resource installation precedes the Touch firmware transfer.
+              store.dispatch(setMaxProgress(25));
+              store.dispatch(
+                setProgress(
+                  Math.max(progress, Math.floor(payloadProgress * 0.25))
+                )
+              );
+              store.dispatch(setUseSdkProgress(true));
+              store.dispatch(
+                setUpdateTip(formatMessage({ id: 'TR_TRANSFER_DATA' }) ?? '')
+              );
+              return;
+            }
             const mappedProgress = mapFirmwareUpdateProgress({
               currentProgress: progress,
               payloadProgress,

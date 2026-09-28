@@ -2,7 +2,7 @@ import JSZip from 'jszip';
 import { sha256 } from '@noble/hashes/sha256';
 import { bytesToHex } from '@noble/hashes/utils';
 
-import { UI_RESPONSE } from '@onekeyfe/hd-core';
+import { UI_EVENT, UI_REQUEST, UI_RESPONSE } from '@onekeyfe/hd-core';
 import { EFirmwareType } from '@onekeyfe/hd-shared';
 import type {
   CoreApi,
@@ -11,6 +11,11 @@ import type {
 } from '@onekeyfe/hd-core';
 import type { DeviceTypeMap } from '@/types';
 import { store } from '@/store';
+import {
+  setMaxProgress,
+  setProgress,
+  setShowButtonAlert,
+} from '@/store/reducers/firmware';
 import {
   setDevice,
   setReleaseMap,
@@ -28,6 +33,118 @@ jest.mock('./instance', () => ({
 
 const mockedGetHardwareSDKInstance =
   getHardwareSDKInstance as jest.MockedFunction<typeof getHardwareSDKInstance>;
+
+describe('ServiceHardware Touch firmware progress', () => {
+  let onUiEvent: (event: {
+    type: string;
+    payload: {
+      data?: { message: string };
+      progress?: number;
+      progressType?: string;
+    };
+  }) => void;
+  let previouslyRegisteredEvents: boolean;
+
+  beforeEach(async () => {
+    previouslyRegisteredEvents = serviceHardware.registeredEvents;
+    serviceHardware.registeredEvents = false;
+    store.dispatch(
+      setDevice({ deviceType: 'touch' } as unknown as KnownDevice)
+    );
+    store.dispatch(setProgress(0));
+    store.dispatch(setMaxProgress(0));
+    store.dispatch(setShowButtonAlert(false));
+    const on = jest.fn();
+    mockedGetHardwareSDKInstance.mockResolvedValue({
+      on,
+    } as unknown as CoreApi);
+
+    await serviceHardware.getSDKInstance();
+
+    expect(on).toHaveBeenCalledWith(UI_EVENT, expect.any(Function));
+    onUiEvent = on.mock.calls[0][1];
+  });
+
+  afterEach(() => {
+    serviceHardware.registeredEvents = previouslyRegisteredEvents;
+    store.dispatch(setDevice(null));
+    store.dispatch(setProgress(0));
+    store.dispatch(setMaxProgress(0));
+    store.dispatch(setShowButtonAlert(false));
+  });
+
+  test.each([true, false])(
+    'continues transfer and simulated install after resources (resource update: %s)',
+    (updatesResources) => {
+      if (updatesResources) {
+        onUiEvent({
+          type: UI_REQUEST.FIRMWARE_TIP,
+          payload: { data: { message: 'UpdateSysResource' } },
+        });
+        onUiEvent({
+          type: UI_REQUEST.FIRMWARE_PROGRESS,
+          payload: { progress: 40, progressType: 'installingFirmware' },
+        });
+        expect(store.getState().firmware.progress).toBe(10);
+
+        onUiEvent({
+          type: UI_REQUEST.FIRMWARE_PROGRESS,
+          payload: { progress: 100, progressType: 'installingFirmware' },
+        });
+        expect(store.getState().firmware).toMatchObject({
+          progress: 25,
+          maxProgress: 25,
+          useSdkProgress: true,
+        });
+        onUiEvent({
+          type: UI_REQUEST.FIRMWARE_TIP,
+          payload: { data: { message: 'UpdateSysResourceSuccess' } },
+        });
+        onUiEvent({
+          type: UI_REQUEST.FIRMWARE_TIP,
+          payload: { data: { message: 'AutoRebootToBootloader' } },
+        });
+      }
+
+      onUiEvent({
+        type: UI_REQUEST.FIRMWARE_TIP,
+        payload: { data: { message: 'StartTransferData' } },
+      });
+      onUiEvent({
+        type: UI_REQUEST.FIRMWARE_PROGRESS,
+        payload: { progress: 40, progressType: 'transferData' },
+      });
+      expect(store.getState().firmware.progress).toBe(
+        updatesResources ? 25 : 20
+      );
+
+      onUiEvent({
+        type: UI_REQUEST.FIRMWARE_PROGRESS,
+        payload: { progress: 100, progressType: 'transferData' },
+      });
+      expect(store.getState().firmware).toMatchObject({
+        progress: 50,
+        maxProgress: 50,
+        useSdkProgress: true,
+      });
+
+      onUiEvent({
+        type: UI_REQUEST.FIRMWARE_TIP,
+        payload: { data: { message: 'ConfirmOnDevice' } },
+      });
+      onUiEvent({
+        type: UI_REQUEST.FIRMWARE_TIP,
+        payload: { data: { message: 'InstallingFirmware' } },
+      });
+      expect(store.getState().firmware).toMatchObject({
+        progress: 50,
+        maxProgress: 99,
+        useSdkProgress: false,
+        showButtonAlert: true,
+      });
+    }
+  );
+});
 
 const pro2Device = {
   connectId: 'pro2-connect-id',
