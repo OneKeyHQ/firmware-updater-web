@@ -198,12 +198,18 @@ class ServiceHardware {
   async getSDKInstance() {
     return getHardwareSDKInstance().then((instance) => {
       if (!this.registeredEvents) {
-        let updatingTouchResources = false;
+        let updatingV2Resources = false;
+        let v2TransferStartProgress = 0;
         instance.on(UI_EVENT, (e) => {
           const { type, payload } = e;
-          const { device } = store.getState().runtime;
-          const isTouch =
-            (device?.deviceType ?? getDeviceType(device?.features)) === 'touch';
+          const { device, currentTab } = store.getState().runtime;
+          const deviceType =
+            device?.deviceType ?? getDeviceType(device?.features);
+          const isV3Update =
+            deviceType === 'pro' &&
+            (currentTab === 'v3-remote' || currentTab === 'v3-local');
+          const isV2TouchOrPro =
+            (deviceType === 'touch' || deviceType === 'pro') && !isV3Update;
           if (type === UI_REQUEST.REQUEST_PIN) {
             this.sendUiResponse({
               type: UI_RESPONSE.RECEIVE_PIN,
@@ -217,7 +223,13 @@ class ServiceHardware {
             store.dispatch(setShowButtonAlert(false));
           } else if (type === UI_REQUEST.FIRMWARE_TIP) {
             const { message = '' } = payload.data ?? {};
-            updatingTouchResources = isTouch && message === 'UpdateSysResource';
+            updatingV2Resources =
+              isV2TouchOrPro && message === 'UpdateSysResource';
+            if (isV2TouchOrPro) {
+              // V2 has transfer progress, but no observable install percentage
+              // or confirmation-completed event. Do not invent progress while waiting.
+              store.dispatch(setUseSdkProgress(true));
+            }
             switch (message) {
               case 'AutoRebootToBootloader':
                 // 5
@@ -255,11 +267,49 @@ class ServiceHardware {
                   )
                 );
                 break;
+              case 'StartDownloadFirmware':
+              case 'FinishDownloadFirmware':
+                if (isV3Update) {
+                  store.dispatch(setUseSdkProgress(true));
+                  store.dispatch(
+                    setUpdateTip(
+                      formatMessage({
+                        id:
+                          message === 'StartDownloadFirmware'
+                            ? 'TR_DOWNLOAD_FIRMWARE'
+                            : 'TR_DOWNLOAD_FIRMWARE_SUCCESS',
+                      }) ?? ''
+                    )
+                  );
+                }
+                break;
+              case 'StartTransferData':
+                if (isV2TouchOrPro || isV3Update) {
+                  if (isV2TouchOrPro) {
+                    v2TransferStartProgress = Math.min(
+                      store.getState().firmware.progress,
+                      25
+                    );
+                  }
+                  store.dispatch(setUseSdkProgress(true));
+                  store.dispatch(
+                    setUpdateTip(
+                      formatMessage({ id: 'TR_TRANSFER_DATA' }) ?? ''
+                    )
+                  );
+                }
+                break;
               case 'ConfirmOnDevice':
                 store.dispatch(setShowButtonAlert(true));
                 store.dispatch(setUpdateTip(''));
                 break;
               case 'FirmwareEraseSuccess':
+                if (isV2TouchOrPro) {
+                  v2TransferStartProgress = Math.min(
+                    store.getState().firmware.progress,
+                    25
+                  );
+                }
                 // 30
                 store.dispatch(setMaxProgress(30));
                 store.dispatch(
@@ -267,12 +317,22 @@ class ServiceHardware {
                 );
                 break;
               case 'InstallingFirmware':
-                if (isTouch) {
-                  // Touch reports transfer progress but not installation progress.
+              case 'FirmwareUpdating':
+                if (isV2TouchOrPro || isV3Update) {
                   store.dispatch(setMaxProgress(FIRMWARE_INSTALL_PROGRESS_MAX));
-                  store.dispatch(setUseSdkProgress(false));
                   store.dispatch(
                     setUpdateTip(formatMessage({ id: 'TR_INSTALLING' }) ?? '')
+                  );
+                }
+                break;
+              case 'FirmwareUpdateCompleted':
+                if (isV3Update) {
+                  store.dispatch(setProgress(100));
+                  store.dispatch(
+                    setUpdateTip(
+                      formatMessage({ id: 'TR_FIRMWARE_INSTALLED_SUCCESS' }) ??
+                        ''
+                    )
                   );
                 }
                 break;
@@ -299,12 +359,12 @@ class ServiceHardware {
             }
             const { progress: payloadProgress, progressType } = payload;
             if (
-              updatingTouchResources &&
+              updatingV2Resources &&
               progressType === 'installingFirmware' &&
               payloadProgress >= 0 &&
               payloadProgress <= 100
             ) {
-              // Resource installation precedes the Touch firmware transfer.
+              // V2 resources precede the Touch/Pro firmware transfer.
               store.dispatch(setMaxProgress(25));
               store.dispatch(
                 setProgress(
@@ -324,6 +384,21 @@ class ServiceHardware {
             });
 
             if (mappedProgress) {
+              if (isV2TouchOrPro && progressType === 'transferData') {
+                // Reserve 100% for SDK success; confirmation and installation
+                // have no continuous progress in this V2 flow.
+                mappedProgress.progress = Math.max(
+                  progress,
+                  v2TransferStartProgress +
+                    Math.floor(
+                      (payloadProgress *
+                        (FIRMWARE_INSTALL_PROGRESS_MAX -
+                          v2TransferStartProgress)) /
+                        100
+                    )
+                );
+                mappedProgress.maxProgress = FIRMWARE_INSTALL_PROGRESS_MAX;
+              }
               store.dispatch(setMaxProgress(mappedProgress.maxProgress));
               store.dispatch(setProgress(mappedProgress.progress));
               store.dispatch(setUseSdkProgress(true));
@@ -800,6 +875,7 @@ class ServiceHardware {
         store.dispatch(setShowErrorAlert({ type: 'error', message }));
         return;
       }
+      store.dispatch(setProgress(100));
       store.dispatch(
         setShowErrorAlert({ type: 'success', message: '固件安装成功' })
       );

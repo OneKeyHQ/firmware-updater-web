@@ -15,8 +15,10 @@ import {
   setMaxProgress,
   setProgress,
   setShowButtonAlert,
+  setShowProgressBar,
 } from '@/store/reducers/firmware';
 import {
+  setCurrentTab,
   setDevice,
   setReleaseMap,
   setSelectedReleaseInfo,
@@ -24,6 +26,7 @@ import {
 } from '@/store/reducers/runtime';
 import * as utils from '@/utils';
 import * as touchFirmware from '@/utils/touchFirmware';
+import * as locales from '@/locales';
 import { getHardwareSDKInstance } from './instance';
 import { serviceHardware } from '.';
 
@@ -34,7 +37,7 @@ jest.mock('./instance', () => ({
 const mockedGetHardwareSDKInstance =
   getHardwareSDKInstance as jest.MockedFunction<typeof getHardwareSDKInstance>;
 
-describe('ServiceHardware Touch firmware progress', () => {
+describe('ServiceHardware firmware progress', () => {
   let onUiEvent: (event: {
     type: string;
     payload: {
@@ -54,6 +57,11 @@ describe('ServiceHardware Touch firmware progress', () => {
     store.dispatch(setProgress(0));
     store.dispatch(setMaxProgress(0));
     store.dispatch(setShowButtonAlert(false));
+    store.dispatch(setCurrentTab('firmware'));
+    store.dispatch(setShowProgressBar(true));
+    jest
+      .spyOn(locales, 'formatMessage')
+      .mockImplementation(({ id }) => String(id));
     const on = jest.fn();
     mockedGetHardwareSDKInstance.mockResolvedValue({
       on,
@@ -71,11 +79,19 @@ describe('ServiceHardware Touch firmware progress', () => {
     store.dispatch(setProgress(0));
     store.dispatch(setMaxProgress(0));
     store.dispatch(setShowButtonAlert(false));
+    store.dispatch(setCurrentTab('firmware'));
+    jest.restoreAllMocks();
   });
 
-  test.each([true, false])(
-    'continues transfer and simulated install after resources (resource update: %s)',
-    (updatesResources) => {
+  test.each<[string, boolean]>([
+    ['touch', true],
+    ['touch', false],
+    ['pro', true],
+    ['pro', false],
+  ])(
+    'uses reported V2 progress for %s (resource update: %s)',
+    (deviceType, updatesResources) => {
+      store.dispatch(setDevice({ deviceType } as unknown as KnownDevice));
       if (updatesResources) {
         onUiEvent({
           type: UI_REQUEST.FIRMWARE_TIP,
@@ -115,7 +131,7 @@ describe('ServiceHardware Touch firmware progress', () => {
         payload: { progress: 40, progressType: 'transferData' },
       });
       expect(store.getState().firmware.progress).toBe(
-        updatesResources ? 25 : 20
+        updatesResources ? 54 : 39
       );
 
       onUiEvent({
@@ -123,8 +139,8 @@ describe('ServiceHardware Touch firmware progress', () => {
         payload: { progress: 100, progressType: 'transferData' },
       });
       expect(store.getState().firmware).toMatchObject({
-        progress: 50,
-        maxProgress: 50,
+        progress: 99,
+        maxProgress: 99,
         useSdkProgress: true,
       });
 
@@ -137,10 +153,155 @@ describe('ServiceHardware Touch firmware progress', () => {
         payload: { data: { message: 'InstallingFirmware' } },
       });
       expect(store.getState().firmware).toMatchObject({
-        progress: 50,
+        progress: 99,
         maxProgress: 99,
-        useSdkProgress: false,
+        useSdkProgress: true,
         showButtonAlert: true,
+      });
+    }
+  );
+
+  test.each(['touch', 'pro'])(
+    'maps the old %s V2 transfer without requiring an installation event',
+    (deviceType) => {
+      store.dispatch(
+        setDevice({
+          deviceType,
+          features: { deviceType, bootloaderVersion: '2.4.4' },
+        } as unknown as KnownDevice)
+      );
+      onUiEvent({
+        type: UI_REQUEST.FIRMWARE_TIP,
+        payload: { data: { message: 'ConfirmOnDevice' } },
+      });
+      onUiEvent({
+        type: UI_REQUEST.FIRMWARE_TIP,
+        payload: { data: { message: 'FirmwareEraseSuccess' } },
+      });
+      onUiEvent({
+        type: UI_REQUEST.FIRMWARE_PROGRESS,
+        payload: { progress: 100, progressType: 'transferData' },
+      });
+      expect(store.getState().firmware).toMatchObject({
+        progress: 99,
+        maxProgress: 99,
+        useSdkProgress: true,
+      });
+    }
+  );
+
+  test.each([true, false])(
+    'finishes V2 progress only on SDK success (success: %s)',
+    async (success) => {
+      store.dispatch(setSelectedUploadType('binary'));
+      jest
+        .spyOn(serviceHardware, 'getFileBuffer')
+        .mockResolvedValue(new ArrayBuffer(8));
+      const firmwareUpdateV2 = jest.fn().mockImplementation(() => {
+        onUiEvent({
+          type: UI_REQUEST.FIRMWARE_TIP,
+          payload: { data: { message: 'StartTransferData' } },
+        });
+        onUiEvent({
+          type: UI_REQUEST.FIRMWARE_PROGRESS,
+          payload: { progress: 100, progressType: 'transferData' },
+        });
+        expect(store.getState().firmware.progress).toBe(99);
+        return Promise.resolve({
+          success,
+          payload: { error: 'update failed' },
+        });
+      });
+      mockedGetHardwareSDKInstance.mockResolvedValue({
+        on: jest.fn(),
+        firmwareUpdateV2,
+      } as unknown as CoreApi);
+
+      await serviceHardware.firmwareUpdate();
+
+      expect(firmwareUpdateV2).toHaveBeenCalledTimes(1);
+      expect(store.getState().firmware).toMatchObject({
+        progress: success ? 100 : 99,
+        resultType: success ? 'success' : 'error',
+        showProgressBar: false,
+      });
+    }
+  );
+
+  test('shows V3 stages while preserving reported transfer and install progress', () => {
+    store.dispatch(setDevice({ deviceType: 'pro' } as unknown as KnownDevice));
+    store.dispatch(setCurrentTab('v3-remote'));
+    onUiEvent({
+      type: UI_REQUEST.FIRMWARE_TIP,
+      payload: { data: { message: 'StartDownloadFirmware' } },
+    });
+    expect(store.getState().firmware).toMatchObject({
+      progress: 0,
+      useSdkProgress: true,
+      updateTip: 'TR_DOWNLOAD_FIRMWARE',
+    });
+    onUiEvent({
+      type: UI_REQUEST.FIRMWARE_TIP,
+      payload: { data: { message: 'FinishDownloadFirmware' } },
+    });
+    expect(store.getState().firmware.updateTip).toBe(
+      'TR_DOWNLOAD_FIRMWARE_SUCCESS'
+    );
+    onUiEvent({
+      type: UI_REQUEST.FIRMWARE_TIP,
+      payload: { data: { message: 'StartTransferData' } },
+    });
+    expect(store.getState().firmware.updateTip).toBe('TR_TRANSFER_DATA');
+    onUiEvent({
+      type: UI_REQUEST.FIRMWARE_PROGRESS,
+      payload: { progress: 100, progressType: 'transferData' },
+    });
+    expect(store.getState().firmware.progress).toBe(50);
+    onUiEvent({
+      type: UI_REQUEST.FIRMWARE_TIP,
+      payload: { data: { message: 'FirmwareUpdating' } },
+    });
+    expect(store.getState().firmware.updateTip).toBe('TR_INSTALLING');
+    for (const progress of [60, 40]) {
+      onUiEvent({
+        type: UI_REQUEST.FIRMWARE_PROGRESS,
+        payload: { progress, progressType: 'installingFirmware' },
+      });
+      expect(store.getState().firmware.progress).toBe(79);
+    }
+    onUiEvent({
+      type: UI_REQUEST.FIRMWARE_TIP,
+      payload: { data: { message: 'FirmwareUpdateCompleted' } },
+    });
+    expect(store.getState().firmware).toMatchObject({
+      progress: 100,
+      updateTip: 'TR_FIRMWARE_INSTALLED_SUCCESS',
+    });
+  });
+
+  test.each(['pro2', 'neo'])(
+    'keeps %s V4 progress unchanged even with a previous V3 tab selection',
+    (deviceType) => {
+      store.dispatch(setDevice({ deviceType } as unknown as KnownDevice));
+      store.dispatch(setCurrentTab('v3-remote'));
+      onUiEvent({
+        type: UI_REQUEST.FIRMWARE_PROGRESS,
+        payload: { progress: 100, progressType: 'transferData' },
+      });
+      expect(store.getState().firmware.progress).toBe(50);
+      onUiEvent({
+        type: UI_REQUEST.FIRMWARE_PROGRESS,
+        payload: { progress: 100, progressType: 'installingFirmware' },
+      });
+      onUiEvent({
+        type: UI_REQUEST.FIRMWARE_TIP,
+        payload: { data: { message: 'FirmwareUpdateCompleted' } },
+      });
+      expect(store.getState().firmware).toMatchObject({
+        progress: 99,
+        maxProgress: 99,
+        useSdkProgress: true,
+        updateTip: 'TR_INSTALLING',
       });
     }
   );
