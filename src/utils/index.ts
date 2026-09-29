@@ -41,11 +41,11 @@ export const getDeviceFirmwareVersion = (
   if (!features) return [0, 0, 0];
 
   if (features.onekey_version) {
-    return features.onekey_version.split('.') as unknown as number[];
+    return features.onekey_version.split('.').map((part) => Number(part) || 0);
   }
   return [
-    features.major_version,
-    features.minor_version,
-    features.patch_version,
+    features.major_version ?? 0,
+    features.minor_version ?? 0,
+    features.patch_version ?? 0,
   ];
 };
