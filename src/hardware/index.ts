@@ -23,7 +23,6 @@ import {
 } from '@onekeyfe/hd-shared';
 import { store } from '@/store';
 import {
-  setDevice,
   setReleaseMap,
   setInstallType,
   setNeedsBootloaderPermission,
@@ -1369,42 +1368,6 @@ class ServiceHardware {
       // Don't throw - let the SDK handle timeout
     }
     return authorized;
-  }
-
-  /**
-   * Re-select the current device after it disconnected outside an update,
-   * e.g. a Mini re-plugged in bootloader mode under an unauthorized USB PID.
-   * Passing the previous path makes the picker open unless that exact device
-   * is already authorized, so an unrelated authorized wallet is never reused.
-   */
-  async reauthorizeDisconnectedDevice() {
-    try {
-      const previousPath = store.getState().runtime.device?.path;
-      const usbDevice = await requestOrReuseOneKeyWebUsbDevice(previousPath);
-      const selectedPath = resolveAuthorizedWebUsbDeviceId(usbDevice);
-      const response = await this.searchDevices();
-      if (!response.success) return false;
-      const selectedDevice = response.payload.find(
-        (candidate) =>
-          (candidate as KnownDevice).path === selectedPath ||
-          candidate.connectId === selectedPath
-      );
-      if (!selectedDevice) return false;
-      store.dispatch(setDevice(selectedDevice as KnownDevice));
-      store.dispatch(setNeedsBootloaderPermission(false));
-      return true;
-    } catch (error) {
-      console.error('Error re-authorizing disconnected device:', error);
-      if (
-        error instanceof Error &&
-        error.message === AMBIGUOUS_WEBUSB_DEVICE_MESSAGE
-      ) {
-        store.dispatch(
-          setShowErrorAlert({ type: 'error', message: error.message })
-        );
-      }
-      return false;
-    }
   }
 }
 

@@ -20,7 +20,6 @@ import {
 import {
   setCurrentTab,
   setDevice,
-  setNeedsBootloaderPermission,
   setReleaseMap,
   setSelectedReleaseInfo,
   setSelectedUploadType,
@@ -805,63 +804,6 @@ describe('ServiceHardware Pro2 firmware update', () => {
         type: UI_RESPONSE.SELECT_DEVICE_IN_BOOTLOADER_FOR_WEB_DEVICE,
         payload: { deviceId: 'rebooted-device' },
       });
-    } finally {
-      sendUiResponse.mockRestore();
-      if (previousUsb) {
-        Object.defineProperty(navigator, 'usb', previousUsb);
-      } else {
-        delete (navigator as { usb?: unknown }).usb;
-      }
-    }
-  });
-
-  test('opens the picker for a disconnected Mini instead of reusing another wallet', async () => {
-    const otherWallet = {
-      vendorId: 0x1209,
-      productId: 0x53c1,
-      serialNumber: 'other-wallet',
-    };
-    const miniBootloader = {
-      vendorId: 0x1209,
-      productId: 0x53c0,
-      serialNumber: 'mini-bootloader',
-    };
-    const bootloaderDevice = {
-      path: 'mini-bootloader',
-      connectId: 'mini-bootloader',
-      features: { bootloader_mode: true },
-    };
-    store.dispatch(
-      setDevice({ path: 'mini-firmware', connectId: 'mini-firmware' } as never)
-    );
-    store.dispatch(setNeedsBootloaderPermission(true));
-    const getDevices = jest
-      .fn()
-      .mockResolvedValueOnce([otherWallet])
-      .mockResolvedValue([otherWallet, miniBootloader]);
-    const requestDevice = jest.fn().mockResolvedValue(miniBootloader);
-    const previousUsb = Object.getOwnPropertyDescriptor(navigator, 'usb');
-    Object.defineProperty(navigator, 'usb', {
-      configurable: true,
-      value: { getDevices, requestDevice },
-    });
-    mockedGetHardwareSDKInstance.mockResolvedValue({
-      searchDevices: jest.fn().mockResolvedValue({
-        success: true,
-        payload: [{ path: 'other-wallet' }, bootloaderDevice],
-      }),
-      on: jest.fn(),
-    } as unknown as CoreApi);
-    const sendUiResponse = jest.spyOn(serviceHardware, 'sendUiResponse');
-
-    try {
-      await expect(
-        serviceHardware.reauthorizeDisconnectedDevice()
-      ).resolves.toBe(true);
-      expect(requestDevice).toHaveBeenCalledTimes(1);
-      expect(sendUiResponse).not.toHaveBeenCalled();
-      expect(store.getState().runtime.device).toEqual(bootloaderDevice);
-      expect(store.getState().runtime.needsBootloaderPermission).toBe(false);
     } finally {
       sendUiResponse.mockRestore();
       if (previousUsb) {

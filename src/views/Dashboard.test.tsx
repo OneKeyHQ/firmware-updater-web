@@ -11,11 +11,7 @@ import { Provider } from 'react-redux';
 import { serviceHardware } from '@/hardware';
 import LOCALES from '@/locales';
 import { store } from '@/store';
-import {
-  setDevice,
-  setNeedsBootloaderPermission,
-  setPageStatus,
-} from '@/store/reducers/runtime';
+import { setDevice, setPageStatus } from '@/store/reducers/runtime';
 import Dashboard from './Dashboard';
 
 jest.mock('@/hardware', () => ({
@@ -62,7 +58,6 @@ describe('Dashboard initialization', () => {
     jest.clearAllMocks();
     store.dispatch(setDevice(null));
     store.dispatch(setPageStatus('initialize'));
-    store.dispatch(setNeedsBootloaderPermission(false));
     mockedServiceHardware.getReleaseInfo.mockResolvedValue(undefined);
   });
 
@@ -179,7 +174,7 @@ describe('Dashboard initialization', () => {
     expect(mockedServiceHardware.stopScan).toHaveBeenCalled();
   });
 
-  test('asks to authorize on the firmware page when the current USB device disconnects', async () => {
+  test('returns to the connect page when the current USB device disconnects', async () => {
     const usb = new EventTarget();
     Object.defineProperty(navigator, 'usb', {
       configurable: true,
@@ -224,12 +219,10 @@ describe('Dashboard initialization', () => {
         usb.dispatchEvent(event);
       });
 
-      // The selection and firmware page stay so Mini instructions remain.
-      expect(store.getState().runtime.device?.path).toBe('mini-device');
-      expect(store.getState().runtime.needsBootloaderPermission).toBe(true);
+      expect(store.getState().runtime.device).toBeNull();
       expect(
-        screen.queryByRole('button', { name: 'Connect device' })
-      ).not.toBeInTheDocument();
+        await screen.findByRole('button', { name: 'Connect device' })
+      ).toBeInTheDocument();
     } finally {
       delete (navigator as { usb?: unknown }).usb;
     }
