@@ -1,5 +1,11 @@
 import React from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import { IntlProvider } from 'react-intl';
 import { Provider } from 'react-redux';
 import { serviceHardware } from '@/hardware';
@@ -166,6 +172,73 @@ describe('Dashboard initialization', () => {
       expect(store.getState().runtime.device?.path).toBe('selected-device');
     });
     expect(mockedServiceHardware.stopScan).toHaveBeenCalled();
+  });
+
+  test('returns to the connect page when the current USB device disconnects', async () => {
+    const usb = new EventTarget();
+    Object.defineProperty(navigator, 'usb', {
+      configurable: true,
+      value: usb,
+    });
+    mockedServiceHardware.getSDKInstance.mockResolvedValue({} as never);
+    mockedServiceHardware.searchDevices.mockResolvedValue({
+      success: true,
+      payload: [{ path: 'mini-device', connectId: 'mini-device' }],
+    } as never);
+    mockedServiceHardware.startDeviceScan.mockImplementation((callback) => {
+      callback({
+        success: true,
+        payload: [{ path: 'mini-device', connectId: 'mini-device' }],
+      } as never);
+      return Promise.resolve(undefined);
+    });
+
+    try {
+      render(
+        <Provider store={store}>
+          <IntlProvider locale="en-US" messages={LOCALES['en-US']}>
+            <Dashboard />
+          </IntlProvider>
+        </Provider>
+      );
+
+      await waitFor(() => {
+        expect(store.getState().runtime.device?.path).toBe('mini-device');
+      });
+
+      // Mini re-enumerates under the unauthorized bootloader PID.
+      const event = new Event('disconnect');
+      Object.assign(event, {
+        device: {
+          vendorId: 0x1209,
+          productId: 0x53c1,
+          serialNumber: 'mini-device',
+        },
+      });
+      act(() => {
+        usb.dispatchEvent(event);
+      });
+
+      expect(store.getState().runtime.device).toBeNull();
+
+      // Reconnecting must ask for the disconnected device rather than reuse
+      // whichever other wallet is still authorized.
+      mockedServiceHardware.promptWebDeviceAccess.mockResolvedValue({
+        vendorId: 0x1209,
+        productId: 0x53c0,
+        serialNumber: 'mini-bootloader',
+      });
+      fireEvent.click(
+        await screen.findByRole('button', { name: 'Connect device' })
+      );
+      await waitFor(() => {
+        expect(
+          mockedServiceHardware.promptWebDeviceAccess
+        ).toHaveBeenCalledWith('mini-device');
+      });
+    } finally {
+      delete (navigator as { usb?: unknown }).usb;
+    }
   });
 
   test('shows the disconnect instruction when USB identities collide', async () => {

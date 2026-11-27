@@ -1,11 +1,11 @@
-import { useEffect, useCallback, FC, useState } from 'react';
+import { useEffect, useCallback, FC, useRef, useState } from 'react';
 import { useIntl } from 'react-intl';
 import { useSelector, useDispatch } from 'react-redux';
 import type { KnownDevice } from '@onekeyfe/hd-core';
 import { resolveOneKeyUsbDevicePath } from '@onekeyfe/hd-shared';
 import { Steps, SearchDevice, Firmware } from '@/components';
 import { serviceHardware } from '@/hardware';
-import { RootState } from '@/store';
+import { RootState, store } from '@/store';
 import { setPageStatus, setDevice } from '@/store/reducers/runtime';
 
 const Content: FC<{
@@ -38,6 +38,9 @@ export default function Dashboard() {
   const [needUserAction, setNeedUserAction] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectionError, setConnectionError] = useState('');
+  // Path of a device that disconnected from the firmware page. Reconnecting
+  // must not silently reuse another authorized wallet in its place.
+  const reconnectPathRef = useRef<string | undefined>();
 
   const searchDevice = useCallback(
     async (preferredPath?: string) => {
@@ -112,12 +115,15 @@ export default function Dashboard() {
     try {
       // WebUSB authorization and protocol identification are intentionally
       // separate: the SDK scan actively probes both Protocol V1 and V2.
-      const selectedDevice = await serviceHardware.promptWebDeviceAccess();
+      const selectedDevice = await serviceHardware.promptWebDeviceAccess(
+        reconnectPathRef.current
+      );
       const selectedPath = resolveOneKeyUsbDevicePath(selectedDevice);
       if (!selectedPath) {
         throw new Error('Unable to resolve the selected USB device');
       }
       console.log('USB device authorized');
+      reconnectPathRef.current = undefined;
       await searchDevice(selectedPath);
     } catch (error: any) {
       console.error('Failed to prompt device access:', error);
@@ -203,15 +209,28 @@ export default function Dashboard() {
       }
     };
 
-    // Only listen to connect events, not disconnect
-    // User can manually reconnect using the button in firmware page
+    // Entering bootloader re-enumerates some devices under a new USB PID
+    // (e.g. Mini 53c1 -> 53c0) that WebUSB has not authorized yet, so polling
+    // can never see it. Go back to the connect page so the user can grant it.
+    const handleDeviceDisconnect = (event: any) => {
+      if (!device || store.getState().firmware.showFirmwareUpdate) return;
+      if (resolveOneKeyUsbDevicePath(event.device) !== device.path) return;
+      console.log('Current USB device disconnected, resetting state');
+      reconnectPathRef.current = device.path;
+      dispatch(setDevice(null));
+      dispatch(setPageStatus('searching'));
+      setNeedUserAction(true);
+    };
+
     usb.addEventListener('connect', handleDeviceConnect);
+    usb.addEventListener('disconnect', handleDeviceDisconnect);
 
     // Cleanup
     return () => {
       usb.removeEventListener('connect', handleDeviceConnect);
+      usb.removeEventListener('disconnect', handleDeviceDisconnect);
     };
-  }, [pageStatus, searchDevice]);
+  }, [pageStatus, searchDevice, device, dispatch]);
 
   if (pageStatus === 'initialize') {
     return (

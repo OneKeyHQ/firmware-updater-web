@@ -457,8 +457,8 @@ class ServiceHardware {
     return hardwareSDK?.searchDevices();
   }
 
-  async promptWebDeviceAccess() {
-    return requestOrReuseOneKeyWebUsbDevice();
+  async promptWebDeviceAccess(preferredPath?: string) {
+    return requestOrReuseOneKeyWebUsbDevice(preferredPath);
   }
 
   async startDeviceScan(
