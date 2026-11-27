@@ -220,9 +220,22 @@ describe('Dashboard initialization', () => {
       });
 
       expect(store.getState().runtime.device).toBeNull();
-      expect(
+
+      // Reconnecting must ask for the disconnected device rather than reuse
+      // whichever other wallet is still authorized.
+      mockedServiceHardware.promptWebDeviceAccess.mockResolvedValue({
+        vendorId: 0x1209,
+        productId: 0x53c0,
+        serialNumber: 'mini-bootloader',
+      });
+      fireEvent.click(
         await screen.findByRole('button', { name: 'Connect device' })
-      ).toBeInTheDocument();
+      );
+      await waitFor(() => {
+        expect(
+          mockedServiceHardware.promptWebDeviceAccess
+        ).toHaveBeenCalledWith('mini-device');
+      });
     } finally {
       delete (navigator as { usb?: unknown }).usb;
     }
