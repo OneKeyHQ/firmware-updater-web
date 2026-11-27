@@ -6,7 +6,11 @@ import { resolveOneKeyUsbDevicePath } from '@onekeyfe/hd-shared';
 import { Steps, SearchDevice, Firmware } from '@/components';
 import { serviceHardware } from '@/hardware';
 import { RootState, store } from '@/store';
-import { setPageStatus, setDevice } from '@/store/reducers/runtime';
+import {
+  setPageStatus,
+  setDevice,
+  setNeedsBootloaderPermission,
+} from '@/store/reducers/runtime';
 
 const Content: FC<{
   onConnectDevice?: () => void;
@@ -205,14 +209,13 @@ export default function Dashboard() {
 
     // Entering bootloader re-enumerates some devices under a new USB PID
     // (e.g. Mini 53c1 -> 53c0) that WebUSB has not authorized yet, so polling
-    // can never see it. Go back to the connect page so the user can grant it.
+    // can never see it. Stay on the firmware page (keeping its instructions
+    // and selected file) and ask the user to authorize the reconnected device.
     const handleDeviceDisconnect = (event: any) => {
       if (!device || store.getState().firmware.showFirmwareUpdate) return;
       if (resolveOneKeyUsbDevicePath(event.device) !== device.path) return;
-      console.log('Current USB device disconnected, resetting state');
-      dispatch(setDevice(null));
-      dispatch(setPageStatus('searching'));
-      setNeedUserAction(true);
+      console.log('Current USB device disconnected, awaiting authorization');
+      dispatch(setNeedsBootloaderPermission(true));
     };
 
     usb.addEventListener('connect', handleDeviceConnect);

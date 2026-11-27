@@ -3,7 +3,7 @@ import { FC, useState, useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import semver from 'semver';
 import { useIntl } from 'react-intl';
-import { RootState } from '@/store';
+import { RootState, store } from '@/store';
 import { Button, Alert, Link } from '@onekeyfe/ui-components';
 import {
   getDeviceType,
@@ -13,7 +13,11 @@ import {
   getDeviceFirmwareVersion,
 } from '@onekeyfe/hd-core';
 import { serviceHardware } from '@/hardware';
-import { setDevice, setPageStatus } from '@/store/reducers/runtime';
+import {
+  setDevice,
+  setNeedsBootloaderPermission,
+  setPageStatus,
+} from '@/store/reducers/runtime';
 import { RestartToHomeTip, ListTips, EmptyTips } from './TouchResource/Tips';
 import ResourceButton from './TouchResource/Button';
 
@@ -172,7 +176,11 @@ const BootloaderPermissionPrompt: FC = () => {
     }
     setAuthorizing(true);
     try {
-      const success = await serviceHardware.promptBootloaderDeviceAccess();
+      // Outside an update the SDK is not waiting for a device selection, so
+      // re-select the device for this page instead of answering the SDK.
+      const success = store.getState().firmware.showFirmwareUpdate
+        ? await serviceHardware.promptBootloaderDeviceAccess()
+        : await serviceHardware.reauthorizeDisconnectedDevice();
       if (!success) {
         console.warn('Bootloader 设备重新授权未完成，可提示用户再次尝试。');
       }
@@ -394,9 +402,21 @@ export default function Firmware() {
       if (!response.success) {
         return;
       }
-      if (response.payload.length > 0 && device) {
-        const existDevice = findConnectedDevice(response.payload, device);
-        dispatch(setDevice((existDevice as KnownDevice) ?? null));
+      // Read the live selection: this interval outlives remounts and
+      // reauthorization may replace the device it started with.
+      const { device: currentDevice, needsBootloaderPermission } =
+        store.getState().runtime;
+      if (response.payload.length > 0 && currentDevice) {
+        const existDevice = findConnectedDevice(
+          response.payload,
+          currentDevice
+        );
+        if (existDevice) {
+          dispatch(setDevice(existDevice as KnownDevice));
+          dispatch(setNeedsBootloaderPermission(false));
+        } else if (!needsBootloaderPermission) {
+          dispatch(setDevice(null));
+        }
       }
     }, 5000);
     isPollingUpdateDevice = true;
