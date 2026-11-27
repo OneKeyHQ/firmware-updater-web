@@ -52,19 +52,19 @@ const LocalePopover = React.memo(function LocalPopover() {
               {({ close }) => (
                 <div className="overflow-hidden rounded-lg shadow-lg ring-1 ring-black ring-opacity-5">
                   {locales.map((item) => (
-                    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-                    <div
+                    <button
                       key={item.value}
-                      className="relative grid gap-6 bg-white px-3 py-3 hover:bg-gray-50 cursor-pointer"
+                      type="button"
+                      className="relative grid w-full gap-6 bg-white px-3 py-3 hover:bg-gray-50 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500"
                       onClick={() => {
                         dispatch(setLocale(item.value as any));
                         close();
                       }}
                     >
-                      <p className="text-base font-medium text-gray-900 text-center">
+                      <span className="text-base font-medium text-gray-900 text-center">
                         {item.name}
-                      </p>
-                    </div>
+                      </span>
+                    </button>
                   ))}
                 </div>
               )}
